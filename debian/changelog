@@ -1,3 +1,9 @@
+afni (0.20141224~dfsg.1-2) neurodebian; urgency=medium
+
+  * Minor fixup of permissions to make afni_util.py executable
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sat, 05 Mar 2016 21:28:45 -0500
+
 afni (0.20141224~dfsg.1-1) neurodebian; urgency=medium
 
   * Fresh upstream code
