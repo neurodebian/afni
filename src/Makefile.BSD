@@ -82,11 +82,11 @@ LIBDIR = $(INSTALLDIR)
 
 # for dynamic linking
 
-# LLIBS  = -lmri -lf2c -lXm -lXp -lXpm -lXext -lXmu -lXt -lX11 -lm
+# LLIBS  = -lmri -lf2c -lXm -lXpm -lXext -lXmu -lXt -lX11 -lm
 
 # for static linking to Motif, dynamic to all else
 
-LLIBS  = -lmri -lf2c -lXm -lXp -lXpm -lXext -lXmu -lXt -lX11 -lm
+LLIBS  = -lmri -lf2c -lXm -lXpm -lXext -lXmu -lXt -lX11 -lm
 
 # for static linking, as far as possible
 
@@ -108,7 +108,7 @@ SUMA_INCLUDE_PATH = -I/usr/X11R6/include -I/usr/local/include -I./ -I../ -I../ni
 SUMA_LINK_PATH = -L/usr/lib -L/usr/X11R6/lib -L../
 #use -lGLw if you have libGLw.a or libGLw.so* or 
 #  -lMesaGLw if you have Mesa's version (libMesaGLw*) of libGLw
-SUMA_LINK_LIB = -lXm -lGLw -lGLU -lGL -lXmu -lXp -lXt -lXext -lX11 -lm 
+SUMA_LINK_LIB = -lXm -lGLw -lGLU -lGL -lXmu -lXt -lXext -lX11 -lm 
 SUMA_MAKEFILE_NAME = SUMA_Makefile
 SUMA_BIN_ARCHIVE = SUMA_Linux.tar
 SUMA_MDEFS = -DSUMA_GL_NO_CHECK_FRAME_BUFFER

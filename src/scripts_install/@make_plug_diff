@@ -102,7 +102,7 @@ sed "s|CEXTRA =|CEXTRA = -DUSING_LESSTIF|" Makefiles/Makefile.common.orig | \
 	
 #Modify Makefile to remove X libs and add rickr to include path
 if ( ! -f Makefile.orig) cp Makefile Makefile.orig
-sed 's|{$LIBXM} -lXp -lXpm -lXext -lXmu -lXt -lSM -lICE -lX11 -lXft||'  \
+sed 's|{$LIBXM} -lXpm -lXext -lXmu -lXt -lSM -lICE -lX11 -lXft||'  \
                   Makefile.orig 	|	\
  	sed 's|$(CXX) -c plug_diff.c|$(CXX) -c plug_diff.c -I$(AFNI_PATH)/rickr|' \
                   > Makefile
@@ -270,7 +270,7 @@ COMMENTS:
    echo 'to the line beginning with:'
    echo '   $(CXX) -c plug_diff.c ...'
    echo "4- There is no need for  "
-   echo '   {$LIBXM} -lXp -lXpm -lXext -lXmu -lXt -lSM -lICE -lX11 -lXft'
+   echo '   {$LIBXM} -lXpm -lXext -lXmu -lXt -lSM -lICE -lX11 -lXft'
    echo "for LLIBS in the top-level Makefile"
    echo "5- File vrnd.c needs #include <string.h>"
    echo "Code related issues:"

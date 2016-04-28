@@ -24,7 +24,7 @@ ALLO = color.o curve.o frame.o frstpt.o labmod.o memplt.o    \
 # RANLIB = /usr/bin/ranlib
 # RM     = /bin/rm -f
 # LFLAGS = -s -L. -L.. -L/usr/X11R6/lib -lcoxplot -lf2c \
-#          -lXm -lXp -lXpm -lXext -lXmu -lXt -lX11 -lm
+#          -lXm -lXpm -lXext -lXmu -lXt -lX11 -lm
 
 libcoxplot.a:$(ALLO) coxplot.h
 	$(RM) $@
@@ -34,7 +34,7 @@ libcoxplot.a:$(ALLO) coxplot.h
 xxx:xxx.o libcoxplot.a
 	$(RM) $@
 	$(CC) -o xxx xxx.o $(LFLAGS) -L. -L.. -L/usr/X11/lib \
-              -lcoxplot -lf2c -lXm -lXp -lXpm -lXext -lXmu -lXt -lX11 -lm
+              -lcoxplot -lf2c -lXm -lXpm -lXext -lXmu -lXt -lX11 -lm
 
 qqq:qqq.o libcoxplot.a
 	$(RM) $@

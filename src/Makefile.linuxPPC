@@ -49,7 +49,7 @@ LIBDIR = $(INSTALLDIR)
 
 # for dynamic linking - assumes you have Motif or LessTif *.so libraries
 
-LLIBS  = -lmri -lf2c -lICE -lSM -lXm -lXp -lXpm -lXext -lXmu -lXt -lX11 $(LZLIB) -lm  -ldl -lc
+LLIBS  = -lmri -lf2c -lICE -lSM -lXm -lXpm -lXext -lXmu -lXt -lX11 $(LZLIB) -lm  -ldl -lc
 
 # for static linking, as far as possible
 

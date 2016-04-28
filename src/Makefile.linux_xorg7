@@ -95,11 +95,11 @@ EXPROGS = $(GSLPROGS)
 
 # for dynamic linking
 
-# LLIBS  = -lmri -lf2c -lXm -lXp -lXpm -lXext -lXmu -lXt -lX11 $(LZLIB) $(LGIFTI) -lm  -ldl -lc
+# LLIBS  = -lmri -lf2c -lXm -lXpm -lXext -lXmu -lXt -lX11 $(LZLIB) $(LGIFTI) -lm  -ldl -lc
 
 # for static linking to Motif, dynamic to all else
 
-LLIBS  = -lmri -lf2c $(XLIBS) -lXft -lXp -lXpm -lXext -lXmu -lSM -lICE -lX11 \
+LLIBS  = -lmri -lf2c $(XLIBS) -lXft -lXpm -lXext -lXmu -lSM -lICE -lX11 \
          $(LDPYTHON) -ljpeg -lpng $(LZLIB) $(LGIFTI) -lm  -ldl -lc
 
 # for static linking, as far as possible

@@ -173,7 +173,7 @@ PLATFORMINC=-I../../include/XmHTML -I/usr/X11R6/include
 INCLUDES = $(LIBINC) $(PLATFORMINC) $(IMAGEINCLUDES) $(II)
 
 LIBDIR = -L/usr/X11R6/lib -L../../..
-LIBS   = -lXm -lXpm -lXmu -lXp -lXt -lXext -lX11 -lSM -lICE
+LIBS   = -lXm -lXpm -lXmu -lXt -lXext -lX11 -lSM -lICE
 
 # final line fed to the linker 
 LOADLIBES = $(LIBDIR) $(LIBS) $(IMAGELIBS)

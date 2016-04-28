@@ -94,7 +94,7 @@ EXPROGS = $(GSLPROGS)
 # for dynamic linking
 
 LLIBS  = -lmri -lf2c $(XLIBS) -lXft -lfontconfig $(LDPYTHON) -lpng -liconv \
-         -lXmu -lXp -lXpm -lXext -lX11 $(LZLIB) $(LGIFTI) -lm -lc
+         -lXmu -lXpm -lXext -lX11 $(LZLIB) $(LGIFTI) -lm -lc
 
 # vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 # For suma 
