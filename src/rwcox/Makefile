@@ -27,7 +27,7 @@ LINT = /usr/bin/lint -a -b -u -v -x $(IFLAGS) $(CCDEFS)
 INSTALLDIR = $(HOME)/abin
 LIBDIR = $(INSTALLDIR)
 
-LLIBS  = -lmri /usr/X11R6/lib/libXm.a -lXp -lXpm -lXext -lXmu -lXt -lX11 -lm  -ldl -lc
+LLIBS  = -lmri /usr/X11R6/lib/libXm.a -lXpm -lXext -lXmu -lXt -lX11 -lm  -ldl -lc
 
 .c.o:
 	$(RM) $@

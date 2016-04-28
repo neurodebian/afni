@@ -54,7 +54,7 @@ LLIBS  = -lmri -lf2c -lXm -lXt -lX11 -lm $(EXTRA_LIBS)
 # For suma 
 SUMA_INCLUDE_PATH = -I/usr/openwin/share/include/X11 -I../ -I../niml/ -I./ -Igts/src
 SUMA_LINK_PATH = -L/usr/openwin/lib -R/usr/openwin/lib -L../
-SUMA_LINK_LIB = -lm -lGL -lGLU -lGLw -lXmu -lXm -lXp -lXt -lXext -lX11 -lsocket -lnsl
+SUMA_LINK_LIB = -lm -lGL -lGLU -lGLw -lXmu -lXm -lXt -lXext -lX11 -lsocket -lnsl
 SUMA_MAKEFILE_NAME = SUMA_Makefile_NoDev
 SUMA_BIN_ARCHIVE = SUMA_SOLARIS.tar
 SUMA_MDEFS = -DSUMA_GL_NO_CHECK_FRAME_BUFFER

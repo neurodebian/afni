@@ -89,11 +89,11 @@ EXPROGS = $(GSLPROGS)
 
 # for pure dynamic linking
 
-# LLIBS  = -lmri -lXm -lXft -lXp -lXpm -lXext -lXmu -lXt -lSM -lICE -lX11 -lpng -ljpeg $(LZLIB) $(LGIFTI) -lm  -ldl -lc
+# LLIBS  = -lmri -lXm -lXft -lXpm -lXext -lXmu -lXt -lSM -lICE -lX11 -lpng -ljpeg $(LZLIB) $(LGIFTI) -lm  -ldl -lc
 
 # link choices are made above
 
-LLIBS  = -lmri $(XLIBS) -lXft -lXp -lXpm -lXext -lXmu -lSM -lICE -lX11 -lpng -ljpeg $(LZLIB) $(LGIFTI) -lm  -ldl -lc -lf2c
+LLIBS  = -lmri $(XLIBS) -lXft -lXpm -lXext -lXmu -lSM -lICE -lX11 -lpng -ljpeg $(LZLIB) $(LGIFTI) -lm  -ldl -lc -lf2c
 
 # for static linking, as far as possible
 

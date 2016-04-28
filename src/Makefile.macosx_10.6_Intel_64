@@ -90,7 +90,7 @@ EXPROGS = $(GSLPROGS)
 
 # removed -lpng (needed for our OpenMotif compile (which might be a configure
 # option we could take out), not for fink's)               3 Jun 2011 [rickr]
-LLIBS  = -lmri -lf2c $(XLIBS) -lXft -lfontconfig -liconv -lXmu -lXp -lXpm -lXext -lX11 $(LZLIB) $(LGIFTI) -lm -lc
+LLIBS  = -lmri -lf2c $(XLIBS) -lXft -lfontconfig -liconv -lXmu -lXpm -lXext -lX11 $(LZLIB) $(LGIFTI) -lm -lc
 
 # vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 # For suma

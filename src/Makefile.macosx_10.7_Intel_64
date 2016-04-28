@@ -104,7 +104,7 @@ EXPROGS = $(GSLPROGS)
 # for dynamic linking
 
 LLIBS  = -lmri -lf2c $(XLIBS) /sw/lib/xft2/lib/libXft.a -lfontconfig \
-         /sw/lib/libpng.a -liconv -lXmu -lXp -lXpm -lXext -lX11      \
+         /sw/lib/libpng.a -liconv -lXmu -lXpm -lXext -lX11      \
          $(LZLIB) $(LGIFTI) $(LDPYTHON) -lm -lc
 
 # vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv

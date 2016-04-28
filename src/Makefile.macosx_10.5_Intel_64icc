@@ -85,7 +85,7 @@ EXPROGS = $(GSLPROGS)
 
 # for dynamic linking
 
-LLIBS  = -lmri -lf2c $(XLIBS) -lXft -lfontconfig -lpng -liconv -lXmu -lXp -lXpm -lXext -lX11 $(LZLIB) $(LGIFTI) -lm -lc
+LLIBS  = -lmri -lf2c $(XLIBS) -lXft -lfontconfig -lpng -liconv -lXmu -lXpm -lXext -lX11 $(LZLIB) $(LGIFTI) -lm -lc
 
 # vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 # For suma 
