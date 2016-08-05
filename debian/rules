@@ -1,11 +1,13 @@
 #!/usr/bin/make -f
 
 srcpkg = $(shell LC_ALL=C dpkg-parsechangelog | grep '^Source:' | cut -d ' ' -f 2,2)
-debver = $(shell LC_ALL=C dpkg-parsechangelog | grep '^Version:' | cut -d ' ' -f 2,2 )
-upstreamver = $(shell echo $(debver) | cut -d '-' -f 1,1 )
-# this figures out the last merge point from 'master' into the Debian branch and
-# then described this commit by parsing its commit message
-gitver = $(shell [ -x /usr/bin/git ] && git log -n 1 --oneline $$(git merge-base -a HEAD upstream) | cut -d ' ' -f '4,4')
+
+# this figures out the last merge point from 'upstream' into the Debian branch and
+# then described this commit relative to the last release tag (AFNI_...)
+# For this to make any sense, the local/remote upstream branch must track upstream's
+# master or any other source branch.
+gitver = $(shell [ -x /usr/bin/git ] && git describe --tags --match 'AFNI_[0-9]*.[0-9]*.[0-9]*' \
+  $$(git rev-parse --quiet --verify refs/remotes/origin/upstream && git merge-base -a HEAD origin/upstream || git merge-base -a HEAD upstream ) | sed -e 's/^AFNI_//' -e 's/-/+git/')~dfsg.1
 
 # Enable hardening on systems which support it
 # yoh: do not use hardening magic in cc/ld -- leads to spurious
@@ -129,9 +131,8 @@ override_dh_auto_install:
 	# remove @update.afni.* (e.g. .binaries) so it doesn't interfer
 	# with packaged installation
 	find debian/ -iname @update.afni.\* -delete
-    # some permissions fixes
+	# some permissions fixes
 	chmod a+rx /usr/lib/afni/bin/afni_util.py
-
 
 override_dh_auto_clean:
 	dh_auto_clean --builddirectory=$(DEB_BUILDDIR)
@@ -142,34 +143,57 @@ override_dh_auto_clean:
 override_dh_strip:
 	dh_strip --dbg-package=afni-dbg
 
-# make orig tarball from repository content
-get-orig-source:
+
+dfsg-source-tree:
 	-quilt pop -a
 	@echo "Testing for uncommited changes"
 	@git diff --quiet HEAD
+	# remove undesired content
+	# gts, GLUT, GLw
+	rm -rf src/SUMA/{gts,GLUT,GLw_local}
+	# libjpeg
+	rm -rf src/jpeg-6b
+	#libnifti: nah, we need this for now, because of the NIFTI2 "situation"
+	#rm -rf src/nifti
+	#gifti
+	rm -rf src/gifti
+	#libvolpack
+	rm -rf src/{volpack,volpack.h}
+	# libqhull
+	rm -rf src/qhulldir
+	# netcdf
+	rm -rf src/{netcdf-3.5.0,netcdf.h}
+	# Apple dlcompat
+	rm -rf src/dlcompat
+	# bzip2
+	rm -rf src/bzip2*
+	# fftw
+	rm -f src/fftw.h
+	# f2c
+	rm -fr src/f2cdir
+	rm -f src/f2c.h
+	# gifsicle
+	rm -rf src/gifsicle*
+	# XmHTML
+	rm -rf src/XmHTML
+	# NiBabel
+	rm -rf src/pkundu/meica.libs/nibabel
+	# MDP
+	rm -rf src/pkundu/meica.libs/mdp
+	# non-commercial, non-distribution license
+	rm -rf src/svm
+	# non-free/non-commerical (used to be in Debian, but got removed and is
+	# upstream dead), we are using ffmpeg
+	rm -rf src/mpeg_encodedir
+
+# commit any cleanup results
+	@if ! git diff --quiet HEAD; then \
+		git commit -e -a -m "Remove unwanted (e.g. non-DFSG-compliant) content"; \
+	fi
+
+
+# make orig tarball from repository content
+get-orig-source:
 	# orig tarball, turn directory into something nicer
 	git archive --format=tar --prefix=$(srcpkg)-$(gitver)/ HEAD | \
-		gzip -9 > $(srcpkg)_$(gitver).orig.tar.gz
-
-# Helper target to compare listing of installed afni against binary
-# upstream distribution.
-#
-# Ignore those missing which known to belong to externals, or built
-# under different names (e.g. R_io.so -> librio.so)
-test-missing:
-	@cat ../linux_openmp_64.filelist \
-    | grep -v \
-      -e README -e '\.a$$' -e 'meica\.libs' -e 'index.html.201' \
-      -e OLD_AFNI \
-      -e '^\./\(demo.*\.niml\.do\|qhull\|rbox\|qdelaunay\|[cd]jpeg\|nifti1_test\|nifti_\(tool\|stats\)\|gifti_tool\|mpeg_encode\)$$' \
-      -e '^\./\(plug_3dsvm.so\|3dsvm\)$$' \
-      -e '^\./.*\.\(pyc\|a\)$$' \
-      -e '^\./volpack\.h$$' -e 'AFNI\.....rc' \
-      -e '^\./R_io.so$$' \
-    | while read f; do \
-        bn=$$(basename $$f); \
-        n=$$(/usr/bin/find \
-            /usr/lib/afni /usr/share/afni /usr/include/afni /usr/include/nifti \
-            -name $$bn -type f | wc -l); \
-        [ $$n -eq 1 ] || echo "Found $$n for $$bn from $$f"; \
-    done
+		xz -9 > $(srcpkg)_$(gitver).orig.tar.xz
