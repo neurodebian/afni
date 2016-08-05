@@ -1,9 +1,13 @@
 --- /dev/null
 +++ b/src/CMakeLists.txt
-@@ -0,0 +1,257 @@
+@@ -0,0 +1,262 @@
 +##
 +## Check for and configure for external dependencies
 +##
++
++# generate version header
++configure_file(AFNI_version.h.in AFNI_version.h)
++INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
 +
 +FIND_PACKAGE(X11 REQUIRED)
 +FIND_PACKAGE(Motif REQUIRED)
@@ -74,9 +78,10 @@
 +# NIfTI
 +#
 +IF(AFNI_BUILD_LOCAL_NIFTICLIBS)
-+  INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/nifti/niftilib
-+                      ${CMAKE_SOURCE_DIR}/nifti/nifticdf
-+                      ${CMAKE_SOURCE_DIR}/nifti/znzlib)
++  INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/src/nifti/niftilib
++                      ${CMAKE_SOURCE_DIR}/src/nifti/nifticdf
++                      ${CMAKE_SOURCE_DIR}/src/nifti/znzlib
++                      ${CMAKE_SOURCE_DIR}/src/nifti/nifti2)
 +  MESSAGE(STATUS "Using local NIfTI libs sources")
 +ELSE(AFNI_BUILD_LOCAL_NIFTICLIBS)
 +  FIND_PATH(NIFTI_INCLUDE_DIR nifti1.h
@@ -122,7 +127,7 @@
 +#
 +IF(AFNI_BUILD_LOCAL_3DEDGE3)
 +  SET(THREEDEDGE_LIBS 3DEdge)
-+  INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/3DEdge/src)
++  INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/src/3DEdge/src)
 +  ADD_SUBDIRECTORY(3DEdge/src)
 +  MESSAGE(STATUS "Using local 3DEdge3 sources")
 +ELSE(AFNI_BUILD_LOCAL_3DEDGE3)
@@ -211,7 +216,7 @@
 +  MESSAGE(STATUS "Using local GIFTI sources")
 +  ADD_SUBDIRECTORY(gifti)
 +
-+  INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/gifti)
++  INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/src/gifti)
 +  SET(AFNI_HAVE_GIFTI TRUE)
 +# or if there is a system lib
 +ELSE(AFNI_BUILD_LOCAL_GIFTI)
@@ -496,9 +501,9 @@
 +##
 +
 +INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}
-+                    ${CMAKE_SOURCE_DIR}/niml
-+                    ${CMAKE_SOURCE_DIR}/rickr
-+                    ${CMAKE_SOURCE_DIR}/ptaylor)
++                    ${CMAKE_SOURCE_DIR}/src/niml
++                    ${CMAKE_SOURCE_DIR}/src/rickr
++                    ${CMAKE_SOURCE_DIR}/src/ptaylor)
 +
 +#
 +# Define sets of source files
@@ -1223,16 +1228,19 @@
 +ENDFOREACH(test)
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -2,14 +2,64 @@
- 
- PROJECT(AFNI)
+@@ -1,15 +1,67 @@
+ ## Rudimentary cmake setup for now just to run tests
  
 +cmake_minimum_required(VERSION 2.6)
 +if(COMMAND cmake_policy)
 +  cmake_policy(SET CMP0002 NEW)
 +  cmake_policy(SET CMP0003 NEW)
++  cmake_policy(SET CMP0048 OLD)
 +endif(COMMAND cmake_policy)
 +
++# Here upstream should specify the version!
+ PROJECT(AFNI)
+ 
  ##
  ## Define options to customize the build-process
  ##
@@ -1288,3 +1296,10 @@
  IF(AFNI_BUILD_TESTS)
    ENABLE_TESTING()
    ADD_SUBDIRECTORY(tests)
+--- /dev/null
++++ b/src/AFNI_version.h.in
+@@ -0,0 +1,4 @@
++#undef  AFNI_VERSION_LABEL
++#define AFNI_VERSION_LABEL "@AFNI_VERSION@"
++#undef  AFNI_VERSION_PLATFORM
++#define AFNI_VERSION_PLATFORM "@AFNI_VERSION_PLATFORM@"

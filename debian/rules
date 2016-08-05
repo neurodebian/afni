@@ -1,6 +1,7 @@
 #!/usr/bin/make -f
 
 srcpkg = $(shell LC_ALL=C dpkg-parsechangelog | grep '^Source:' | cut -d ' ' -f 2,2)
+debver = $(shell LC_ALL=C dpkg-parsechangelog | grep '^Version:' | cut -d ' ' -f 2,2 )
 
 # this figures out the last merge point from 'upstream' into the Debian branch and
 # then described this commit relative to the last release tag (AFNI_...)
@@ -55,7 +56,9 @@ export CTEST_OUTPUT_ON_FAILURE=1
 CTEST_FLAGS=$(shell chmod +x tests/xvfb-driver; tests/xvfb-driver glxinfo >/dev/null 2>&1 || echo "-LE GLX";)
 
 DEB_CMAKE_EXTRA_FLAGS = \
-    -DAFNI_SHOWOFF:STRING="=Debian-$(DEB_BUILD_GNU_TYPE)" \
+    -DAFNI_SHOWOFF:STRING="Debian-$(DEB_BUILD_GNU_TYPE)" \
+    -DAFNI_VERSION:STRING="Debian-$(debver)" \
+    -DAFNI_VERSION_PLATFORM:STRING="Debian-$(DEB_BUILD_GNU_TYPE)" \
     -DBUILD_WITH_INSTALL_RPATH:BOOL=ON \
     -DCMAKE_SKIP_RPATH:BOOL=OFF \
     -DCMAKE_INSTALL_RPATH:STRING="/usr/lib/afni/lib" \
