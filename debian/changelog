@@ -1,6 +1,7 @@
 afni (16.2.07~dfsg.1-1) UNRELEASED; urgency=medium
 
   * Major update after a long time.
+  * Bump debian/compat to 9.
 
  -- Michael Hanke <mih@debian.org>  Fri, 05 Aug 2016 12:49:14 +0200
 
