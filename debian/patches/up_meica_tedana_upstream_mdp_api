@@ -9,7 +9,7 @@ Last-Update: 2012-11-28
 
 --- a/src/pkundu/meica.libs/tedana.py
 +++ b/src/pkundu/meica.libs/tedana.py
-@@ -430,7 +430,7 @@ def tedica(dd,cost):
+@@ -430,7 +430,7 @@
  	#Do ICA
  	climit = float("%s" % options.conv)
  	#icanode = mdp.nodes.FastICANode(white_comp=nc, white_parm={'svd':True},approach='symm', g=cost, fine_g=options.finalcost, limit=climit, verbose=True)

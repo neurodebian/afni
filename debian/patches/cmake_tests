@@ -1,6 +1,6 @@
 --- a/src/CMakeLists.txt
 +++ b/src/CMakeLists.txt
-@@ -25,6 +25,9 @@ OPTION(AFNI_BUILD_CORELIBS_ONLY
+@@ -25,6 +25,9 @@
  OPTION(AFNI_BUILD_WITH_LESSTIF2
         "Build using lesstif2, otherwise with OpenMotif"
         ON)
@@ -10,7 +10,7 @@
  
  #
  # Install destinations
-@@ -286,6 +289,10 @@ IF(AFNI_HAVE_GIFTI)
+@@ -286,6 +289,10 @@
    ADD_DEFINITIONS(-DHAVE_GIFTI)
  ENDIF(AFNI_HAVE_GIFTI)
  
@@ -21,7 +21,7 @@
  # everything that is not necessary for corelibs
  IF(NOT AFNI_BUILD_CORELIBS_ONLY)
    ADD_SUBDIRECTORY(rickr)
-@@ -308,4 +315,6 @@ IF(NOT AFNI_BUILD_CORELIBS_ONLY)
+@@ -308,4 +315,6 @@
    ADD_SUBDIRECTORY(faces)
    ADD_SUBDIRECTORY(poems)
  
@@ -126,7 +126,7 @@
 +
 --- a/src/3DEdge/src/CMakeLists.txt
 +++ b/src/3DEdge/src/CMakeLists.txt
-@@ -11,3 +11,22 @@ INSTALL(TARGETS 3DEdge
+@@ -11,3 +11,22 @@
    RUNTIME DESTINATION ${AFNI_INSTALL_BIN_DIR} COMPONENT Runtime
    LIBRARY DESTINATION ${AFNI_INSTALL_LIB_DIR} COMPONENT Runtime
    ARCHIVE DESTINATION ${AFNI_INSTALL_LIB_DIR} COMPONENT Development)

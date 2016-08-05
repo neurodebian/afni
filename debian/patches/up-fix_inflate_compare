@@ -1,6 +1,6 @@
 --- a/src/SUMA/SUMA_inflate_compare.c
 +++ b/src/SUMA/SUMA_inflate_compare.c
-@@ -329,7 +329,7 @@ int main (int argc,char *argv[])
+@@ -329,7 +329,7 @@
      if (triangle->N_hits ==0) {
        distance[i] = -1;
        // fprintf(SUMA_STDERR, 

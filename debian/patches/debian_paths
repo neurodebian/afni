@@ -48,7 +48,7 @@ Last-Update: 2010-09-29
     if( epath == NULL ) epath = getenv("PATH") ;
 --- a/src/afni.c
 +++ b/src/afni.c
-@@ -5935,12 +5935,31 @@
+@@ -5962,12 +5962,31 @@
        /*-- 20 Dec 2001: Try to read a "global" session --*/
        /*-- 11 May 2002: Move read global session up here --*/
  
