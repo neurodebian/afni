@@ -1,8 +1,8 @@
-afni (0.20160624~dfsg.1-1) UNRELEASED; urgency=medium
+afni (16.2.07~dfsg.1-1) UNRELEASED; urgency=medium
 
   * Major update after a long time.
 
- -- Michael Hanke <mih@debian.org>  Sun, 26 Jun 2016 09:45:15 +0200
+ -- Michael Hanke <mih@debian.org>  Fri, 05 Aug 2016 12:49:14 +0200
 
 afni (0.20141224~dfsg.1-1) neurodebian; urgency=medium
 

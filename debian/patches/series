@@ -12,4 +12,3 @@ fixes
 debian_paths
 cmake_sharedlibs-noncmake
 cmake_sharedlibs-cmake
-cmake_tests

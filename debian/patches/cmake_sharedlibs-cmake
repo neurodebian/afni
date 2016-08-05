@@ -1,6 +1,6 @@
 --- /dev/null
 +++ b/src/CMakeLists.txt
-@@ -0,0 +1,311 @@
+@@ -0,0 +1,320 @@
 +PROJECT(AFNI)
 +
 +cmake_minimum_required(VERSION 2.6)
@@ -28,6 +28,9 @@
 +OPTION(AFNI_BUILD_WITH_LESSTIF2
 +       "Build using lesstif2, otherwise with OpenMotif"
 +       ON)
++OPTION(AFNI_BUILD_TESTS
++       "Enable testing and build available tests"
++       OFF)
 +
 +#
 +# Install destinations
@@ -289,6 +292,10 @@
 +  ADD_DEFINITIONS(-DHAVE_GIFTI)
 +ENDIF(AFNI_HAVE_GIFTI)
 +
++IF(AFNI_BUILD_TESTS)
++  ENABLE_TESTING()
++ENDIF(AFNI_BUILD_TESTS)
++
 +# everything that is not necessary for corelibs
 +IF(NOT AFNI_BUILD_CORELIBS_ONLY)
 +  ADD_SUBDIRECTORY(rickr)
@@ -310,6 +317,8 @@
 +
 +  ADD_SUBDIRECTORY(faces)
 +  ADD_SUBDIRECTORY(poems)
++
++  ADD_SUBDIRECTORY(tests)
 +
 +ENDIF(NOT AFNI_BUILD_CORELIBS_ONLY)
 --- /dev/null
@@ -1242,7 +1251,7 @@
 +  DESTINATION ${AFNI_INSTALL_SCRIPT_DIR} COMPONENT Runtime)
 --- /dev/null
 +++ b/src/3DEdge/src/CMakeLists.txt
-@@ -0,0 +1,13 @@
+@@ -0,0 +1,32 @@
 +PROJECT(3DEdge)
 +
 +SET(SOURCES
@@ -1256,3 +1265,118 @@
 +  RUNTIME DESTINATION ${AFNI_INSTALL_BIN_DIR} COMPONENT Runtime
 +  LIBRARY DESTINATION ${AFNI_INSTALL_LIB_DIR} COMPONENT Runtime
 +  ARCHIVE DESTINATION ${AFNI_INSTALL_LIB_DIR} COMPONENT Development)
++
++#
++# Tests
++#
++IF(AFNI_BUILD_TESTS)
++  ENABLE_TESTING()
++ENDIF(AFNI_BUILD_TESTS)
++
++SET(TESTS
++ # Requires data files -- still waiting on upstream to provide
++ # test-edges
++ test-edges-pnm test-hyster-pnm
++)
++
++FOREACH(test ${TESTS})
++	ADD_EXECUTABLE(${test} ${test}.c)
++    TARGET_LINK_LIBRARIES(${test} 3DEdge m)
++	ADD_TEST(${test} ${test})
++ENDFOREACH(test)
+--- /dev/null
++++ b/src/tests/CMakeLists.txt
+@@ -0,0 +1,28 @@
++PROJECT(TESTS)
++#
++# Tests -- building/running is aggregated within a separate directory
++#          so they do not interact/pollute main build space
++#
++# yoh: for some reason WORKING_DIRECTORY is not quite working for me
++#      says BAD_COMMAND for the binary to be executed.  That is why
++#      this solution with tests/ directory
++#
++#  ADD_TEST(NAME testdsetio
++#           WORKING_DIRECTORY temp-tests
++#	       COMMAND testdsetio )
++
++ADD_TEST(testdsetio testdsetio)
++
++ADD_EXECUTABLE(testdsetio ../SUMA/SUMA_TestDsetIO.c)
++TARGET_LINK_LIBRARIES(testdsetio SUMA 3DEdge segtools ${AFNI_LIBS})
++
++ADD_TEST(afni:start ../../tests/xvfb-driver -- afni -com "OPEN_WINDOW axialimage; SAVE_JPEG axialimage test1; QUIT")
++
++# TODO: figure out how to reference it correctly, or just copy to this
++# target tests/ build directory
++# Allow for 1 error and 2 failures reported -- due to the ones upon exit
++ADD_TEST(do.examples ../../tests/xvfb-driver -e 0 -f 0 -- @DO.examples -auto_test)
++SET_TESTS_PROPERTIES(do.examples PROPERTIES LABELS GLX)
++
++
++
+--- /dev/null
++++ b/src/tests/xvfb-driver
+@@ -0,0 +1,62 @@
++#!/bin/bash
++set -u
++
++# Parse cmdline
++
++CLOPTS=`getopt -o e:,f: --long errors:,failures: -n 'xvfb-driver' -- "$@"`
++if [ $? != 0 ] ; then
++    echo "Terminating..." >&2
++    exit 1
++fi
++eval set -- "$CLOPTS"
++
++# Defaults
++errors=0						# # of errors expected
++failures=0						# # of reported failures expected
++
++while true ; do
++    case "$1" in
++        -e|--errors) shift; errors=$1; shift;;
++        -f|--failures) shift; failures=$1; shift;;
++        --) shift ; break ;;
++        *) echo "Internal error! ($1)"; exit 1;;
++    esac
++done
++
++# Deduce paths
++
++srcdir=$(readlink -f `dirname $0`/..)
++builddir=$(readlink -f $PWD/..)
++tempdir=`mktemp -d`
++
++cleanup() { rm -r "$tempdir"; }
++trap 'cleanup' EXIT HUP
++
++echo "I: builddir=$builddir  srcdir=$srcdir tempdir=$tempdir"
++cd $tempdir
++ln -s $srcdir/faces pics
++
++AFNI_DETACH=NO AFNI_SYSTEM_AFNIRC=/dev/null \
++AFNI_PLUGINPATH=$builddir PATH=$builddir:$builddir/SUMA:$srcdir:$PATH \
++	xvfb-run --auto-servernum --server-num=20 -s "-screen 0 1024x768x24 -ac +extension GLX +render -noreset" \
++	"$@" 2>&1 | tee __outputlog.txt
++code=${PIPESTATUS[0]}
++
++if [ "$code" != "0" ]; then
++	echo "E: Testing $@ failed. Exit code was $code"
++	exit 1
++fi
++
++cmd="$@"
++errors_=`grep Error __*log.txt| grep -v -e "Out of Cheese Error" -e SUMA_PositionWindowRelative_current | wc -l`
++if [ $errors -lt $errors_ ]; then
++	echo "E: Testing '$cmd' failed due to presence of $errors_ Error messages when up to $errors were expected" >&2
++	exit 1
++fi
++
++failures_=`grep '^Failed to' __*log.txt| grep -v -e "window attributes" | wc -l`
++if [ $failures -lt $failures_ ]; then
++	echo "E: Testing '$cmd' failed due to presence of $failures_ 'Failed to ...' messages when up to $failures were expected" >&2
++	exit 1
++fi
++
