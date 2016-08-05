@@ -1,5 +1,5 @@
---- a/thd_dset_to_vectim.c
-+++ b/thd_dset_to_vectim.c
+--- a/src/thd_dset_to_vectim.c
++++ b/src/thd_dset_to_vectim.c
 @@ -78,9 +78,9 @@
     }
  

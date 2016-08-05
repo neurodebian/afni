@@ -3,8 +3,8 @@ Description: Configure Debian-specific installation paths
   and /usr/share, instead of having to dump everything into a single directory.
 Author: Michael Hanke <michael.hanke@gmail.com>
 Last-Update: 2010-09-29
---- a/afni_func.c
-+++ b/afni_func.c
+--- a/src/afni_func.c
++++ b/src/afni_func.c
 @@ -6617,7 +6617,7 @@
       XMapRaised( XtDisplay(tips_hw->wshell) , XtWindow(tips_hw->wshell) ) ;
       EXRETURN ;
@@ -23,8 +23,8 @@ Last-Update: 2010-09-29
     if( epath == NULL ) epath = getenv("AFNI_PLUGIN_PATH") ;
     if( epath == NULL ) epath = getenv("PATH") ;
     if( epath == NULL ){ num_poem=-1; EXRETURN ; }
---- a/afni_splash.c
-+++ b/afni_splash.c
+--- a/src/afni_splash.c
++++ b/src/afni_splash.c
 @@ -666,6 +666,8 @@
     /*----- get path to search -----*/
  
@@ -34,8 +34,8 @@ Last-Update: 2010-09-29
     if( epath == NULL ) epath = getenv("AFNI_PLUGIN_PATH") ;
     if( epath == NULL ) epath = getenv("PATH") ;
     if( epath == NULL ) epath = getenv("HOME") ;
---- a/thd_ttatlas_query.c
-+++ b/thd_ttatlas_query.c
+--- a/src/thd_ttatlas_query.c
++++ b/src/thd_ttatlas_query.c
 @@ -632,6 +632,9 @@
  {
     char *epath;
@@ -46,8 +46,8 @@ Last-Update: 2010-09-29
     if( epath == NULL ) epath = getenv("AFNI_PLUGINPATH") ;
     if( epath == NULL ) epath = getenv("AFNI_PLUGIN_PATH") ;
     if( epath == NULL ) epath = getenv("PATH") ;
---- a/afni.c
-+++ b/afni.c
+--- a/src/afni.c
++++ b/src/afni.c
 @@ -5935,12 +5935,31 @@
        /*-- 20 Dec 2001: Try to read a "global" session --*/
        /*-- 11 May 2002: Move read global session up here --*/
@@ -80,8 +80,8 @@ Last-Update: 2010-09-29
  
           if( gss != NULL ){                               /* got at least one */
              gss->parent = NULL ;                          /* parentize them */
---- a/SUMA/SUMA_CreateDO.c
-+++ b/SUMA/SUMA_CreateDO.c
+--- a/src/SUMA/SUMA_CreateDO.c
++++ b/src/SUMA/SUMA_CreateDO.c
 @@ -12534,6 +12534,9 @@
  SUMA_Boolean SUMA_LoadImageNIDOnel(NI_element *nel)
  {
@@ -104,8 +104,8 @@ Last-Update: 2010-09-29
        SUMA_free(fname); fname = NULL;
        SUMA_RETURN(NOPE);
     }
---- a/scripts_install/demo.fixed.niml.do
-+++ b/scripts_install/demo.fixed.niml.do
+--- a/src/scripts_install/demo.fixed.niml.do
++++ b/src/scripts_install/demo.fixed.niml.do
 @@ -59,7 +59,7 @@
  /T>
  <I
@@ -124,8 +124,8 @@ Last-Update: 2010-09-29
  />
  <S
  node = '0'
---- a/scripts_install/demo.mobile.niml.do
-+++ b/scripts_install/demo.mobile.niml.do
+--- a/src/scripts_install/demo.mobile.niml.do
++++ b/src/scripts_install/demo.mobile.niml.do
 @@ -17,7 +17,7 @@
  />
  <I
@@ -151,8 +151,8 @@ Last-Update: 2010-09-29
 -filename = "funstuff/face_daveperlman.jpg"
 +filename = "pics/face_daveperlman.jpg"
  />
---- a/thd_getpathprogs.c
-+++ b/thd_getpathprogs.c
+--- a/src/thd_getpathprogs.c
++++ b/src/thd_getpathprogs.c
 @@ -528,7 +528,9 @@
  THD_string_array * THD_get_all_afni_readmes(void )
  {

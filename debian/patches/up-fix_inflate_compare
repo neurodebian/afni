@@ -1,5 +1,5 @@
---- a/SUMA/SUMA_inflate_compare.c
-+++ b/SUMA/SUMA_inflate_compare.c
+--- a/src/SUMA/SUMA_inflate_compare.c
++++ b/src/SUMA/SUMA_inflate_compare.c
 @@ -329,7 +329,7 @@ int main (int argc,char *argv[])
      if (triangle->N_hits ==0) {
        distance[i] = -1;

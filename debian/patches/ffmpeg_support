@@ -7,8 +7,8 @@ Description: Replace mpeg_encode with ffmpeg
 Forwarded: Rick Reynolds <reynoldr@mail.nih.gov>
 Author: Michael Hanke <michael.hanke@gmail.com>
 Last-Update: 2009-10-29
---- a/imseq.c
-+++ b/imseq.c
+--- a/src/imseq.c
++++ b/src/imseq.c
 @@ -286,7 +286,7 @@
  
  #define GIFSICLE_SUFFIX    "-O2 -d %d -k 127 -l %%s > %%s"

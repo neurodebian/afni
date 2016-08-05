@@ -5,8 +5,8 @@ Description: Make AFNI compatible with an up-to-date version of F2C.
 Forwarded: Rick Reynolds <reynoldr@mail.nih.gov>
 Author: Michael Hanke <michael.hanke@gmail.com>
 Last-Update: 2009-12-07
---- a/eispack/f2c.h
-+++ b/eispack/f2c.h
+--- a/src/eispack/f2c.h
++++ b/src/eispack/f2c.h
 @@ -1,228 +1,16 @@
 -/* f2c.h  --  Standard Fortran to C header file */
 -
@@ -248,7 +248,7 @@ Last-Update: 2009-12-07
  #endif
 +#endif
 --- /dev/null
-+++ b/f2c.h
++++ b/src/f2c.h
 @@ -0,0 +1,16 @@
 +// The is a wrapper around the canonical f2c.h. It has been introduced since
 +// upstream AFNI carries a full and modified copy of F2C that also modifies

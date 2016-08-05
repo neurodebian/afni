@@ -18,8 +18,8 @@ Description: Alternative CMAKE-based buildsystem and shared lib configuration
 Forwarded: Rick Reynolds <reynoldr@mail.nih.gov>
 Author: Michael Hanke <michael.hanke@gmail.com>, Bernd Feige <bernd.feige@uniklinik-freiburg.de>
 Last-Update: 2010-09-21
---- a/SUMA/SUMA_gts.h
-+++ b/SUMA/SUMA_gts.h
+--- a/src/SUMA/SUMA_gts.h
++++ b/src/SUMA/SUMA_gts.h
 @@ -20,7 +20,6 @@
  #include "gts/config.h"
  #endif
@@ -28,8 +28,8 @@ Last-Update: 2010-09-21
  
  #include "SUMA_suma.h"
  
---- a/SUMA/SUMA_gts_insert.c
-+++ b/SUMA/SUMA_gts_insert.c
+--- a/src/SUMA/SUMA_gts_insert.c
++++ b/src/SUMA/SUMA_gts_insert.c
 @@ -7,6 +7,8 @@
  #include "../../SUMA_gts_insert.c" 
  gts's surface.c works just fine
@@ -39,8 +39,8 @@ Last-Update: 2010-09-21
  
  static int debug;
  
---- a/cs_qmed.c
-+++ b/cs_qmed.c
+--- a/src/cs_qmed.c
++++ b/src/cs_qmed.c
 @@ -18,6 +18,10 @@
     sum /= n ; return sum ;
  }
@@ -52,8 +52,8 @@ Last-Update: 2010-09-21
  /*------------------------------------------------------------------------
     Compute the median of an array of floats.  Will rearrange (partially
     sort) the array in the process.  The algorithm is based on Quicksort,
---- a/gifti_choice.c
-+++ b/gifti_choice.c
+--- a/src/gifti_choice.c
++++ b/src/gifti_choice.c
 @@ -10,15 +10,18 @@
  
  #ifdef HAVE_GIFTI
@@ -81,8 +81,8 @@ Last-Update: 2010-09-21
  #else
  
      /* if we do not love or even want GIFTI, include failure functions here */
---- a/mri_dicom_hdr.c
-+++ b/mri_dicom_hdr.c
+--- a/src/mri_dicom_hdr.c
++++ b/src/mri_dicom_hdr.c
 @@ -95,18 +95,18 @@
  
  /* Dimon needs to compile without libmri     18 May 2006 */
@@ -109,8 +109,8 @@ Last-Update: 2010-09-21
  
  /* cast int to pointer and vice-versa without warning messages */
  
---- a/mri_nstats.c
-+++ b/mri_nstats.c
+--- a/src/mri_nstats.c
++++ b/src/mri_nstats.c
 @@ -1,10 +1,7 @@
  #include "mrilib.h"
  
@@ -122,8 +122,8 @@ Last-Update: 2010-09-21
  #endif
  
  /*--------------------------------------------------------------------------*/
---- a/rickr/Dimon.c
-+++ b/rickr/Dimon.c
+--- a/src/rickr/Dimon.c
++++ b/src/rickr/Dimon.c
 @@ -202,6 +202,7 @@
  #define MAIN
  #define IFM_PROG_NAME   "Dimon"
@@ -141,8 +141,8 @@ Last-Update: 2010-09-21
  
  extern char  DI_MRL_orients[8];
  extern float DI_MRL_tr;
---- a/rickr/dimon_afni.c
-+++ b/rickr/dimon_afni.c
+--- a/src/rickr/dimon_afni.c
++++ b/src/rickr/dimon_afni.c
 @@ -8,8 +8,9 @@
  #include "mri_image.h"
  #include "mri_dicom_hdr.h"
@@ -154,8 +154,8 @@ Last-Update: 2010-09-21
  
  /*----------------------------------------------------------------------
   * dimon_afni.c
---- a/suma_gifti.c
-+++ b/suma_gifti.c
+--- a/src/suma_gifti.c
++++ b/src/suma_gifti.c
 @@ -262,9 +262,14 @@
     }
     
@@ -188,8 +188,8 @@ Last-Update: 2010-09-21
     RETURN(gim);
  }
   
---- a/R_scripts/AFNIio.R
-+++ b/R_scripts/AFNIio.R
+--- a/src/R_scripts/AFNIio.R
++++ b/src/R_scripts/AFNIio.R
 @@ -9,7 +9,7 @@
  # Functions for library loading
  #------------------------------------------------------------------

@@ -1,5 +1,5 @@
---- a/ptaylor/3dNetCorr.c
-+++ b/ptaylor/3dNetCorr.c
+--- a/src/ptaylor/3dNetCorr.c
++++ b/src/ptaylor/3dNetCorr.c
 @@ -52,10 +52,6 @@
  #include <omp.h>
  #endif

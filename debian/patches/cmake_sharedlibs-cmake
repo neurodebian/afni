@@ -1,5 +1,5 @@
 --- /dev/null
-+++ b/CMakeLists.txt
++++ b/src/CMakeLists.txt
 @@ -0,0 +1,311 @@
 +PROJECT(AFNI)
 +
@@ -313,7 +313,7 @@
 +
 +ENDIF(NOT AFNI_BUILD_CORELIBS_ONLY)
 --- /dev/null
-+++ b/CMakeLists_apps.txt
++++ b/src/CMakeLists_apps.txt
 @@ -0,0 +1,227 @@
 +##
 +## This file is to be included in the toplevel CMakeLists.txt
@@ -543,7 +543,7 @@
 +INSTALL(PROGRAMS ${SCRIPTS}
 +  DESTINATION ${AFNI_INSTALL_SCRIPT_DIR} COMPONENT Runtime)
 --- /dev/null
-+++ b/CMakeLists_libs.txt
++++ b/src/CMakeLists_libs.txt
 @@ -0,0 +1,220 @@
 +##
 +## This file is to be included in the toplevel CMakeLists.txt
@@ -766,7 +766,7 @@
 +  PERMISSIONS ${FILE_PERMISSIONS}
 +  COMPONENT Development)
 --- /dev/null
-+++ b/CMakeLists_plugins.txt
++++ b/src/CMakeLists_plugins.txt
 @@ -0,0 +1,69 @@
 +##
 +## This file is to be included in the toplevel CMakeLists.txt
@@ -838,7 +838,7 @@
 +  DESTINATION ${AFNI_INSTALL_PLUGIN_DIR} COMPONENT Runtime
 +  PERMISSIONS ${FILE_PERMISSIONS})
 --- /dev/null
-+++ b/R_scripts/CMakeLists.txt
++++ b/src/R_scripts/CMakeLists.txt
 @@ -0,0 +1,16 @@
 +PROJECT(R_SCRIPTS)
 +
@@ -857,7 +857,7 @@
 +INSTALL(PROGRAMS ${SCRIPTS}
 +  DESTINATION ${AFNI_INSTALL_SCRIPT_DIR} COMPONENT Runtime)
 --- /dev/null
-+++ b/SUMA/CMakeLists.txt
++++ b/src/SUMA/CMakeLists.txt
 @@ -0,0 +1,178 @@
 +PROJECT(SUMA)
 +
@@ -1038,7 +1038,7 @@
 +  LIBRARY DESTINATION ${AFNI_INSTALL_LIB_DIR} COMPONENT Runtime
 +  ARCHIVE DESTINATION ${AFNI_INSTALL_LIB_DIR} COMPONENT Development)
 --- /dev/null
-+++ b/avovk/CMakeLists.txt
++++ b/src/avovk/CMakeLists.txt
 @@ -0,0 +1,26 @@
 +PROJECT(segtools)
 +
@@ -1067,7 +1067,7 @@
 +  MESSAGE("GNU Scientific Library not found - not compiling segtools!")
 +ENDIF(GSL_LIBRARY)
 --- /dev/null
-+++ b/coxplot/CMakeLists.txt
++++ b/src/coxplot/CMakeLists.txt
 @@ -0,0 +1,25 @@
 +PROJECT(coxplot)
 +
@@ -1095,7 +1095,7 @@
 +  LIBRARY DESTINATION ${AFNI_INSTALL_LIB_DIR} COMPONENT Runtime
 +  ARCHIVE DESTINATION ${AFNI_INSTALL_LIB_DIR} COMPONENT Development)
 --- /dev/null
-+++ b/faces/CMakeLists.txt
++++ b/src/faces/CMakeLists.txt
 @@ -0,0 +1,8 @@
 +PROJECT(FACES)
 +
@@ -1106,7 +1106,7 @@
 +INSTALL(FILES ${ALLFACES} ${ALLSPLASH}
 +  DESTINATION ${AFNI_INSTALL_PICS_DIR} COMPONENT Runtime)
 --- /dev/null
-+++ b/poems/CMakeLists.txt
++++ b/src/poems/CMakeLists.txt
 @@ -0,0 +1,6 @@
 +PROJECT(POEMS)
 +
@@ -1115,7 +1115,7 @@
 +INSTALL(FILES ${ALLPOEMS}
 +  DESTINATION ${AFNI_INSTALL_POEMS_DIR} COMPONENT Runtime)
 --- /dev/null
-+++ b/python_scripts/CMakeLists.txt
++++ b/src/python_scripts/CMakeLists.txt
 @@ -0,0 +1,27 @@
 +PROJECT(PYTHON_SCRIPTS)
 +
@@ -1145,7 +1145,7 @@
 +INSTALL(PROGRAMS ${SCRIPTS}
 +  DESTINATION ${AFNI_INSTALL_SCRIPT_DIR} COMPONENT Runtime)
 --- /dev/null
-+++ b/rickr/CMakeLists.txt
++++ b/src/rickr/CMakeLists.txt
 @@ -0,0 +1,32 @@
 +PROJECT(rickr)
 +
@@ -1180,7 +1180,7 @@
 +  LIBRARY DESTINATION ${AFNI_INSTALL_LIB_DIR} COMPONENT Runtime
 +  ARCHIVE DESTINATION ${AFNI_INSTALL_LIB_DIR} COMPONENT Development)
 --- /dev/null
-+++ b/html/CMakeLists.txt
++++ b/src/html/CMakeLists.txt
 @@ -0,0 +1,7 @@
 +PROJECT(HTML)
 +
@@ -1190,7 +1190,7 @@
 +INSTALL(FILES ${ALLHTML} ${ALLJPEG}
 +  DESTINATION ${AFNI_INSTALL_HTML_DIR} COMPONENT Runtime)
 --- /dev/null
-+++ b/ptaylor/CMakeLists.txt
++++ b/src/ptaylor/CMakeLists.txt
 @@ -0,0 +1,24 @@
 +PROJECT(tracktools)
 +
@@ -1217,7 +1217,7 @@
 +    MESSAGE(STATUS "GSL and/or GTS libraries not found -- not compiling tracktools")
 +ENDIF (GSL_LIBRARY AND GTS_FOUND)
 --- /dev/null
-+++ b/pkundu/CMakeLists.txt
++++ b/src/pkundu/CMakeLists.txt
 @@ -0,0 +1,8 @@
 +PROJECT(PKUNDU)
 +
@@ -1228,7 +1228,7 @@
 +INSTALL(PROGRAMS ${SCRIPTS}
 +  DESTINATION ${AFNI_INSTALL_SCRIPT_DIR} COMPONENT Runtime)
 --- /dev/null
-+++ b/pkundu/meica.libs/CMakeLists.txt
++++ b/src/pkundu/meica.libs/CMakeLists.txt
 @@ -0,0 +1,10 @@
 +PROJECT(MEICA_LIBS)
 +
@@ -1241,7 +1241,7 @@
 +INSTALL(PROGRAMS ${SCRIPTS}
 +  DESTINATION ${AFNI_INSTALL_SCRIPT_DIR} COMPONENT Runtime)
 --- /dev/null
-+++ b/3DEdge/src/CMakeLists.txt
++++ b/src/3DEdge/src/CMakeLists.txt
 @@ -0,0 +1,13 @@
 +PROJECT(3DEdge)
 +

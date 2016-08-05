@@ -1,5 +1,5 @@
---- a/thd_xwebber.c
-+++ b/thd_xwebber.c
+--- a/src/thd_xwebber.c
++++ b/src/thd_xwebber.c
 @@ -190,6 +190,9 @@ ENTRY("htmlize") ;
     RETURN(mmm) ;
  }

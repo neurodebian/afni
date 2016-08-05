@@ -9,8 +9,8 @@ path handling
 Origin: NeuroDebian
 Last-Update: 2012-11-29
 
---- a/pkundu/meica.py
-+++ b/pkundu/meica.py
+--- a/src/pkundu/meica.py
++++ b/src/pkundu/meica.py
 @@ -388,7 +388,7 @@ sl.append("3dcalc -overwrite -a s0v.nii
  if options.anat!='':
  	#Copy in anatomical and make sure its in +orig space

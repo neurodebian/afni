@@ -1,5 +1,5 @@
---- a/3ddata.h
-+++ b/3ddata.h
+--- a/src/3ddata.h
++++ b/src/3ddata.h
 @@ -3747,7 +3747,7 @@
  
      Won't do anything if the dataset is locked into memory

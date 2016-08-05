@@ -7,8 +7,8 @@ Subject: Use coarse_limit in FastICANode parameters, as patch was adopted upstre
 
 Last-Update: 2012-11-28
 
---- a/pkundu/meica.libs/tedana.py
-+++ b/pkundu/meica.libs/tedana.py
+--- a/src/pkundu/meica.libs/tedana.py
++++ b/src/pkundu/meica.libs/tedana.py
 @@ -430,7 +430,7 @@ def tedica(dd,cost):
  	#Do ICA
  	climit = float("%s" % options.conv)
