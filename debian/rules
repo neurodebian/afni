@@ -158,8 +158,8 @@ dfsg-source-tree:
 	rm -rf src/jpeg-6b
 	#libnifti: nah, we need this for now, because of the NIFTI2 "situation"
 	#rm -rf src/nifti
-	#gifti
-	rm -rf src/gifti
+	#gifti; AFNI now carries a fresher version that was never released
+	#rm -rf src/gifti
 	#libvolpack
 	rm -rf src/{volpack,volpack.h}
 	# libqhull
