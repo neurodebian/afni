@@ -1,0 +1,38 @@
+Duplicate files
+===============
+  eispack.h eispack/eispack.h
+  coxplot.h coxplot/coxplot.h
+
+Permissions
+===========
+
+
+Additional optional dependencies
+================================
+
+Testing
+=======
+* 3DEdge comes with some basic tests, would be nice to build/execute
+
+  require data files to be provided
+  see http://afni.nimh.nih.gov/afni/community/board/read.php?1,142220,142220#msg-142220
+
+* Test using crafted and stock AFNI scripts
+
+ - if we get AFNI_data6, we could excercise @DriveAfni simply by
+   overloading prompt_user
+
+    echo -e "#\!/bin/sh\nsleep 1\necho 1\n" >| prompt_user; chmod a+x prompt_user
+    PATH=$PWD:$PATH @DriveAfni
+
+   the only catch that it also shows a resultant image which needs to
+   be closed somehow...
+
+Missing installations
+=====================
+
+scan_niml_vals.csh , CA_EZ_atlas.csh - missing from source distribution
+
+Incorrect paths
+===============
+

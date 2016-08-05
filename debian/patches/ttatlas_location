@@ -1,0 +1,19 @@
+Description: thd_ttatlas_query.c allows custom atlas location not supported by @FindAfniDsetPath
+  This patch simply searches $AFNI_TTATLAS_DATASET in addition to existing list
+  of locations.
+Author: Michael Hanke <michael.hanke@gmail.com>
+Last-Update: 2011-01-17
+--- a/scripts_install/@FindAfniDsetPath
++++ b/scripts_install/@FindAfniDsetPath
+@@ -43,6 +43,11 @@
+     set dataset_path = (${dataset_path} `echo $AFNI_PLUGINPATH | tr ':' ' '`)
+ endif
+ 
++if ( $?AFNI_TTATLAS_DATASET ) then
++    set dataset_path = (${dataset_path} `echo $AFNI_TTATLAS_DATASET | tr ':' ' '`)
++endif
++
++
+ foreach dir (${dataset_path})
+     if ( `@CheckForAfniDset ${dir}/${ref_in}` == 2 ) then
+ 	echo $dir

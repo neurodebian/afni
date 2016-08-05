@@ -1,0 +1,21 @@
+afni for Debian
+---------------
+
+In comparision to the binaries distributed by the AFNI developers the Debian
+version of AFNI is lacking some features, due to the restrictive licensing
+of some of its dependencies. This concerns the following tools:
+
+* 3dsvm and the associated plugin -- the required litesvm source code is
+    covered by a non-free (non-commercial) license and has been removed from
+    the Debian package.
+
+
+Matlab support
+--------------
+
+AFNI's Matlab library is available at /usr/share/matlab/site/m/afni. To be able
+to use it with Matlab one needs to add this path to Matlab's search path.
+
+Unfortunately, the current code is not compatible with Octave.
+
+ -- Yaroslav Halchenko <debian@onerussian.com>, Fri, 30 Nov 2012 17:02:57 -0500

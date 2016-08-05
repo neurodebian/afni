@@ -1,0 +1,9 @@
+debian/tmp/share/afni/pics/* usr/share/afni/pics/
+debian/tmp/share/afni/poems/* usr/share/afni/poems/
+debian/tmp/share/afni/atlases/* usr/share/afni/atlases/
+debian/tmp/share/afni/html/* usr/share/afni/html/
+debian/tmp/share/afni/scripts/* usr/lib/afni/bin/
+debian/tmp/matlab usr/share/afni/
+debian/lintian/afni-common usr/share/lintian/overrides
+debian/etc/* etc/afni/
+debian/afni_wrapper usr/lib/afni/bin/

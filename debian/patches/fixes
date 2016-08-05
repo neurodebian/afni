@@ -1,0 +1,17 @@
+Description: Adjust GLUT header location to a more standard setting.
+ The previous configuration can be achieved by setting an appropriate library
+ search path without breaking all other setups.
+Forwarded: Rick Reynolds <reynoldr@mail.nih.gov>
+Author: Michael Hanke <michael.hanke@gmail.com>
+Last-Update: 2010-09-20
+--- a/SUMA/SUMA_suma.h
++++ b/SUMA/SUMA_suma.h
+@@ -129,7 +129,7 @@
+    #include <GL/gl.h>
+    #include <GL/glu.h>
+    #include <GL/glx.h>
+-   #include <GLUT/GL/glut.h>
++   #include <GL/glut.h>
+    
+ 
+    

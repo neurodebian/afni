@@ -1,0 +1,469 @@
+afni (0.20160624~dfsg.1-1) UNRELEASED; urgency=medium
+
+  * Major update after a long time.
+
+ -- Michael Hanke <mih@debian.org>  Sun, 26 Jun 2016 09:45:15 +0200
+
+afni (0.20141224~dfsg.1-1) neurodebian; urgency=medium
+
+  * Fresh upstream code
+  * debian/patches -- 1 updated
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 25 Dec 2014 11:33:53 -0500
+
+afni (0.20141212~dfsg.1-1) neurodebian; urgency=medium
+
+  * New upstream code
+  * debian/patches
+    - refreshed all
+    - cmake_tests: allow for "Out of Cheese Error"
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 15 Dec 2014 20:14:24 -0500
+
+afni (0.20141118~dfsg.1-1) neurodebian; urgency=medium
+
+  * New upstream code
+  * debian/patches
+    - cmake_sharedlibs  was split into two (-noncmake and -cmake) with
+      cmake files being only in -cmake one while -noncmake containing sattelite
+      patches
+    - cmake_sharedlibs-cmake  updated for introduced few new files
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Fri, 21 Nov 2014 16:26:20 -0500
+
+afni (0.20141107~dfsg.1-1) neurodebian; urgency=medium
+
+  * New upstream code
+  * debian/patches
+    - updated for changes in upstream code (new sources, one patch was adopted)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 13 Nov 2014 11:02:42 -0500
+
+afni (0.20140910~dfsg.1-1) neurodebian; urgency=medium
+
+  * debian/patches
+    - accounted for added roiing.* files
+    - accounted for renames/new python mvm scripts
+    - accounted in AFNIio.R for the rename R_io.so -> librio.so in our build
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sun, 12 Oct 2014 17:00:23 -0400
+
+afni (0.20140908~dfsg.1-1) neurodebian; urgency=medium
+
+  * New upstream code
+  * debian/patches
+    - removed up_meica_fixes from the series (conflicts, and anyways previous
+      version was not working)
+    - debian_paths -- updated for now a function get_env_atlas_path allowing
+      for paths to AFNI atlases being overriden via AFNI_ATLAS_PATH, and
+      otherwise using default path on Debian systems (/usr/share/afni/atlases)
+    - cmake_sharedlibs, ffmpeg_support, up_3dNetCorrFix,
+      up_condition_dset_unload -- refreshed, with some conflicts resolved
+    - cmake_sharedlibs
+      - updated for changes in upstream build infrastructure
+      - removed meicaX.py
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 08 Sep 2014 11:59:31 -0400
+
+afni (0.20140612~dfsg.1-1) neurodebian; urgency=low
+
+  * New upstream code.
+    - New programs: afni_open, 3dConformist, 3dTORTOISEtoHere, 3dEigsToDT,
+      3dDTtoNoisyDWI
+    - 3dProbTrackID is officially deprecated (but still shipped)
+    - New scripts: @afni.run.me, 3dRprogDemo
+    - New Python scripts gen_ss_review_table.py
+    - 9 new faces and 52 new quotes
+    - run afni_history for a more detailed account of upstream changes
+  * Updated CMake build system.
+  * debian/patches
+    - up_char_cast was successfully upstreamed
+    - up_meica_fixes was a problematic patch to update. Might not be 100%.
+
+ -- Alex Waite <Alexqw85@gmail.com>  Thu, 05 Jun 2014 13:48:03 +0200
+
+afni (0.20140227~dfsg.1-1) neurodebian; urgency=low
+
+  * New upstream code. Updated CMake build system.
+
+ -- Alex Waite <Alexqw85@gmail.com>  Fri, 28 Feb 2014 13:20:33 +0200
+
+afni (0.20131204~dfsg.1-2) neurodebian; urgency=low
+
+  * Prune any @update.afni.* script (e.g. @update.afni.binaries) from
+    installation so it doesn't interfer with packaged installation
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 05 Dec 2013 16:48:02 -0500
+
+afni (0.20131204~dfsg.1-1) neurodebian; urgency=low
+
+  [ Andreas Tille ]
+  * Perspective team upload (for now no upload to Debian proper)
+  * debian/upstream: Add citation information from Debian Science task
+    neuroscience-cognitive
+
+  [ Yaroslav Halchenko ]
+  * Fresh upstream snapshot
+  * debian/patches
+    - updated for new locations
+    - up_char_cast (forwared upstream) to avoid FTBFS with
+      -Werror=format-security
+    - cmake_tests - ignore freshly introduced errors/failures to determine
+      window position (irrelevant for this stage of testing)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 05 Dec 2013 16:48:01 -0500
+
+afni (0.20130912~dfsg.1-3) neurodebian; urgency=low
+
+  * debian/patches
+    - cmake_sharedlibs - enable gifti support (-DGIFTI) and link libmri
+      against it (Closes Nick#D902704B-139A-450D-91DC-A7AFBF78FC5A@gmail.com)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 19 Nov 2013 20:58:28 -0500
+
+afni (0.20130912~dfsg.1-2) neurodebian; urgency=low
+
+  * debian/rules
+    - disable -D_FORTIFY_SOURCE=2 until upstream resolves code with undefined
+      sprintf behavior
+      (http://afni.nimh.nih.gov/afni/community/board/read.php?1,142574,142574#msg-142574)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 19 Sep 2013 22:42:55 -0400
+
+afni (0.20130912~dfsg.1-1) neurodebian; urgency=low
+
+  * Fresh upstream snapshot
+  * debian/patches
+    - deb_path_to_doexamples - removed (upstream now)
+    - cmake_sharedlibs - add model_conv_cosine4
+    - debian_paths - refreshed
+    - cmake_tests - SUMA should not spit our errors now, thus
+      make do.examples test more stringent
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Fri, 13 Sep 2013 10:04:55 -0400
+
+afni (0.20130903~dfsg.1-1) neurodebian; urgency=low
+
+  * Fresh upstream snapshot
+  * debian/patches
+    - cmake_tests
+  	  - switch to have 'up to' specified # of "Error" and "Failed to "
+        messages.  Should "fix" build on i686 13.04 build where no SUMA error
+        gets reported upon exit
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Fri, 06 Sep 2013 08:29:02 -0400
+
+afni (0.20130830~dfsg.1-3) neurodebian; urgency=low
+
+  * debian/control
+    - afni-atlases should be in Recommends not Depends
+  * debian/patches
+    - cmake_sharedlibs
+      - MOTIF library (libXm) must be linked before other X libraries (Xt
+        in particular).  Therefore placing it first among
+        TARGET_LINK_LIBRARIES and disabling --as-needed for this linkage while
+        (re)enabling it right after
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 04 Sep 2013 09:16:08 -0400
+
+afni (0.20130830~dfsg.1-2) UNRELEASED; urgency=low
+
+  * debian/patches:
+    - cmake_sharedlibs
+      - add SUMA_gts_insert.c to libSUMAGTS and link SurfMesh against it
+      - absorb librickr into libmri -- upstream dropped separate librickr
+        as of 0.20080129~dfsg.1.
+      - absorb libafni_warp into libmri -- upstream does "the same" and
+        if split -- there is a circular dependency between afni_warp and
+        mri forbidding robust building/linking
+      - link lib3DEdge against m, and segtools and tracktools against mri
+      - make SEGTOOLS_LIBS list only segtools
+      - enforce --no-as-needed ld flag while building segtools due to libgsl
+        not linking against libgslcblas thus failing to build with --as-needed
+        which is defauilt on Ubuntus
+    - cmake_tests
+      - disable 3dedge test requiring data (waiting on upstream)
+      - xvfb-driver -- allow to specify # of errors expected, so we
+        could already test @DO.examples which should have 1 error
+        on exit
+  * debian/rules:
+    - remove explicit -Wl,--allow-shlib-undefined which was introduced
+      awaiting for a fix to #624156 long RIP.
+    - add -Wl,--no-undefined for exe and shared linker flags
+    - do not ignore tests failures
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 03 Sep 2013 13:12:23 -0400
+
+afni (0.20130830~dfsg.1-1) neurodebian; urgency=low
+
+  * Fresh upstream snapshot: some enhancements and even more holidays to
+    celebrate
+  * debian/patches:
+    - cmake_sharedlibs:
+      - include retroicor.c functionality into libmri.so to be shared by
+        tools and plugins -- resolves "Failed to open plugin
+        /usr/lib/afni/plugins/plug_retroicor.so" upon AFNI startup.
+    - cmake_tests:
+      - basic test to verify that AFNI starts without reporting any failure
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Fri, 30 Aug 2013 18:04:14 -0400
+
+afni (0.20130827~dfsg.1-1) UNRELEASED; urgency=low
+
+  * New upstream snapshot: bulk of fixes and enhancements
+  * debian/control
+    - add tcsh, libjpeg-progs to build-depends -- needed for testing
+      @DO.examples
+  * debian/patches/cmake_tests
+    - tests/xvfb-driver -- link faces as pics under a temporary test directory
+      so that @DO.examples has it available when afni is not yet installed
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 28 Aug 2013 11:24:14 -0400
+
+afni (0.20130821~dfsg.1-1) neurodebian; urgency=low
+
+  * Fresh upstream snapshot
+    - bulk of changes for graph datasets support
+    - @DO.example could now be used in automated mode without interaction
+      with users (-auto_test)
+  * debian/control
+    - recommend afni-atlases
+  * debian/rules
+    - explicitly include hardening.make and adjust LDFLAGS and CFLAGS
+      instead of relying on "magic" of DEB_BUILD_HARDENING which seems to
+      not play with ccache nicely all the times.  Also exclude -fPIE since
+      conflicts with -fPIC when gcc < 4.8
+  * debian/patches
+    - cmake_sharedlibs:
+      - do not bother with -D*_STAND_ALONE -- not used by upstream since a while
+      - fix building of inspec, quickspec, CreateIcosahedron, MapIcosahedron
+      - drop binaries not provided by upstream: SUMA_FreeSurfer,
+        SUMA_SureFit, SUMA_Ply_Read, SUMA_Map_SurfacetoSurface, ShowCmap --
+        their functionality is within the library and exposed by other binaries
+      - add zcross.c functionality to lib3dedge
+      - minor typos
+    - cmake_tests:
+      - initiated collecting rudimentary tests
+    - deb_path_to_doexamples:
+      - find .do examples on Debian installations among docs
+      - exit with code 1 if those could not be found
+    - debian_paths:
+      - search for images in SUMA_LoadImageNIDOnel under reasonable for images
+        locations instead of PATH.  Fixed 'funstuff' paths in demo*.niml.do files.
+      - specify path to READMEs to be under /usr/share/doc/afni-common
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 22 Aug 2013 22:05:21 -0400
+
+afni (0.20130815~dfsg.1-1) neurodebian; urgency=low
+
+  * Fresh upstream snapshot
+  * debian/rules -- AFNI_BUILD_WITH_LESSTIF2:BOOL=OFF to actually build
+    against Open Motif as we thought we were doing since 2010 ;)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sat, 17 Aug 2013 09:39:38 -0400
+
+afni (0.20130813~dfsg.1-1) UNRELEASED; urgency=low
+
+  * New upstream code, mostly compilation fixes
+
+ -- Alex Waite <Alexqw85@gmail.com>  Wed, 14 Aug 2013 10:46:43 +0200
+
+afni (0.20130809~dfsg.1-1) UNRELEASED; urgency=low
+
+  * New upstream code; updated CMake. Adds 3dUnifize, 3dNwarpCat,
+    3dLocalHistog, 3dNwarpAdjust, 3dNwarpFuncs, 3dTproject, @compute_gcor,
+    3dLME, @move.to.series.dirs, @toMNI_Awarp, @toMNI_Qwarpar, @simulate_motion
+    HalloSuma, afni_system_check.py, auto_warp.py, 3dROIMaker, 3dMatch,
+    3dNetCorr, meicaX.py, optcom.py, optcom_surf.py, t2smap.py, tedanaX.py
+  * Patches accepted upstream: up_secure_snprintf
+
+ -- Alex Waite <Alexqw85@gmail.com>  Mon, 12 Aug 2013 18:23:22 +0200
+
+afni (0.20121123~dfsg.1-2) neurodebian; urgency=low
+
+  * Add afni-dbg package to provide debug symbols
+  * debian/patches:
+    - up_3rd_no_RefreshHTML_AtEvent -- to not even mention
+      RefreshHTML from the patched XmHTML
+    - up_condition_dset_unload -- avoid dereferencing NULL
+    - cmake_sharedlibs:
+      - link against lib3DEdge after libSUMA, since otherwise
+        binaries do not get linked against it on Ubuntu systems
+      - no need to manually extend list of libraries for
+        SUMA_Map_SurfacetoSurface since it is added to the
+        PROGRAMS and they are all linked against SUMA_LIBS
+  * debian/rules:
+    - since we --allow-shlib-undefined (because of the plugins)
+      added a primitive check for few SUMA commands that they link
+      against SUMA and 3DEdge libraries
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 04 Jun 2013 11:08:09 -0400
+
+afni (0.20121123~dfsg.1-1) neurodebian; urgency=low
+
+  [ Michael Hanke, Yaroslav Halchenko ]
+  * New upstream code. Updated CMake build system:
+    - 3dedge library is now GPL-ed, thus not stripped
+    - New scripts: meica.py (requires nibabel and MDP, now Recommended)
+  * Built with OpenMP support (libgomp1 dependency added)
+  * New patches: up_pragma_var_definition, up_glut_init,
+    up_meica_tedana_upstream_mdp_api, up_meica_fixes, up_secure_sprintf
+  * Enabled hardening (where applicable)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 28 Nov 2012 14:59:31 -0500
+
+afni (0.20120420~dfsg.1-1) UNRELEASED; urgency=low
+
+  [ Alex Waite]
+  * New upstream code; updated CMake. Adds 3dCountSpikes, 3dNwarpCalc,
+    @Quiet_Talkers and @radial_correlate
+  * Upstream: New R scripts: 1dRplot.R and 3dICC_REML.R
+  * Upstream: New Python scripts: gen_group_command.py,
+    gen_ss_review_scripts.py, make_pq_script.py, slow_surf_clustsim.py,
+    uber_align_test.py, uber_proc.py, uber_skel.py, uber_subject.py
+    and uber_ttest.py
+  * Upstream: Major improvements to 3dSurfMask for mask creation and
+    voxel distance computations.  See examples under 3dSurfMask -help.
+  * Upstream: You can have multiple instances of programs talk to eachother.
+  * Upstream: Generic Atlas Support and new atlases.  Cytoarchitectonic
+    atlases from Zilles, Eickhoff updated to 1.8.  Three new probabilistic
+    atlases from the Desai group.
+  * Upstream: New AFNI tips system has better formatting and includes images.
+  * Upstream: afni_proc.py now processes surface data.
+  * Fixed missing qhull dependency for 3dSkullStrip
+
+  [ Michael Hanke ]
+  * Added build-dependency on xmhtml1-dev for "new" tooltip system.
+
+  [ Alex Waite ]
+  * New upstream code. Updated CMake build system.
+  * Upstream: New I/O library for R uses AFNI's c library.
+  * Upstream: Web-based access atlases available. Able to query web atlases
+    from whereami and open webpages.
+  * Upstream new programs: dicom_hinfo, apsearch, quick.alpha.vals.py, 3dLSS,
+    @AfniEnv, @Atlasize, 1dBport, SurfExtrema, 3dinfill, 3dNormalityTest,
+    3dTnorm
+  * Upstream: Many bug fixes and overall code cleanup.
+  * Now build and ship libSUMAGTS.so
+
+ -- Alex Waite <alexqw85@gmail.com>  Wed, 25 Apr 2012 18:58:59 +0200
+
+afni (0.20110610~dfsg.1-1) UNRELEASED; urgency=low
+
+  [ Alex Waite ]
+  * New upstream code. Updated CMake build system.
+
+  [ Michael Hanke ]
+  * Upstream introduced circular dependencies between the internal libraries,
+    hence linking is now done with --allow-shlib-undefined.
+  * Added get-orig-source target to debian/rules.
+
+ -- Michael Hanke <mih@debian.org>  Wed, 22 Jun 2011 15:21:32 -0400
+
+afni (0.20101222~dfsg.1-3) UNRELEASED; urgency=low
+
+  * Added patch to let @FindAfniDsetPath also search AFNI_TTATLAS_DATASET -- a
+    configuration setting that is supported by thd_ttatlas_query.c and used by
+    the Debian setup. Thanks to Alex Waite for the bug report.
+
+ -- Michael Hanke <mih@debian.org>  Mon, 17 Jan 2011 12:46:45 -0500
+
+afni (0.20101222~dfsg.1-2) UNRELEASED; urgency=low
+
+  * Install @RetinoProc which has been left-out accidentally.
+  * Bugfix of @RetinoProc to work with Debian's 3dSkullStrip.
+  * Install AFNI's Matlab library.
+  * Added 'r-base' as a suggested dependency.
+  * Added 'python' as a recommended dependency.
+
+ -- Michael Hanke <mih@debian.org>  Wed, 05 Jan 2011 13:55:16 -0500
+
+afni (0.20101222~dfsg.1-1) UNRELEASED; urgency=low
+
+  * New upstream code. Adds tools: niccc, 3dkmeans, 3dRankizer, 3dXYZcat. Adds
+    scripts: @ElectroGrid, ExamineXmat, 1dRplot, @2dwarper.Allin, @help.AFNI.
+    Adds plugin: plug_aslA3D3.
+  * Updated CMake patch.
+  * Merged some small portion of the shared libarary related patches with
+    upstream.
+  * Make afni_wrapper more robust. Thanks to Alex Waite for the patch.
+
+ -- Michael Hanke <mih@debian.org>  Thu, 23 Dec 2010 11:34:20 -0500
+
+afni (0.20101018~dfsg.1-1) UNRELEASED; urgency=low
+
+  * New upstream code. Added 3dDTtoDWI tool.
+  * Switch build-dependency from lesstif2 to openmotif. Because openmotif is
+    non-free AFNI is now a 'contrib' package. This move was necessary,
+    because AFNI doesn't play nicely with lesstif (segfaults). Upstream
+    doesn't want to support lesstif, because it is currently unmaintained.
+  * Added build-dependency x11proto-print-dev to ease backporting to Debian
+    lenny.
+
+ -- Michael Hanke <michael.hanke@gmail.com>  Tue, 19 Oct 2010 15:25:53 -0400
+
+afni (0.20101001~dfsg.1-1) UNRELEASED; urgency=low
+
+  * New upstream code.
+  * Update CMake patch to install new 1dSVAR.R.
+  * Load AFNI atlases in addition to the AFNI_GLOBAL_SESSION.
+
+ -- Michael Hanke <michael.hanke@gmail.com>  Sun, 03 Oct 2010 10:51:03 -0400
+
+afni (0.20100928~dfsg.1-1) UNRELEASED; urgency=low
+
+  * New upstream code.
+  * Update CMake patch to install lib_textdata.py that was missing before.
+  * Added netpbm as a recommended package.
+  * Added patch to set Debian-specific locations for faces, poems and atlases.
+
+ -- Michael Hanke <michael.hanke@gmail.com>  Wed, 29 Sep 2010 15:26:27 -0400
+
+afni (0.20100917~dfsg.1-1) UNRELEASED; urgency=low
+
+  * New upstream code, and updated CMAKE setup.
+  * Switched to source package format 3.0 (quilt) and from CDBS to debhelper's
+    "dh".
+
+ -- Michael Hanke <michael.hanke@gmail.com>  Tue, 21 Sep 2010 11:51:13 -0400
+
+afni (0.20100114~dfsg.1-1) UNRELEASED; urgency=low
+
+  * New upstream code, and updated CMAKE setup.
+  * Updated copyright file -- still incomplete.
+
+ -- Michael Hanke <michael.hanke@gmail.com>  Sun, 17 Jan 2010 13:27:49 -0500
+
+afni (0.20091204~dfsg.1-1) UNRELEASED; urgency=low
+
+  * New upstream code.
+  * Major bugfix caused by multiple, but different, versions of f2c.h --
+    causing int to be int32 or int64 for different parts of AFNI, at the same
+    time.
+
+ -- Michael Hanke <michael.hanke@gmail.com>  Mon, 07 Dec 2009 20:47:56 -0500
+
+afni (0.20091028~dfsg.1-1) UNRELEASED; urgency=low
+
+  * New upstream code.
+  * Add patch to allow AFNI to use ffmpeg instead of the stripped mpeg_encode.
+
+ -- Michael Hanke <michael.hanke@gmail.com>  Thu, 29 Oct 2009 14:29:18 -0400
+
+afni (0.20091023~dfsg.1-1) UNRELEASED; urgency=low
+
+  * New upstream code.
+  * New CMake buildsystem based on an initial patch by Bernd Feige.
+  * New afni-dev package with static libraries and header files for
+    AFNI plugin development.
+  * Add wrapper to start AFNI's without GUI without having to manually source
+    the config file.
+  * Add afni.desktop and afni.menu for desktop integration.
+
+ -- Michael Hanke <michael.hanke@gmail.com>  Tue, 27 Oct 2009 09:42:40 -0400
+
+afni (0.20091009~dfsg.1-1) UNRELEASED; urgency=low
+
+  * Initial packaging working toward closing ITP #409849.
+
+ -- Michael Hanke <michael.hanke@gmail.com>  Sun, 18 Oct 2009 20:43:08 -0400

@@ -1,0 +1,216 @@
+Description: Alternative CMAKE-based buildsystem and shared lib configuration
+ This new build-system allows for more streamlined build-config adjustments than
+ the old one, instead for countless dedicated scenario makefiles all
+ configurations options can be adjusted on a very fine grained level.
+ .
+ This patch also introduces changes that are required to build all AFNI-internal
+ libraries as shared libs -- dramatically reducing the size of the binary build.
+ .
+ The patch is work in progress. Although it has been in production for almost a
+ year now (with no major complaints) it needs careful checking whether all tools
+ get built. Especially the SUMA component needs attention, as there is a
+ significant duplication of code between AFNI and SUMA that might cause issues.
+ .
+ Currently, the 'avovk' component is not yet integrated into the CMAKE setup.
+ Additionally, CMAKE doesn't handle various 3rd party software code that is
+ shipped with AFNI, but tries to locate installed versions of the respective
+ libraries at build time.
+Forwarded: Rick Reynolds <reynoldr@mail.nih.gov>
+Author: Michael Hanke <michael.hanke@gmail.com>, Bernd Feige <bernd.feige@uniklinik-freiburg.de>
+Last-Update: 2010-09-21
+--- a/SUMA/SUMA_gts.h
++++ b/SUMA/SUMA_gts.h
+@@ -20,7 +20,6 @@
+ #include "gts/config.h"
+ #endif
+ #include "gts.h"
+-#include "gts-private.h"
+ 
+ #include "SUMA_suma.h"
+ 
+--- a/SUMA/SUMA_gts_insert.c
++++ b/SUMA/SUMA_gts_insert.c
+@@ -7,6 +7,8 @@
+ #include "../../SUMA_gts_insert.c" 
+ gts's surface.c works just fine
+ */
++#include <stdlib.h>
++#include "gts.h"
+ 
+ static int debug;
+ 
+--- a/cs_qmed.c
++++ b/cs_qmed.c
+@@ -18,6 +18,10 @@
+    sum /= n ; return sum ;
+ }
+ 
++#ifdef USE_OMP
++#include <omp.h>
++#endif
++
+ /*------------------------------------------------------------------------
+    Compute the median of an array of floats.  Will rearrange (partially
+    sort) the array in the process.  The algorithm is based on Quicksort,
+--- a/gifti_choice.c
++++ b/gifti_choice.c
+@@ -10,15 +10,18 @@
+ 
+ #ifdef HAVE_GIFTI
+ 
+-    /* pretend the gifti source is here, along with thd_gifti functions */
+-    
+-    #include "mcw_malloc.h"     /* Need this to use same allocation functions */
+-    
+-    #include "gifti_io.c"       /* library */
+-    #include "gifti_xml.c"
++/* On Debian we have a proper library for gifti -- no need for this:
++ * -----------------------------------------------------------------
++ *   pretend the gifti source is here, along with thd_gifti functions
++ *
++ *  #include "mcw_malloc.h"      Need this to use same allocation functions
++ *
++ *  #include "gifti_io.c"        library
++ *  #include "gifti_xml.c"
++ */
++   #include "thd_gifti.c"       /* afni interface */
++   #include "suma_gifti.c"      /* suma interface */
+ 
+-    #include "thd_gifti.c"      /* afni interface */
+-    #include "suma_gifti.c"     /* suma interface */
+ #else
+ 
+     /* if we do not love or even want GIFTI, include failure functions here */
+--- a/mri_dicom_hdr.c
++++ b/mri_dicom_hdr.c
+@@ -95,18 +95,18 @@
+ 
+ /* Dimon needs to compile without libmri     18 May 2006 */
+ /* (this allows removal of rickr/l_mri_dicom_hdr.c)      */
+-#ifndef FOR_DIMON
++/*#ifndef FOR_DIMON // causes problems linking to libmri (duplicate symbols)*/
+ 
+ #include "mcw_malloc.h"
+ #include "Amalloc.h"
+ #include "debugtrace.h"    /* 10 Sep 2002 */
+ 
+-#else
+-
+-#include "Amalloc.h"
+-#include "dbtrace.h"
+-
+-#endif
++/* #else
++ * #include "Amalloc.h"
++ * #include "dbtrace.h"
++ *
++ * #endif
++ */
+ 
+ /* cast int to pointer and vice-versa without warning messages */
+ 
+--- a/mri_nstats.c
++++ b/mri_nstats.c
+@@ -1,10 +1,7 @@
+ #include "mrilib.h"
+ 
+-/** if using OpenMP, this file should be #include-d into the main program! **/
+-
+ #ifdef USE_OMP
+ #include <omp.h>
+-#include "cs_qmed.c"
+ #endif
+ 
+ /*--------------------------------------------------------------------------*/
+--- a/rickr/Dimon.c
++++ b/rickr/Dimon.c
+@@ -202,6 +202,7 @@
+ #define MAIN
+ #define IFM_PROG_NAME   "Dimon"
+ 
++#include "mcw_malloc.h"
+ #include "mrilib.h"
+ #include "Dimon.h"      /* broken off from Imon.h */
+ #include "realtime.h"
+@@ -279,7 +280,7 @@
+ #include "l_mcw_glob.h"
+ #include "thd_iochan.h"
+ #include "mri_image.h"
+-#include "dbtrace.h"
++#include "debugtrace.h"
+ 
+ extern char  DI_MRL_orients[8];
+ extern float DI_MRL_tr;
+--- a/rickr/dimon_afni.c
++++ b/rickr/dimon_afni.c
+@@ -8,8 +8,9 @@
+ #include "mri_image.h"
+ #include "mri_dicom_hdr.h"
+ #include "vecmat.h"
++#include "mcw_malloc.h"
+ #include "Amalloc.h"
+-#include "dbtrace.h"
++#include "debugtrace.h"
+ 
+ /*----------------------------------------------------------------------
+  * dimon_afni.c
+--- a/suma_gifti.c
++++ b/suma_gifti.c
+@@ -262,9 +262,14 @@
+    }
+    
+    /* form image */
++/* Since this goes into a shared lib, we better do not rely on global symbols --
++ * should not have a huge impact, since this is just a debug message
++ */
++#if 0
+    if( G.verb > 1 ) {  
+       fprintf(stderr,"++ creating gifti_image \n" );
+    }
++#endif
+    
+    /* basic step - create empty image (with a version string) 
+       from gifti_create_image */
+@@ -375,10 +380,15 @@
+       RETURN(gim);
+    }
+ 
++/* Since this goes into a shared lib, we better do not rely on global symbols --
++ * should not have a huge impact, since this is just a debug message
++ */
++#if 0
+    if( G.verb > 1 ) {  
+       gifti_disp_gifti_image("afni_surf_to_gifti_surf :",gim, G.verb > 3);  
+    }
+-   
++#endif
++
+    RETURN(gim);
+ }
+  
+--- a/R_scripts/AFNIio.R
++++ b/R_scripts/AFNIio.R
+@@ -9,7 +9,7 @@
+ # Functions for library loading
+ #------------------------------------------------------------------
+ find.in.path <- function(file) { #Pretty much same as first.in.path
+-   ff <- paste(strsplit(Sys.getenv('PATH'),':')[[1]],'/', file, sep='')
++   ff <- paste(strsplit(paste(Sys.getenv('PATH'),'/usr/lib/afni/lib', sep=':'),':')[[1]],'/', file, sep='')
+    ff <- ff[lapply(ff,file.exists)==TRUE];
+    aa <- gsub('//','/',ff[1], fixed=TRUE)
+    if (is.na(aa)) aa <- NULL
+@@ -155,11 +155,11 @@
+ #Locate and load R_io.so
+ set_R_io <- function() {
+    rio <- 0
+-   ll <- find.in.path('R_io.so')
++   ll <- find.in.path('librio.so')
+    if (!is.null(ll)) {
+       dd <- try(dyn.load(ll), silent=TRUE)
+-      if (dd[[1]]!="R_io") {
+-         warn.AFNI(paste("Failed to load R_io.so with this error message:\n"));
++      if (dd[[1]]!="librio") {
++         warn.AFNI(paste("Failed to load librio.so with this error message:\n"));
+          dyn.load(ll)
+       } else {
+          rio <- 1

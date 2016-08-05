@@ -1,0 +1,93 @@
+Source: afni
+Section: contrib/science
+Priority: extra
+Maintainer: NeuroDebian Team <team@neuro.debian.net>
+Uploaders: Michael Hanke <mih@debian.org>, Yaroslav Halchenko <debian@onerussian.com>,
+           Alex Waite <Alexqw85@gmail.com>
+Build-Depends: cmake (>= 2.6.4), debhelper (>= 7.0.50~),
+               hardening-includes,
+               libmotif-dev,
+               libnifti1-dev | libnifti-dev,
+               libvolpack1-dev | libvolpack-dev,
+               libglw1-mesa-dev | libglw-dev,
+               libgts-dev,
+               libjpeg62-dev | libjpeg-dev,
+               libqhull-dev,
+               libnetcdf-dev,
+               freeglut3-dev | freeglut-dev,
+               libgl1-mesa-dev | libgl-dev,
+               libexpat1-dev | libexpat-dev,
+               libf2c2-dev,
+               zlib1g-dev,
+               libxmu-dev,
+               libxpm-dev,
+               libgsl0-dev,
+               libxi-dev,
+               libgiftiio-dev,
+               libgomp1,
+               chrpath,
+               x11proto-print-dev,
+               matlab-support-dev,
+               libxmhtml-dev | xmhtml1-dev | xmhtml-dev,
+               r-base-core,
+               xvfb, xauth, libgl1-mesa-dri, mesa-utils,
+               tcsh,
+               libjpeg-turbo-progs | libjpeg-progs,
+Standards-Version: 3.9.5
+Homepage: http://afni.nimh.nih.gov
+Vcs-Browser: http://git.debian.org/?p=pkg-exppsy/afni.git
+Vcs-Git: git://git.debian.org/git/pkg-exppsy/afni.git
+
+Package: afni
+Architecture: any
+Depends: afni-common (= ${source:Version}),
+         tcsh, gifsicle, libjpeg-progs,
+         ${shlibs:Depends}, ${misc:Depends}
+Recommends: nifti-bin,
+            bzip2, ffmpeg, netpbm, qhull-bin,
+Suggests: r-base
+Description: toolkit for analyzing and visualizing functional MRI data
+ AFNI is an environment for processing and displaying functional MRI data.
+ It provides a complete analysis toolchain, including 3D cortical surface
+ models, and mapping of volumetric data (SUMA).
+ .
+ In addition to its own format, AFNI understands the NIfTI format and is
+ therefore integrates easily with FSL and FreeSurfer.
+
+
+Package: afni-common
+Architecture: all
+Depends: python, tcsh,
+         ${shlibs:Depends}, ${misc:Depends}
+Recommends: python-mdp, python-nibabel,
+         afni-atlases,
+Description: miscellaneous scripts and data files for AFNI
+ AFNI is an environment for processing and displaying functional MRI data.
+ It provides a complete analysis toolchain, including 3D cortical surface
+ models, and mapping of volumetric data (SUMA).
+ .
+ This package provides the required architecture independent parts of AFNI.
+
+
+Package: afni-dev
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: header and static libraries for AFNI plugin development
+ AFNI is an environment for processing and displaying functional MRI data.
+ It provides a complete analysis toolchain, including 3D cortical surface
+ models, and mapping of volumetric data (SUMA).
+ .
+ This package provides the necessary libraries and header files for AFNI
+ plugin development.
+
+
+Package: afni-dbg
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: debug symbols for AFNI
+ AFNI is an environment for processing and displaying functional MRI data.
+ It provides a complete analysis toolchain, including 3D cortical surface
+ models, and mapping of volumetric data (SUMA).
+ .
+ This package provides debug symbols which could be useful to troubleshoot
+ and report problems with AFNI.

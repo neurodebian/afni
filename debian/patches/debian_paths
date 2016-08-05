@@ -1,0 +1,186 @@
+Description: Configure Debian-specific installation paths
+  This allows for splitting libraries, plugins and pure data into /usr/lib
+  and /usr/share, instead of having to dump everything into a single directory.
+Author: Michael Hanke <michael.hanke@gmail.com>
+Last-Update: 2010-09-29
+--- a/afni_func.c
++++ b/afni_func.c
+@@ -6617,7 +6617,7 @@
+      XMapRaised( XtDisplay(tips_hw->wshell) , XtWindow(tips_hw->wshell) ) ;
+      EXRETURN ;
+    } else if( !AFNI_noenv("AFNI_DONT_USE_HTMLWIN") ){
+-     fpt = THD_find_regular_file("afnigui.html", NULL) ;
++     fpt = THD_find_regular_file("afnigui.html", "/usr/share/afni/html") ;
+      if( fpt != NULL && *fpt != '\0' ){
+        inf = (char *)malloc(sizeof(char)*(strlen(fpt)+16)) ;
+        strcpy(inf,"file:") ; strcat(inf,fpt) ; free(fpt) ;
+@@ -7569,6 +7569,8 @@
+    /*----- get path to search -----*/
+ 
+                        epath = getenv("AFNI_PLUGINPATH") ;
++   /* Debian puts them into a separate dir */
++   epath = "/usr/share/afni/poems";
+    if( epath == NULL ) epath = getenv("AFNI_PLUGIN_PATH") ;
+    if( epath == NULL ) epath = getenv("PATH") ;
+    if( epath == NULL ){ num_poem=-1; EXRETURN ; }
+--- a/afni_splash.c
++++ b/afni_splash.c
+@@ -666,6 +666,8 @@
+    /*----- get path to search -----*/
+ 
+                        epath = getenv("AFNI_PLUGINPATH") ;
++   /* Debian puts them into a separate dir */
++   epath = "/usr/share/afni/pics";
+    if( epath == NULL ) epath = getenv("AFNI_PLUGIN_PATH") ;
+    if( epath == NULL ) epath = getenv("PATH") ;
+    if( epath == NULL ) epath = getenv("HOME") ;
+--- a/thd_ttatlas_query.c
++++ b/thd_ttatlas_query.c
+@@ -632,6 +632,9 @@
+ {
+    char *epath;
+                        epath = getenv("AFNI_ATLAS_PATH") ;
++   /* Debian puts them into a separate dir.  Still allow for
++      override via environment variable above  */
++   if( epath == NULL ) epath = "/usr/share/afni/atlases";
+    if( epath == NULL ) epath = getenv("AFNI_PLUGINPATH") ;
+    if( epath == NULL ) epath = getenv("AFNI_PLUGIN_PATH") ;
+    if( epath == NULL ) epath = getenv("PATH") ;
+--- a/afni.c
++++ b/afni.c
+@@ -5935,12 +5935,31 @@
+       /*-- 20 Dec 2001: Try to read a "global" session --*/
+       /*-- 11 May 2002: Move read global session up here --*/
+ 
++      char debian_atlases[30] = "/usr/share/afni/atlases";
+       eee = getenv( "AFNI_GLOBAL_SESSION" ) ;   /* where it's supposed to be */
++      /* Debian: if there is now global session, use the atlases */
++      if( eee == NULL ){
++         eee = debian_atlases ;
++         REPORT_PROGRESS("ONLY ATLASES");
++      }
+       if( eee != NULL ){
+          THD_3dim_dataset *dset ;
+          STATUS("reading global session") ;
+          gss =
+           GLOBAL_library.session = THD_init_session( eee ); /* try to read datasets */
++         /* Debian: always add the global atlas dir, if not the only global
++          * session */
++         if( gss != NULL ){
++             /* do not add twice */
++             if ( eee != debian_atlases ){
++                 REPORT_PROGRESS("PLUS ATLASES");
++                 AFNI_append_sessions(gss, THD_init_session( debian_atlases));
++             }
++         } else {
++            /* try reading the atlases (again) in case failure on custom
++             * session dir caused nothing to be loaded */
++            gss = GLOBAL_library.session = THD_init_session( debian_atlases );
++         }
+ 
+          if( gss != NULL ){                               /* got at least one */
+             gss->parent = NULL ;                          /* parentize them */
+--- a/SUMA/SUMA_CreateDO.c
++++ b/SUMA/SUMA_CreateDO.c
+@@ -12534,6 +12534,9 @@
+ SUMA_Boolean SUMA_LoadImageNIDOnel(NI_element *nel)
+ {
+    static char FuncName[]={"SUMA_LoadImageNIDOnel"};
++   static char ImagesPATH[]={"/usr/share/afni/pics:/usr/share/afni:"
++                             "/usr/share/pixmaps:/usr/share/images:"
++                             "/usr/share/images/desktop-base"};
+    MRI_IMAGE *im=NULL;
+    int ir, ic, i1d, i1df, imx, i1d3, i1d4;
+    byte *rgb = NULL, *imar=NULL;
+@@ -12554,7 +12557,10 @@
+    
+    if (! (fname = SUMA_copy_string(NI_get_attribute(nel,"filename"))) )
+       SUMA_RETURN(NOPE);
+-   if (!SUMA_search_file(&fname, NULL)) { /* can't find it */ 
++   /* Debian: It is not sensible to search for images among PATHs, thus
++      providing alternative paths were to expect images on standard deployments
++   */
++   if (!SUMA_search_file(&fname, ImagesPATH)) { /* can't find it */ 
+       SUMA_free(fname); fname = NULL;
+       SUMA_RETURN(NOPE);
+    }
+--- a/scripts_install/demo.fixed.niml.do
++++ b/scripts_install/demo.fixed.niml.do
+@@ -59,7 +59,7 @@
+ /T>
+ <I
+ coord = '1 0 0.9'
+-filename = 'funstuff/face_alexmartin2.jpg'
++filename = 'pics/face_alexmartin2.jpg'
+ h_align = 'right'
+ v_align = 'bot'
+ />
+@@ -74,7 +74,7 @@
+ 0.0 1.0 1
+ 1.0 1.0 1
+ 1.0 0.0 1"
+-filename = "funstuff/face_afniman.jpg"
++filename = "pics/face_afniman.jpg"
+ />
+ <S
+ node = '0'
+--- a/scripts_install/demo.mobile.niml.do
++++ b/scripts_install/demo.mobile.niml.do
+@@ -17,7 +17,7 @@
+ />
+ <I
+ node = "10"
+-filename = "funstuff/face_hamepark.jpg"
++filename = "pics/face_hamepark.jpg"
+ />
+ <Tex
+ target = "FRAME"
+@@ -26,7 +26,7 @@
+ 200.0 240.0 260
+ 240.0 240.0 260
+ 240.0 200.0 260"
+-filename = "funstuff/face_sumabucks.jpg"
++filename = "pics/face_sumabucks.jpg"
+ />
+ <S
+ node = '0'
+@@ -40,5 +40,5 @@
+ mix_mode = "decal"
+ coord_gen = "sphere"
+ target = "ALL_SURFS"
+-filename = "funstuff/face_daveperlman.jpg"
++filename = "pics/face_daveperlman.jpg"
+ />
+--- a/thd_getpathprogs.c
++++ b/thd_getpathprogs.c
+@@ -528,7 +528,9 @@
+ THD_string_array * THD_get_all_afni_readmes(void )
+ {
+    THD_string_array *outar=NULL, *elist=NULL;
++   /* Debian: README* files are in stock documentation directory */
+    char *af=NULL, *etr=NULL, *key="README.";
++   char *af_debian="/usr/share/doc/afni-common";
+    int N_af, N_afni=strlen("afni"), iaf=0, ii=0, *isrt=NULL, N_key=0;
+    char scomm[256]={""};
+    
+@@ -541,9 +543,9 @@
+    }
+    
+    /* remove afni from the end to get the path */
+-   N_af = strlen(af);
++   N_af = strlen(af_debian);
+    
+-   elist = THD_get_all_files(af,'\0');
++   elist = THD_get_all_files(af_debian,'\0');
+    
+    /* Now get all readmes under af */
+    N_key = strlen(key);
+@@ -551,7 +553,7 @@
+    for (ii=0, iaf=0; ii<elist->num ; ii++ ){
+       etr = THD_trailname( elist->ar[ii] , 0 ) ; 
+       if (!THD_is_directory(elist->ar[ii]) &&
+-          !strncmp(af, elist->ar[ii], N_af)  &&
++          !strncmp(af_debian, elist->ar[ii], N_af)  &&
+           !strncmp(key, etr, N_key)
+               )  {
+          ADDTO_SARR( outar , elist->ar[ii] ) ; ++iaf;

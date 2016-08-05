@@ -1,0 +1,175 @@
+#!/usr/bin/make -f
+
+srcpkg = $(shell LC_ALL=C dpkg-parsechangelog | grep '^Source:' | cut -d ' ' -f 2,2)
+debver = $(shell LC_ALL=C dpkg-parsechangelog | grep '^Version:' | cut -d ' ' -f 2,2 )
+upstreamver = $(shell echo $(debver) | cut -d '-' -f 1,1 )
+# this figures out the last merge point from 'master' into the Debian branch and
+# then described this commit by parsing its commit message
+gitver = $(shell [ -x /usr/bin/git ] && git log -n 1 --oneline $$(git merge-base -a HEAD upstream) | cut -d ' ' -f '4,4')
+
+# Enable hardening on systems which support it
+# yoh: do not use hardening magic in cc/ld -- leads to spurious
+#      problems if building e.g. via ccache, and logs do not show
+#      then 'effective' set of options used to build any particular
+#      binary
+# export DEB_BUILD_HARDENING=1
+#
+# Do not fortify until upstream takes care about undefined behavior of sprintf(buf, ..., buf)
+DEB_BUILD_HARDENING_FORTIFY := 0
+# instead explicitly add those flags if provided
+-include /usr/share/hardening-includes/hardening.make
+
+# get install locations for matlab packages
+include /usr/share/matlab/debian/defs.make
+
+# filter-out below are to get a set of uniq (not already listed)
+# options to avoid cmdline clutter.  -fPIE -pie are manually filtered out
+# to prevent FTBFS on wheezy/jessie with gcc 4.7 which can't handle having
+# both -fPIE and -fPIC added by cmake
+#
+DPKGLDFLAGS = $(shell dpkg-buildflags --get LDFLAGS)
+LDFLAGS = $(filter-out $(DPKGLDFLAGS) -fPIE -pie, $(HARDENING_LDFLAGS)) $(DPKGLDFLAGS)
+export LDFLAGS
+
+# need to do it after inclusion of cmake class to get the flag
+# appended after -Wall
+DPKGCFLAGS = $(shell dpkg-buildflags --get CFLAGS) -Wno-unused
+CFLAGS = $(filter-out $(DPKGCFLAGS) -fPIE, $(HARDENING_CFLAGS)) $(DPKGCFLAGS)
+export CFLAGS
+
+# what are we doing this for
+DEB_BUILD_GNU_TYPE ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
+# where to perform the general build
+DEB_BUILDDIR = "build-$(DEB_BUILD_GNU_TYPE)"
+# where to build the static corelibs
+DEB_BUILDDIR_STATIC = "build-$(DEB_BUILD_GNU_TYPE)-static"
+
+# Provide details on tests which fail
+export CTEST_OUTPUT_ON_FAILURE=1
+
+# We need to figure out if provided Xvfb supports GLX since
+# some tests would require it but it seems that some Xvfb deployments
+# do not support it (e.g. on quantal)
+CTEST_FLAGS=$(shell chmod +x tests/xvfb-driver; tests/xvfb-driver glxinfo >/dev/null 2>&1 || echo "-LE GLX";)
+
+DEB_CMAKE_EXTRA_FLAGS = \
+    -DAFNI_SHOWOFF:STRING="=Debian-$(DEB_BUILD_GNU_TYPE)" \
+    -DBUILD_WITH_INSTALL_RPATH:BOOL=ON \
+    -DCMAKE_SKIP_RPATH:BOOL=OFF \
+    -DCMAKE_INSTALL_RPATH:STRING="/usr/lib/afni/lib" \
+    -DCMAKE_EXE_LINKER_FLAGS:STRING="$(LDFLAGS) -Wl,--no-undefined" \
+    -DCMAKE_MODULE_LINKER_FLAGS:STRING="$(LDFLAGS)" \
+    -DCMAKE_SHARED_LINKER_FLAGS:STRING="$(LDFLAGS) -Wl,--no-undefined" \
+    -DAFNI_BUILD_LOCAL_NIFTICLIBS:BOOL=ON \
+    -DAFNI_BUILD_LOCAL_GIFTI:BOOL=OFF \
+    -DAFNI_BUILD_LOCAL_3DEDGE3:BOOL=ON \
+    -DAFNI_BUILD_WITH_LESSTIF2:BOOL=OFF \
+    -DAFNI_BUILD_TESTS:BOOL=ON \
+    -DAFNI_INSTALL_BIN_DIR:STRING=/lib/afni/bin \
+    -DAFNI_INSTALL_LIB_DIR:STRING=/lib/afni/lib \
+    -DAFNI_INSTALL_INCLUDE_DIR:STRING=/include/afni \
+    -DAFNI_INSTALL_PLUGIN_DIR:STRING=/lib/afni/plugins \
+    -DAFNI_INSTALL_SCRIPT_DIR:STRING=/share/afni/scripts \
+    -DAFNI_INSTALL_PICS_DIR:STRING=/share/afni/pics \
+    -DAFNI_INSTALL_POEMS_DIR:STRING=/share/afni/poems \
+    -DAFNI_INSTALL_HTML_DIR:STRING=/share/afni/html \
+    -DAFNI_INSTALL_ATLAS_DIR:STRING=/share/afni/atlases
+
+# one ring to rule them all ...
+%:
+	dh $@ --buildsystem=cmake
+
+override_dh_auto_configure:
+	# check whether something changed in the matlab install locations
+	# in which case we'd have to adjust debhelper's .install files
+	# content
+	[ "$(MATLAB_MDIR)" = "/usr/share/matlab/site/m" ]
+	dh_auto_configure --builddirectory=$(DEB_BUILDDIR) -- \
+      $(DEB_CMAKE_EXTRA_FLAGS) \
+      -DBUILD_SHARED_LIBS:BOOL=ON \
+      -DAFNI_BUILD_CORELIBS_ONLY:BOOL=OFF
+	dh_auto_configure --builddirectory=$(DEB_BUILDDIR_STATIC) -- \
+      $(DEB_CMAKE_EXTRA_FLAGS) \
+      -DBUILD_SHARED_LIBS:BOOL=OFF \
+      -DAFNI_BUILD_CORELIBS_ONLY:BOOL=ON
+	# Make xvfb-driver for tests executable since it comes from a patch
+	chmod +x tests/xvfb-driver
+
+
+override_dh_auto_build:
+	dh_auto_build --builddirectory=$(DEB_BUILDDIR)
+	dh_auto_build --builddirectory=$(DEB_BUILDDIR_STATIC)
+
+override_dh_auto_test:
+	: # call ctest directly since passing ctest -LE via dh_auto_test seems not to work
+	cd $(DEB_BUILDDIR)        && ctest $(CTEST_FLAGS)
+	cd $(DEB_BUILDDIR_STATIC) && ctest $(CTEST_FLAGS)
+	: # Just to verify that previous fixes on linking are inplace
+	set -e; for b in 3dSkullStrip; do \
+		ldd $(DEB_BUILDDIR)/SUMA/$$b | grep '=>.*lib3DEdge.so'; \
+		ldd $(DEB_BUILDDIR)/SUMA/$$b | grep '=>.*libSUMA.so'; \
+	done
+
+override_dh_auto_install:
+	dh_auto_install --builddirectory=$(DEB_BUILDDIR)
+	dh_auto_install --builddirectory=$(DEB_BUILDDIR_STATIC) -- \
+	  DESTDIR=$(CURDIR)/debian/tmp/static 
+	# fix tcsh interpreter location
+	for f in $$(egrep -lR '^#![ ]*/bin/tcsh' debian/tmp); do \
+		echo "Fixing tcsh interpreter location in '$$f'" ; \
+		sed -i -e 's|^#![ ]*/bin/tcsh|#!/usr/bin/tcsh|' $$f ; \
+	done
+	# for some reason 3dSetupGroupInCorr gets destroyed during install
+	# need to redo and fix rpath manually
+	cp $(DEB_BUILDDIR)/3dSetupGroupInCorr debian/tmp/lib/afni/bin/
+	chrpath -r /usr/lib/afni/lib debian/tmp/lib/afni/bin/3dSetupGroupInCorr
+	# matlab stuff -- fix permission
+	install -d debian/tmp/matlab
+	install -m 644 -t debian/tmp/matlab matlab/*
+	# remove @update.afni.* (e.g. .binaries) so it doesn't interfer
+	# with packaged installation
+	find debian/ -iname @update.afni.\* -delete
+    # some permissions fixes
+	chmod a+rx /usr/lib/afni/bin/afni_util.py
+
+
+override_dh_auto_clean:
+	dh_auto_clean --builddirectory=$(DEB_BUILDDIR)
+	dh_auto_clean --builddirectory=$(DEB_BUILDDIR_STATIC)
+	# ensure proper permissions for the wrapper
+	chmod +x debian/afni_wrapper
+
+override_dh_strip:
+	dh_strip --dbg-package=afni-dbg
+
+# make orig tarball from repository content
+get-orig-source:
+	-quilt pop -a
+	@echo "Testing for uncommited changes"
+	@git diff --quiet HEAD
+	# orig tarball, turn directory into something nicer
+	git archive --format=tar --prefix=$(srcpkg)-$(gitver)/ HEAD | \
+		gzip -9 > $(srcpkg)_$(gitver).orig.tar.gz
+
+# Helper target to compare listing of installed afni against binary
+# upstream distribution.
+#
+# Ignore those missing which known to belong to externals, or built
+# under different names (e.g. R_io.so -> librio.so)
+test-missing:
+	@cat ../linux_openmp_64.filelist \
+    | grep -v \
+      -e README -e '\.a$$' -e 'meica\.libs' -e 'index.html.201' \
+      -e OLD_AFNI \
+      -e '^\./\(demo.*\.niml\.do\|qhull\|rbox\|qdelaunay\|[cd]jpeg\|nifti1_test\|nifti_\(tool\|stats\)\|gifti_tool\|mpeg_encode\)$$' \
+      -e '^\./\(plug_3dsvm.so\|3dsvm\)$$' \
+      -e '^\./.*\.\(pyc\|a\)$$' \
+      -e '^\./volpack\.h$$' -e 'AFNI\.....rc' \
+      -e '^\./R_io.so$$' \
+    | while read f; do \
+        bn=$$(basename $$f); \
+        n=$$(/usr/bin/find \
+            /usr/lib/afni /usr/share/afni /usr/include/afni /usr/include/nifti \
+            -name $$bn -type f | wc -l); \
+        [ $$n -eq 1 ] || echo "Found $$n for $$bn from $$f"; \
+    done

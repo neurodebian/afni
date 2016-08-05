@@ -1,0 +1,10 @@
+afni (0.20121123~dfsg.1-1) neurodebian; urgency=low
+
+  3dedge library is now released under GPL v3.0 license, thus it is no
+  longer stripped out and all related functionality in AFNI should
+  operate normally.
+
+  AFNI is now built with OpenMP support and where implemented would
+  utilize all available CPU cores.  "man afni" for more details
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 28 Nov 2012 14:10:36 -0500

@@ -1,0 +1,1258 @@
+--- /dev/null
++++ b/CMakeLists.txt
+@@ -0,0 +1,311 @@
++PROJECT(AFNI)
++
++cmake_minimum_required(VERSION 2.6)
++if(COMMAND cmake_policy)
++  cmake_policy(SET CMP0002 NEW)
++  cmake_policy(SET CMP0003 NEW)
++endif(COMMAND cmake_policy)
++
++##
++## Define options to customize the build-process
++##
++
++OPTION(AFNI_BUILD_LOCAL_NIFTICLIBS
++       "Build and use AFNI's local copy of the NIfTI libs"
++       OFF)
++OPTION(AFNI_BUILD_LOCAL_3DEDGE3
++       "Build and use AFNI's local copy of lib3dedge3"
++       OFF)
++OPTION(AFNI_BUILD_LOCAL_GIFTI
++       "Build and use AFNI's local copy of GIFTI"
++       ON)
++OPTION(AFNI_BUILD_CORELIBS_ONLY
++       "Only build core libraries, no SUMA, plugins or programs"
++       OFF)
++OPTION(AFNI_BUILD_WITH_LESSTIF2
++       "Build using lesstif2, otherwise with OpenMotif"
++       ON)
++
++#
++# Install destinations
++#
++# Use different logical targets, but by default put all of them into
++# one directory -- like the old makefiles were doing it
++SET(AFNI_INSTALL_BIN_DIR "bin" CACHE PATH
++    "Directory to install compiled programs into")
++SET(AFNI_INSTALL_LIB_DIR "bin" CACHE PATH
++    "Directory to install libraries into")
++SET(AFNI_INSTALL_INCLUDE_DIR "include" CACHE PATH
++    "Directory to install library headers into")
++SET(AFNI_INSTALL_PLUGIN_DIR "bin" CACHE PATH
++    "Directory to install plugins into")
++SET(AFNI_INSTALL_SCRIPT_DIR "bin" CACHE PATH
++    "Directory to install interpreted scripts into")
++SET(AFNI_INSTALL_PICS_DIR "funstuff" CACHE PATH
++    "Directory to install images into")
++SET(AFNI_INSTALL_POEMS_DIR "funstuff" CACHE PATH
++    "Directory to install poems into")
++SET(AFNI_INSTALL_HTML_DIR "html" CACHE PATH
++    "Directory to install html documentation into")
++SET(AFNI_INSTALL_ATLAS_DIR "atlases" CACHE PATH
++    "Directory to install atlases (and related information) into")
++SET(AFNI_SHOWOFF "${CMAKE_SYSTEM}" CACHE STRING
++    "Identify this build of AFNI (no blanks)")
++
++##
++## Check for and configure for external dependencies
++##
++
++FIND_PACKAGE(X11 REQUIRED)
++FIND_PACKAGE(Motif REQUIRED)
++IF(AFNI_BUILD_WITH_LESSTIF2)
++  ADD_DEFINITIONS(-DUSING_LESSTIF)
++ENDIF(AFNI_BUILD_WITH_LESSTIF2)
++INCLUDE_DIRECTORIES(${MOTIF_INCLUDE_DIR})
++#
++# Stolen from KDE
++#
++################################################################################
++# - Try to find the GLIB2 libraries
++# Once done this will define
++#
++#  GLIB2_FOUND - system has glib2
++#  GLIB2_INCLUDE_DIR - the glib2 include directory
++#  GLIB2_LIBRARIES - glib2 library
++
++# Copyright (c) 2008 Laurent Montel, <montel@kde.org>
++#
++# Redistribution and use is allowed according to the terms of the BSD license.
++# For details see the accompanying COPYING-CMAKE-SCRIPTS file.
++
++if(GLIB2_INCLUDE_DIR AND GLIB2_LIBRARIES)
++    # Already in cache, be silent
++    set(GLIB2_FIND_QUIETLY TRUE)
++endif(GLIB2_INCLUDE_DIR AND GLIB2_LIBRARIES)
++
++find_package(PkgConfig)
++pkg_check_modules(PC_LibGLIB2 QUIET glib-2.0)
++
++find_path(GLIB2_MAIN_INCLUDE_DIR
++          NAMES glib.h
++          HINTS ${PC_LibGLIB2_INCLUDEDIR}
++          PATH_SUFFIXES glib-2.0)
++
++find_library(GLIB2_LIBRARY
++             NAMES glib-2.0
++             HINTS ${PC_LibGLIB2_LIBDIR}
++)
++
++set(GLIB2_LIBRARIES ${GLIB2_LIBRARY})
++
++# search the glibconfig.h include dir under the same root where the library is found
++get_filename_component(glib2LibDir "${GLIB2_LIBRARIES}" PATH)
++
++find_path(GLIB2_INTERNAL_INCLUDE_DIR glibconfig.h
++          PATH_SUFFIXES glib-2.0/include
++          HINTS ${PC_LibGLIB2_INCLUDEDIR} "${glib2LibDir}" ${CMAKE_SYSTEM_LIBRARY_PATH})
++
++set(GLIB2_INCLUDE_DIR "${GLIB2_MAIN_INCLUDE_DIR}")
++
++# not sure if this include dir is optional or required
++# for now it is optional
++if(GLIB2_INTERNAL_INCLUDE_DIR)
++  set(GLIB2_INCLUDE_DIR ${GLIB2_INCLUDE_DIR} "${GLIB2_INTERNAL_INCLUDE_DIR}")
++endif(GLIB2_INTERNAL_INCLUDE_DIR)
++
++include(FindPackageHandleStandardArgs)
++find_package_handle_standard_args(GLIB2  DEFAULT_MSG  GLIB2_LIBRARIES GLIB2_MAIN_INCLUDE_DIR)
++
++mark_as_advanced(GLIB2_INCLUDE_DIR GLIB2_LIBRARIES)
++
++################################################################################
++INCLUDE_DIRECTORIES(${GLIB2_INCLUDE_DIR})
++
++#
++# NIfTI
++#
++IF(AFNI_BUILD_LOCAL_NIFTICLIBS)
++  INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/nifti/niftilib
++                      ${CMAKE_SOURCE_DIR}/nifti/nifticdf
++                      ${CMAKE_SOURCE_DIR}/nifti/znzlib)
++  MESSAGE(STATUS "Using local NIfTI libs sources")
++ELSE(AFNI_BUILD_LOCAL_NIFTICLIBS)
++  FIND_PATH(NIFTI_INCLUDE_DIR nifti1.h
++            PATHS /usr/include /usr/local/include
++            PATH_SUFFIXES nifti niftilib
++            DOC "NIfTI headers location")
++  INCLUDE_DIRECTORIES(${NIFTI_INCLUDE_DIR})
++ENDIF(AFNI_BUILD_LOCAL_NIFTICLIBS)
++
++#
++# F2C
++#
++# need to force linking against a static f2c when static libs are built
++# to prevent unresolved symbols
++IF(BUILD_SHARED_LIBS)
++  SET(F2C_LIBRARY f2c)
++ELSE(BUILD_SHARED_LIBS)
++  SET(F2C_LIBRARY libf2c.a)
++ENDIF(BUILD_SHARED_LIBS)
++
++#
++# Volpack
++#
++FIND_LIBRARY(VOLPACK_LIBRARY volpack)
++
++#
++# netcdf
++#
++FIND_LIBRARY(NETCDF_LIBRARY netcdf)
++
++#
++# xmhtml
++#
++FIND_LIBRARY(XMHTML_LIBRARY XmHTML)
++
++#
++# jpeg
++#
++FIND_LIBRARY(JPEG_LIBRARY jpeg)
++
++#
++# 3dedge3
++#
++IF(AFNI_BUILD_LOCAL_3DEDGE3)
++  SET(THREEDEDGE_LIBS 3DEdge)
++  INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/3DEdge/src)
++  ADD_SUBDIRECTORY(3DEdge/src)
++  MESSAGE(STATUS "Using local 3DEdge3 sources")
++ELSE(AFNI_BUILD_LOCAL_3DEDGE3)
++  SET(THREEDEDGE_LIBS )
++ENDIF(AFNI_BUILD_LOCAL_3DEDGE3)
++
++#
++# OpenMP
++#
++FIND_PACKAGE(OpenMP)
++IF(OPENMP_FOUND)
++  MESSAGE(STATUS "Using OpenMP")
++  SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS} -DUSE_OMP")
++ENDIF(OPENMP_FOUND)
++
++#
++# Zlib
++#
++FIND_PACKAGE(ZLIB)
++IF(ZLIB_FOUND)
++  ADD_DEFINITIONS(-DHAVE_ZLIB)
++  INCLUDE_DIRECTORIES(${ZLIB_INCLUDE_DIR})
++ENDIF(ZLIB_FOUND)
++
++#
++# GSL
++#
++FIND_LIBRARY(GSL_LIBRARY "gsl")
++IF(GSL_LIBRARY)
++  INCLUDE_DIRECTORIES(${GSL_INC})
++  # forcing --no-as-needed  since gsl is usually not linked against gslcblas
++  # but some systems have --as-needed by default
++  SET(GSL_LIBRARIES  "-Wl,--no-as-needed" gsl gslcblas)
++ENDIF(GSL_LIBRARY)
++
++##
++## Platform checks and config
++##
++IF(UNIX)
++  # 32bit or 64bit?
++  IF(CMAKE_SIZEOF_VOID_P EQUAL 8)
++    MESSAGE(STATUS "Building for a 64bit target system")
++    ADD_DEFINITIONS(-DREAD_WRITE_64)
++  ENDIF(CMAKE_SIZEOF_VOID_P EQUAL 8)
++
++  IF(APPLE)
++    # TODO determine best config
++  ELSE(APPLE)
++    ADD_DEFINITIONS(-DLINUX2 -DUSE_TRACING -DHAVE_XDBE)
++  ENDIF(APPLE)
++ELSE(UNIX)
++  MESSAGE(FATAL_ERROR "Only UNIX-like platforms are supported.")
++ENDIF(UNIX)
++
++# Predefined permission set to enforce proper permissions
++# during install even if files in the sources have different
++# settings
++SET(FILE_PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
++
++SET(SEGTOOLS_LIBS segtools)
++SET(AFNI_LIBS
++   # Link to -lXm before -lXt mri is linked to. Even with explicit
++   # order it is not guaranteed to be in effect if --as-needed
++   -Wl,--no-as-needed ${MOTIF_LIBRARIES} -Wl,--as-needed
++   mrix mri coxplot
++   ${VOLPACK_LIBRARY} ${NETCDF_LIBRARY}
++   ${F2C_LIBRARY} ${XMHTML_LIBRARY} ${JPEG_LIBRARY} m)
++
++# Showoff
++ADD_DEFINITIONS(-DSHOWOFF=${AFNI_SHOWOFF})
++
++##
++## Sub-projects
++##
++# always there
++INCLUDE(CMakeLists_libs.txt)
++ADD_SUBDIRECTORY(coxplot)
++
++# GIFTI upon request
++IF(AFNI_BUILD_LOCAL_GIFTI)
++  # precharge GIFTI's installation target to sync it with other AFNI libs
++  SET(GIFTI_INSTALL_BIN_DIR ${AFNI_INSTALL_BIN_DIR} CACHE PATH
++     "Install GIFTI programs into this directory")
++  SET(GIFTI_INSTALL_LIB_DIR ${AFNI_INSTALL_LIB_DIR} CACHE PATH
++     "Install GIFTI library into this directory")
++  MESSAGE(STATUS "Using local GIFTI sources")
++  ADD_SUBDIRECTORY(gifti)
++
++  INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/gifti)
++  SET(AFNI_HAVE_GIFTI TRUE)
++# or if there is a system lib
++ELSE(AFNI_BUILD_LOCAL_GIFTI)
++  FIND_LIBRARY(GIFTI_LIBRARY giftiio)
++  IF(GIFTI_LIBRARY)
++    FIND_PATH(GIFTI_INCLUDE_DIR gifti_io.h
++              PATHS /usr/include /usr/local/include
++              PATH_SUFFIXES gifti giftilib
++              DOC "Gifti headers location")
++    INCLUDE_DIRECTORIES(${GIFTI_INCLUDE_DIR})
++    MESSAGE(STATUS "Found libgiftiio, compiling with GIFTI support using headers under ${GIFTI_INCLUDE_DIR}")
++    SET(AFNI_HAVE_GIFTI TRUE)
++  ELSE(GIFTI_LIBRARY)
++    MESSAGE(STATUS "No libgiftiio found, compiling without GIFTI support")
++    SET(AFNI_HAVE_GIFTI FALSE)
++  ENDIF(GIFTI_LIBRARY)
++ENDIF(AFNI_BUILD_LOCAL_GIFTI)
++
++# tell now everybody that we have GIFTI if we do have it
++IF(AFNI_HAVE_GIFTI)
++  ADD_DEFINITIONS(-DHAVE_GIFTI)
++ENDIF(AFNI_HAVE_GIFTI)
++
++# everything that is not necessary for corelibs
++IF(NOT AFNI_BUILD_CORELIBS_ONLY)
++  ADD_SUBDIRECTORY(rickr)
++
++  INCLUDE(CMakeLists_apps.txt)
++  INCLUDE(CMakeLists_plugins.txt)
++
++  # Install atlas/spaces information file (not worth separate CMakeLists)
++  INSTALL(FILES AFNI_atlas_spaces.niml
++    DESTINATION ${AFNI_INSTALL_ATLAS_DIR} COMPONENT Runtime)
++
++  ADD_SUBDIRECTORY(html)
++  ADD_SUBDIRECTORY(python_scripts)
++  ADD_SUBDIRECTORY(R_scripts)
++  ADD_SUBDIRECTORY(SUMA)
++  ADD_SUBDIRECTORY(avovk)
++  ADD_SUBDIRECTORY(ptaylor)
++  ADD_SUBDIRECTORY(pkundu)
++
++  ADD_SUBDIRECTORY(faces)
++  ADD_SUBDIRECTORY(poems)
++
++ENDIF(NOT AFNI_BUILD_CORELIBS_ONLY)
+--- /dev/null
++++ b/CMakeLists_apps.txt
+@@ -0,0 +1,227 @@
++##
++## This file is to be included in the toplevel CMakeLists.txt
++##
++
++# 3rd-party stuff
++# TODO there seems to be stuff missing
++SET(EXTRAS whirlgif myget Xphace rmz aiv mycat quotize)
++
++# Programs using only AFNI_LIBS
++SET(PROGRAMS
++  to3d from3d abut 3dclust nsize 3dinfo 3dproject 3dmerge count sfim tfim
++  ftosh 3dttest 3ddup imrotate imreg imstat 3dnvals imand sqwave immask
++  imdump imaver 3dhistog cdf 2swap 4swap mritopgm 3dANOVA 3dANOVA2
++  3dANOVA3 plugout_tta waver 3dnewid 3dcalc ccalc imcalc 1dmatcalc 3drefit
++  3dbucket AlphaSim 3dFWHM plugout_tt 3dnoise plugout_ijk 3dMannWhitney
++  3dWilcoxon 3dKruskalWallis 3dFriedman 3dmaskave 3dbuc2fim byteorder
++  imstack 3dTcat 3drotate 3dvolreg 3dpc 3dfractionize 1dplot imupsam
++  3dIntracranial 24swap 3dTsmooth float_scan 1dtranspose 3dFourier 3dNotes
++  3dROIstats 1deval 3dTstat 3dmaskdump 3dTshift 3dDetrend 1dfft 1dcat
++  3drename 1dnorm afni_vcheck 3ddot 3dWavelets imcutup imcat 3dWinsor
++  3dZeropad 3dTagalign 3dMean 3dAttribute cat_matvec 3dOverlap 3dClipLevel
++  3dZregrid 3dEntropy ent16 3dRowFillin 1dgrayplot 3dToutcount 1dsum
++  3dExtrema strblast 3dZcutup 3dZcat 3dTqual 3dGetrow 3dTcorrelate
++  3dAnatNudge 3dcopy Vecwarp 3dMINCtoAFNI 3dCM fdrval 3dAFNItoANALYZE
++  siemens_vision ge_header mayo_analyze 3dAFNItoNIFTI 3dAutoTcorrelate
++  3dFDR rtfeedme 3dAutomask 3dAFNItoMINC 3dBrickStat 3dThreetoRGB Ifile
++  3dAutobox 3dLRflip 3dANALYZEtoAFNI dicom_hdr 3dDespike dicom_to_raw
++  rotcom 1ddot 1dsvd 3dAnhist 3dAFNIto3D 3dWarp nicat fftest 3dDTeig
++  3dWarpDrive plugout_drive 3dLSS 3dMedianFilter 3dAFNItoNIML 3dAFNItoRaw
++  im2niml DTIStudioFibertoSegments 3dLocalstat 3dTwotoComplex 3dInvFMRI
++  3dmatcalc 3dAcost 3dLocalBistat 3dFWHMx 3dBlurToFWHM 3dDFT 3dSynthesize
++  1dMarry 3dEmpty 1dFlagMotion 3dTsort 1dTsort 3dTfitter 1dUpsample
++  3dLocalSVD niml_feedme 3dErrtsCormat 3dUndump 3dREMLfit 3dTnorm
++  3dUpsample 3dTcorrMap 3dmatmult 3dmaskSVD 1dBandpass 3dBlurInMask 3dRank
++  3dDeconvolve 1dGentimes 2dImReg 3dStatClust 3dDWItoDT 3dRegAna
++  3dUniformize 3ddelay 3dfim+ 3dNeocon 3dConvolve RSFgen
++  3dFFT 1dgenARMA11 3dPeriodogram 1dAstrip 3dLocalPV 3dBandpass
++  3dSetupGroupInCorr 3dGroupInCorr 3dDimRed 3dSatCheck 3dTcorr1D 3dSimARMA11
++  3dClustSim 3dRetinoPhase 3dMaskToASCII 3dttest++ 3dDTtoDWI niccc
++  3dRankizer 3dXYZcat 3dDeghost 3dPolyfit 3dNwarpApply 1dCorrelate 3dCountSpikes
++  3dNwarpCalc dicom_hinfo apsearch 3dNormalityTest 3dmask_tool FIRdesign
++  2perm 3dClustCount 3dTransformGroupInCorr 3dExtractGroupInCorr 3dUnifize
++  3dNwarpCat 3dQwarp 3dLocalHistog 3dNwarpAdjust 3dNwarpFuncs 3dTproject
++  afni_open 3dConformist 3dNwarpXYZ 3dTRfix ${EXTRAS})
++
++SET(SCRIPTS
++  @4Daverage @CommandGlobb @GetAfniOrient @DTI_studio_reposition
++  @GetAfniPrefix @NoExt @UpdateAfni @RenamePanga @2dwarper @GetAfniView
++  @SUMA_AlignToExperiment @SUMA_Make_Spec_FS @Purify_1D @SUMA_Make_Spec_SF
++  @make_stim_file @Align_Centers suma_change_spec @CheckForAfniDset
++  @clip_volume @AfniOrient2RAImap @parse_afni_name @auto_align @auto_tlrc
++  @FromRAI @ToRAI @AfniOrientSign @VolCenter @Center_Distance
++  @fix_FSsphere @parse_name @align_partial_oblique @np 3dMax @IsoMasks
++  @SUMA_Make_Spec_Caret @FindAfniDsetPath @GetAfniID @float_fix @escape-
++  3dPAR2AFNI.pl @DriveAfni @DriveSuma @AddEdge
++  @SurfSmooth.HEAT_07.examples @SUMA_FSvolToBRIK @isOblique afni_run_R
++  @GetAfniDims @GetAfniRes @NoisySkullStrip @statauxcode @ScaleVolume
++  @ShowDynamicRange AFNI_Batch_R @DO.examples
++  @Spharm.examples @GetAfniBin @fast_roi
++  @make_plug_diff @build_afni_Xlib @update.afni.binaries @ROI_Corr_Mat
++  @FS_roi_label @demo_prompt @ScriptCheck @NoPound @Reorder 3dSignatures 3dMEMA
++  @DiceMetric @R_funclist @TimeDiff @FullPath @RetinoProc @ANATICOR
++  @MakeLabelTable @ElectroGrid ExamineXmat 1dRplot @2dwarper.Allin
++  @Shift_Volume @help.AFNI @1dDiffMag @FSlabel2dset @Install_InstaCorr_Demo
++  @Quiet_Talkers @radial_correlate @DeblankFileNames @clean_help_dir
++  @global_parse @AfniEnv @Atlasize @Install_TSrestMovieDemo
++  @Install_AfniRetinoDemo @Install_FATCAT_DEMO
++  @Install_RSFMRI_Motion_Group_Demo @Install_MEICA_Demo @T1scale 3dMVM
++  @compute_gcor 3dLME @Install_ClustScat_Demo @Install_FATMVM_DEMO
++  @move.to.series.dirs @toMNI_Awarp @toMNI_Qwarpar
++  @simulate_motion @afni.run.me 3dRprogDemo @ExamineGenFeatDists rPkgsInstall)
++
++
++##
++## Targets
++##
++FOREACH(program ${PROGRAMS})
++  ADD_EXECUTABLE(${program} ${program}.c)
++  TARGET_LINK_LIBRARIES(${program} ${AFNI_LIBS})
++ENDFOREACH(program)
++
++#
++# More programs with more linking
++#
++FOREACH(program
++  3dAllineate 3dSpatNorm whereami 3dSegment 3dABoverlap 3daxialize adwarp)
++  ADD_EXECUTABLE(${program} ${program}.c)
++  TARGET_LINK_LIBRARIES(${program} ${AFNI_LIBS})
++  LIST(APPEND PROGRAMS ${program})
++ENDFOREACH(program)
++
++
++#
++# Further customized targets
++#
++ADD_EXECUTABLE(1dBport 1dBport.c)
++TARGET_LINK_LIBRARIES(1dBport ${AFNI_LIBS} -ldl)
++LIST(APPEND PROGRAMS 1dBport)
++
++ADD_EXECUTABLE(3dTSgen 3dTSgen.c)
++TARGET_LINK_LIBRARIES(3dTSgen ${AFNI_LIBS} -ldl)
++LIST(APPEND PROGRAMS 3dTSgen)
++
++ADD_EXECUTABLE(3dNLfim 3dNLfim.c)
++TARGET_LINK_LIBRARIES(3dNLfim ${AFNI_LIBS} -ldl)
++LIST(APPEND PROGRAMS 3dNLfim)
++
++ADD_EXECUTABLE(1dSEM 1dSEM.c sqrmat.c matrix.c)
++TARGET_LINK_LIBRARIES(1dSEM ${AFNI_LIBS})
++LIST(APPEND PROGRAMS 1dSEM)
++
++ADD_EXECUTABLE(3danisosmooth 3danisosmooth.c DWIstructtensor.c)
++TARGET_LINK_LIBRARIES(3danisosmooth ${AFNI_LIBS})
++LIST(APPEND PROGRAMS 3danisosmooth)
++
++ADD_EXECUTABLE(3dfim 3dfim.c afni_pcor_update.c ts.c)
++# This is for compiling to an object that was called afni_pcor_float.o
++SET_SOURCE_FILES_PROPERTIES(afni_pcor_update.c PROPERTIES COMPILE_FLAGS "-DDTYPE=float")
++TARGET_LINK_LIBRARIES(3dfim ${AFNI_LIBS})
++LIST(APPEND PROGRAMS 3dfim)
++
++ADD_EXECUTABLE(3dmaxima 3dmaxima.c maxima.c)
++TARGET_LINK_LIBRARIES(3dmaxima ${AFNI_LIBS})
++LIST(APPEND PROGRAMS 3dmaxima)
++
++ADD_EXECUTABLE(3dretroicor 3dretroicor.c)
++TARGET_LINK_LIBRARIES(3dretroicor ${AFNI_LIBS})
++LIST(APPEND PROGRAMS 3dretroicor)
++
++ADD_EXECUTABLE(FD2 FD2.c ts.c mcw.c overfim.c pcor.c csfft_AJ.c)
++# This is for compiling pcor.c to an object that was called pcorsh.o
++SET_SOURCE_FILES_PROPERTIES(pcor.c PROPERTIES COMPILE_FLAGS "-DREF_FLOAT_SINGLE -DVOX_SHORT")
++TARGET_LINK_LIBRARIES(FD2 ${AFNI_LIBS})
++LIST(APPEND PROGRAMS FD2)
++
++ADD_EXECUTABLE(fim2 fim2.c ts.c pcor.c)
++TARGET_LINK_LIBRARIES(fim2 ${AFNI_LIBS})
++LIST(APPEND PROGRAMS fim2)
++
++ADD_EXECUTABLE(3dDeconvolve_f 3dDeconvolve.c matrix_f.c)
++# This is for compiling 3dDeconvolve.c and matrix_f.c to objects that were
++# called 3dDeconvolve_f.o and matrix_f.o
++SET_TARGET_PROPERTIES(3dDeconvolve_f PROPERTIES COMPILE_FLAGS "-DFLOATIZE")
++TARGET_LINK_LIBRARIES(3dDeconvolve_f ${AFNI_LIBS})
++LIST(APPEND PROGRAMS 3dDeconvolve_f)
++
++ADD_EXECUTABLE(help_format help_format.c)
++LIST(APPEND PROGRAMS help_format)
++
++ADD_EXECUTABLE(afni_history
++  afni_history.c afni_history_bpittman.c afni_history_christip.c
++  afni_history_dglen.c afni_history_gangc.c afni_history_rickr.c
++  afni_history_rwcox.c afni_history_ziad.c afni_history_ptaylor.c)
++TARGET_LINK_LIBRARIES(afni_history ${AFNI_LIBS})
++LIST(APPEND PROGRAMS afni_history)
++
++ADD_EXECUTABLE(gwarp mri_gwarp.c)
++TARGET_LINK_LIBRARIES(gwarp ${AFNI_LIBS})
++LIST(APPEND PROGRAMS gwarp)
++
++#
++# AFNI
++#
++SET(AFSRC
++  afni.c afni_func.c afni_widg.c afni_fimmer.c afni_pcor.c
++  afni_pcor_update.c afni_transforms.c pbar.c afni_graph.c afni_plugin.c
++  afni_cluster.c afni_plugout.c afni_fimfunc.c
++  afni_setup.c afni_receive.c mcw_graf.c afni_splash.c afni_pplug_env.c
++  afni_pplug_2dfunc.c afni_friends.c afni_ttren.c afni_pplug_1dfunc.c
++  afni_driver.c afni_niml.c afni_sumafunc.c afni_version.c afni_lock.c
++  afni_vol2surf.c afni_pplug_instacorr.c afni_pplug_instacalc.c
++  afni_filer.c)
++# This is for compiling to an object that was called afni_pcor_float.o
++SET_SOURCE_FILES_PROPERTIES(afni_pcor_update.c
++                            PROPERTIES COMPILE_FLAGS "-DDTYPE=float")
++ADD_EXECUTABLE(afni ${AFSRC})
++TARGET_LINK_LIBRARIES(afni ${AFNI_LIBS} -ldl)
++LIST(APPEND PROGRAMS afni)
++
++
++#
++# Optional stuff depending on additional external software
++#
++
++# add local nifti apps if desired
++IF(AFNI_BUILD_LOCAL_NIFTICLIBS)
++  ADD_EXECUTABLE(nifti1_test nifti/utils/nifti1_test.c)
++  TARGET_LINK_LIBRARIES(nifti1_test ${AFNI_LIBS})
++
++  ADD_EXECUTABLE(nifti_tool nifti/utils/nifti_tool.c)
++  TARGET_LINK_LIBRARIES(nifti_tool ${AFNI_LIBS})
++
++  ADD_EXECUTABLE(nifti_stats nifti/utils/nifti_stats.c)
++  TARGET_LINK_LIBRARIES(nifti_stats ${AFNI_LIBS})
++
++  LIST(APPEND PROGRAMS nifti1_test nifti_tool nifti_stats)
++  MESSAGE(STATUS "Using internal NIfTI libs, compiling nifti_* tools")
++ENDIF(AFNI_BUILD_LOCAL_NIFTICLIBS)
++
++# add local 3dedge3 if desired
++IF(AFNI_BUILD_LOCAL_3DEDGE3)
++  ADD_EXECUTABLE(3dedge3 3dedge3.c)
++  TARGET_LINK_LIBRARIES(3dedge3 ${AFNI_LIBS} ${THREEDEDGE_LIBS})
++  LIST(APPEND PROGRAMS 3dedge3)
++  MESSAGE(STATUS "Using internal 3DEdge3, compiling '3dedge3'")
++ENDIF(AFNI_BUILD_LOCAL_3DEDGE3)
++
++
++IF(GSL_LIBRARY)
++  MESSAGE(STATUS "Found GSL library, compiling 'balloon'")
++  ADD_EXECUTABLE(balloon balloon.c)
++  TARGET_LINK_LIBRARIES(balloon ${GSL_LIBRARIES} m)
++  LIST(APPEND PROGRAMS balloon)
++ENDIF(GSL_LIBRARY)
++
++
++##
++## Install targets
++##
++
++INSTALL(TARGETS ${PROGRAMS} ${ADDPROGRAMS}
++  RUNTIME DESTINATION ${AFNI_INSTALL_BIN_DIR} COMPONENT Runtime
++  LIBRARY DESTINATION ${AFNI_INSTALL_LIB_DIR} COMPONENT Runtime
++  ARCHIVE DESTINATION ${AFNI_INSTALL_LIB_DIR} COMPONENT Development)
++
++INSTALL(PROGRAMS ${SCRIPTS}
++  DESTINATION ${AFNI_INSTALL_SCRIPT_DIR} COMPONENT Runtime)
+--- /dev/null
++++ b/CMakeLists_libs.txt
+@@ -0,0 +1,220 @@
++##
++## This file is to be included in the toplevel CMakeLists.txt
++##
++
++INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}
++                    ${CMAKE_SOURCE_DIR}/niml
++                    ${CMAKE_SOURCE_DIR}/rickr
++                    ${CMAKE_SOURCE_DIR}/ptaylor)
++
++#
++# Define sets of source files
++#
++# These reside in main dir
++SET(MRI_SRC
++  mri_cfft.c mri_complex_arith.c mri_fft_complex.c mri_free.c mri_max.c
++  mri_new.c mri_read.c mri_swapbytes.c mri_dup.c mri_to_byte.c
++  mri_to_complex.c mri_to_float.c mri_to_short.c mri_warp.c mri_write.c
++  mri_float_func.c mri_edit.c mri_stat_seq.c mri_add_name.c mri_histog.c
++  mri_nsize.c mri_lsqfit.c mri_sobel.c csfft.c mri_filt_fft.c mri_align.c
++  mri_rota.c mri_thresh.c mri_to_mri.c mri_flippo.c mri_percents.c
++  mri_stats.c mri_cat2D.c mri_transpose.c mri_shifter.c mcw_glob.c
++  mri_2dalign.c mri_order.c mri_3dalign.c mri_render.c mri_to_rgb.c
++  mcw_malloc.c mri_cut.c mri_overlay.c mri_copy.c mri_uncat2D.c
++  cox_render.c mri_histobyte.c mri_aff2d.c debugtrace.c mri_zeropad.c
++  mri_write_angif.c mri_histoshort.c mri_shift2D.c mri_drawing.c
++  mri_coxplot.c mri_get_cmass.c mri_scale.c mri_write_analyze.c
++  mri_to_rgba.c mri_rgba_compose.c mri_blur3d.c mri_dicom_hdr.c
++  mri_read_dicom.c mri_read_stuff.c mri_flip3D.c mri_warp3D.c
++  mri_fromstring.c ge4_header.c mri_equal.c mri_scalize.c mri_isgray.c
++  mri_read_mpeg.c mri_entropy16.c mri_symbolize.c mri_colorsetup.c
++  mri_warp3D_align.c mri_medianfilter.c mri_nstats.c mri_scaled_diff.c
++  mri_matrix.c mri_genalign.c mri_clusterize.c mri_nbistats.c mri_fwhm.c
++  mri_blur3d_variable.c mri_purger.c mri_counter.c mri_to_imarr.c
++  mri_pcvector.c mri_fdrize.c mri_floatvec.c mri_sort.c mri_warpfield.c
++  mri_dicom_stuff.c mri_check.c mri_allzero.c mri_subset.c mri_to_fvect.c
++  mri_genalign_util.c rcmat.c dmat44.c mri_rbfinterp.c matrix.c
++  gifti_choice.c zfun.c cs_pv.c cs_sort_iv.c cs_sort_d misc_math.c
++  mri_sharpness.c mri_genARMA11.c mri_catvol.c mri_polyfit.c mri_nwarp.c mri_extract.c
++  retroicor.c)
++
++SET(THD_SRC
++  thd_atr.c thd_dsetto1D.c thd_initalldir.c thd_reconpar.c thd_auxdata.c
++  thd_editdaxes.c thd_initdblk.c thd_sarr.c thd_bstats.c thd_fdbrick.c
++  thd_initdkptr.c thd_statpval.c thd_compress.c thd_fdto1D.c
++  thd_initprefix.c thd_timeof.c thd_coords.c thd_fdto2D.c thd_initsess.c
++  thd_warps.c thd_countb.c thd_filestuff.c thd_linecount.c thd_writeatr.c
++  thd_delete.c thd_forcemalloc.c thd_loaddblk.c thd_writedblk.c
++  thd_dsetdblk.c thd_get1D.c thd_manydset.c thd_writedset.c
++  thd_dsetinsess.c thd_idcode.c thd_opendset.c thd_zblock.c
++  thd_dsetinslist.c thd_info.c thd_purgedblk.c thd_http.c thd_iochan.c
++  thd_makefbuc.c thd_makefim.c thd_makefith.c thd_trusthost.c thd_rot3d.c
++  thd_mastery.c thd_intlist.c thd_checkidc.c thd_floatscan.c thd_notes.c
++  thd_makemask.c thd_shift2.c thd_1Dtodset.c thd_detrend.c thd_fitter.c
++  thd_winsor.c thd_zeropad.c thd_rot3d_byte.c thd_shear3d.c thd_tmask.c
++  thd_rotangles.c thd_center.c thd_mismatch.c thd_read_vecmat.c
++  thd_tshift.c thd_newprefix.c thd_entropy16.c thd_dsetrow.c
++  thd_rowfillin.c thd_fetchdset.c thd_getpathprogs.c thd_zfillin.c
++  thd_ttatlas_query.c thd_dsetto3D.c thd_median.c thd_cliplevel.c
++  thd_automask.c thd_outlier_count.c thd_correlate.c thd_autonudge.c
++  thd_avts.c thd_mincread.c thd_mincwrite.c thd_mnicoords.c thd_strfunc.c
++  thd_niftiwrite.c thd_analyzeread.c thd_ctfread.c thd_1Ddset.c
++  thd_getorient.c thd_3Ddset.c thd_mattor.c thd_niftiread.c thd_mpegread.c
++  thd_brainormalize.c thd_opentcat.c thd_nimlatr.c thd_dsetatr.c
++  thd_logafni.c thd_dset_nbhd.c thd_vcheck.c thd_matdaxes.c thd_niml.c
++  afni_vedit.c thd_fdrcurve.c thd_dset_to_vectim.c thd_bandpass.c
++  thd_instacorr.c thd_svdblur.c thd_ttest.c thd_satcheck.c thd_dumdset.c
++  ktaub.c bilinear_warp3D.c thd_table.c thd_atlas.c thd_warp_tables.c
++  thd_lasso.c thd_mean_dset.c thd_despike_L1.c thd_Tcorr1D.c)
++
++SET(EDT_SRC
++  edt_addbrick.c edt_blur.c edt_buildmask.c edt_checkargv.c edt_clust.c
++  edt_clustarr.c edt_coerce.c edt_dsetitems.c edt_emptycopy.c
++  edt_filtervol.c edt_help.c edt_onedset.c edt_scl2max.c edt_substbrick.c
++  edt_volamax.c edt_zscore.c edt_fullcopy.c edt_calcmask.c edt_volpad.c
++  edt_sortmask.c edt_clust2.c edt_wodcopy.c edt_clustalpha.c
++  edt_geomcon.c edt_floatize.c)
++
++SET(SUMA_SRC
++  suma_datasets.c suma_algorithms.c suma_string_manip.c suma_utils.c)
++
++SET(CS_SRC
++  cs_sort_fi.c cs_sort_di.c cs_symeig.c cs_sort_ii.c cs_sort_ff.c
++  cs_addto_args.c multivector.c afni_environ.c cs_qmed.c cl2.c
++  cs_sort_fv.c cs_laguerre.c machdep.c cs_qhull.c afni_logger.c cl1.c
++  cs_misc.c powell_int.c powell_newuoa.c afni_suma.c suma_afni_surface.c
++  vol2surf.c cs_sort_dv.c rhdd.c cs_fgets.c list_struct.c svdlib.c)
++
++# Assimilate NIfTI lib pieces into libmri, if we do not link against a
++# system NIfTI lib
++IF(AFNI_BUILD_LOCAL_NIFTICLIBS)
++  LIST(APPEND CS_SRC nifti/niftilib/nifti1_io.c nifti/znzlib/znzlib.c
++       nifti/utils/nifti_stats.c nifti/nifticdf/nifticdf.c nifti_statlib.c)
++  SET_SOURCE_FILES_PROPERTIES(nifti/nifticdf/nifticdf.c
++                PROPERTIES COMPILE_FLAGS "-D__COMPILE_UNUSED_FUNCTIONS__")
++ENDIF(AFNI_BUILD_LOCAL_NIFTICLIBS)
++
++# These reside in niml/
++SET(NIML_SRC
++  niml_b64.c niml_element.c niml_elemio.c niml_registry.c niml_util.c
++  niml_byteorder.c niml_header.c niml_malloc.c niml_rowtype.c niml_uuid.c
++  niml_do.c niml_htable.c niml_md5.c niml_url.c niml_stream.c
++  niml_struct.c niml_dataset.c niml_vector.c niml_stat.c niml_dtable.c
++  niml_sucker.c)
++
++# These belong to rickr/ but no longer compose its own library
++SET(RICKR_SRC
++  r_idisp.c r_misc.c r_new_resam_dset.c)
++
++# These reside in eispack/
++CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/eispack/eis_svd.c
++               ${CMAKE_CURRENT_BINARY_DIR}/eis_svd_slow.c COPYONLY)
++SET(EIS_SRC
++  eis_bakvec.c eis_balanc.c eis_balbak.c eis_bandr.c eis_bandv.c
++  eis_bisect.c eis_bqr.c eis_cbabk2.c eis_cbal.c eis_cdiv.c eis_cg.c
++  eis_ch.c eis_cinvit.c eis_combak.c eis_comhes.c eis_comlr.c eis_comlr2.c
++  eis_comqr.c eis_comqr2.c eis_cortb.c eis_corth.c eis_csroot.c
++  eis_elmbak.c eis_elmhes.c eis_eltran.c eis_epslon.c eis_figi.c
++  eis_figi2.c eis_hqr.c eis_hqr2.c eis_htrib3.c eis_htribk.c eis_htrid3.c
++  eis_htridi.c eis_imtql1.c eis_imtql2.c eis_imtqlv.c eis_invit.c
++  eis_minfit.c eis_ortbak.c eis_orthes.c eis_ortran.c eis_pythag.c
++  eis_qzhes.c eis_qzit.c eis_qzval.c eis_qzvec.c eis_ratqr.c eis_rebak.c
++  eis_rebakb.c eis_reduc.c eis_reduc2.c eis_rg.c eis_rgg.c eis_rs.c
++  eis_rsb.c eis_rsg.c eis_rsgab.c eis_rsgba.c eis_rsm.c eis_rsp.c
++  eis_rst.c eis_rt.c eis_svd.c eis_tinvit.c eis_tql1.c eis_tql2.c
++  eis_tqlrat.c eis_trbak1.c eis_trbak3.c eis_tred1.c eis_tred2.c
++  eis_tred3.c eis_tridib.c eis_tsturm.c)
++
++# These reside in netcdf-3.5.0/src/
++SET(NETCDF_OBJS netcdf_attr.o netcdf_dim.o netcdf_error.o netcdf_libvers.o
++ netcdf_nc.o netcdf_ncio.o netcdf_ncx.o netcdf_putget.o
++ netcdf_string.o netcdf_v1hpg.o netcdf_v2i.o netcdf_var.o
++)
++
++#
++# afni_warp to be included into libmri
++#
++SET(WARP_SRC afni_warp.c)
++FOREACH(TYPE byte short float complex rgbyte)
++  CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/afni_slice.c
++                 ${CMAKE_CURRENT_BINARY_DIR}/afni_slice_${TYPE}.c COPYONLY)
++  LIST(APPEND WARP_SRC ${CMAKE_CURRENT_BINARY_DIR}/afni_slice_${TYPE}.c)
++  SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/afni_slice_${TYPE}.c
++                              PROPERTIES COMPILE_FLAGS "-DDTYPE=${TYPE}")
++ENDFOREACH(TYPE)
++
++SET(MRILIB_SOURCES
++   afni_ports.c pbar_color_defs.c parser.c parser_int.c ${MRI_SRC} ${THD_SRC} ${EDT_SRC} ${CS_SRC} ${SUMA_SRC} ${WARP_SRC})
++# Add source files residing in subdirectories
++FOREACH(src ${NIML_SRC})
++  LIST(APPEND MRILIB_SOURCES "niml/${src}")
++ENDFOREACH(src)
++FOREACH(src ${RICKR_SRC})
++  LIST(APPEND MRILIB_SOURCES "rickr/${src}")
++ENDFOREACH(src)
++FOREACH(src ${EIS_SRC})
++  LIST(APPEND MRILIB_SOURCES "eispack/${src}")
++ENDFOREACH(src)
++# add generate eispack file
++# This is copied from eis_svd above
++LIST(APPEND MRILIB_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/eis_svd_slow.c)
++SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/eis_svd_slow.c
++                            PROPERTIES COMPILE_FLAGS "-DFUNCNAME=svd_slow_")
++
++# TODO port from full AFNI source code
++#FOREACH(src ${NETCDF_OBJS})
++# LIST(APPEND MRILIB_SOURCES "netcdf-3.5.0/src/libsrc/${src}")
++#ENDFOREACH(src)
++
++#
++# libmri
++#
++ADD_LIBRARY(mri ${MRILIB_SOURCES})
++TARGET_LINK_LIBRARIES(mri ${X11_Xt_LIB} ${VOLPACK_LIBRARY} ${NETCDF_LIBRARY}
++                          ${F2C_LIBRARY} giftiio nifticdf niftiio m z)
++# if libmri doesn't have niftilib built-in, we need to link against it
++IF(NOT AFNI_BUILD_LOCAL_NIFTICLIBS)
++  TARGET_LINK_LIBRARIES(mri nifticdf niftiio)
++ENDIF(NOT AFNI_BUILD_LOCAL_NIFTICLIBS)
++
++IF(NOT AFNI_BUILD_LOCAL_GIFTI)
++  TARGET_LINK_LIBRARIES(mri giftiio)
++ENDIF(NOT AFNI_BUILD_LOCAL_GIFTI)
++
++#
++# libmrix
++#
++SET(IMSRC
++  display.c imseq.c bbox.c xim.c xutil.c LiteClue.c thd_xwebber.c)
++ADD_LIBRARY(mrix ${IMSRC})
++TARGET_LINK_LIBRARIES(mrix ${MOTIF_LIBRARIES} ${X11_LIBRARIES} mri coxplot XmHTML)
++
++#
++# librio
++#
++
++# Find R
++FIND_LIBRARY(R_LIB NAMES R PATH /usr/lib /usr/lib/R/lib)
++FIND_PATH(R_INCLUDE_DIRS R.h /usr/share/R/include)
++INCLUDE_DIRECTORIES(${R_INCLUDE_DIRS})
++
++SET(RIOSRC R_io.c)
++ADD_LIBRARY(rio ${RIOSRC})
++TARGET_LINK_LIBRARIES(rio mri ${R_LIB})
++SET_TARGET_PROPERTIES(rio PROPERTIES COMPILE_FLAGS "-std=gnu99")
++
++#
++# Install targets
++#
++INSTALL(TARGETS mri mrix rio
++  RUNTIME DESTINATION ${AFNI_INSTALL_BIN_DIR} COMPONENT Runtime
++  LIBRARY DESTINATION ${AFNI_INSTALL_LIB_DIR} COMPONENT Runtime
++  ARCHIVE DESTINATION ${AFNI_INSTALL_LIB_DIR} COMPONENT Development)
++
++# consider all headers as development headers
++# TODO determine which of them are really necessary
++FILE(GLOB DEV_HDRS "*.h" "rickr/*.h" "niml/niml.h")
++INSTALL(FILES ${DEV_HDRS}
++  DESTINATION ${AFNI_INSTALL_INCLUDE_DIR}
++  PERMISSIONS ${FILE_PERMISSIONS}
++  COMPONENT Development)
+--- /dev/null
++++ b/CMakeLists_plugins.txt
+@@ -0,0 +1,69 @@
++##
++## This file is to be included in the toplevel CMakeLists.txt
++##
++
++SET(baseplugins
++  plug_clust plug_copy plug_rename plug_tag plug_power plug_stats
++  plug_lsqfit plug_imreg plug_edit plug_nlfit plug_realtime plug_3ddot
++  plug_coorder plug_compress plug_volreg plug_drawdset plug_maskave
++  plug_deconvolve plug_render plug_notes plug_histog plug_scatplot
++  plug_nudge plug_wavelets plug_second_dataset plug_betafit plug_zeropad
++  plug_nth_dataset plug_roiplot plug_ttget plug_L1fit plug_3ddup
++  plug_histog_multi plug_afnihistory)
++
++SET(models
++  model_constant model_linear model_quadratic model_null model_diffusion
++  model_beta model_sinewave_ap model_sinewave_apf model_squarewave_ap
++  model_squarewave_apf model_trnglwave_ap model_trnglwave_apf model_exp
++  model_diffexp model_gammavar model_convgamma model_convgamma2a
++  model_michaelis_menton model_linplusort model_zero model_demri_3
++  model_expr2 model_conv_diffgamma model_expMEMRI model_expMEMRI3
++  model_conv_cosine4 model_conv_PRF model_conv_PRF_6)
++
++SET(ziad_plugins
++  plug_3Ddump_V2 plug_4Ddump plug_delay_V2 plug_extract)
++
++SET(fredtam_plugins
++  plug_retroicor)
++
++SET(birn_plugins
++  plug_stavg)
++
++SET(kummer_plugins
++  plug_reorder)
++
++SET(rickr_plugins
++  plug_roiedit plug_hemisub plug_maskcalc plug_crender plug_vol2surf)
++
++SET(tross_plugins
++  plug_fourier)
++
++SET(belmonte_plugins
++  plug_threshold plug_permtest)
++
++SET(davidshin_plugins
++  plug_aslA3D3)
++
++# all contributed plugins
++SET(contrib_plugins
++  ${ziad_plugins} ${birn_plugins} ${kummer_plugins} ${rickr_plugins}
++  ${tross_plugins} ${belmonte_plugins} ${fredtam_plugins} ${davidshin_plugins})
++
++# all plugins
++SET(plugins
++  ${baseplugins} ${models} ${contrib_plugins})
++
++# add targets for all plugins
++FOREACH(plugin ${plugins})
++ ADD_LIBRARY(${plugin} MODULE ${plugin}.c)
++ENDFOREACH(plugin)
++ADD_LIBRARY(plug_maxima MODULE plug_maxima.c maxima.c)
++SET(allplugins ${plugins} plug_maxima)
++
++# prevent plugins from having 'lib' prefix
++SET_TARGET_PROPERTIES(${allplugins} PROPERTIES PREFIX "")
++
++# TODO check if special permissions are necessary
++INSTALL(TARGETS ${allplugins}
++  DESTINATION ${AFNI_INSTALL_PLUGIN_DIR} COMPONENT Runtime
++  PERMISSIONS ${FILE_PERMISSIONS})
+--- /dev/null
++++ b/R_scripts/CMakeLists.txt
+@@ -0,0 +1,16 @@
++PROJECT(R_SCRIPTS)
++
++# script being programs on their own
++SET(SCRIPTS
++  3dAOV.R 3dGC.R 1dRplot.R 3dICA.R 3dICC.R 3dICC_REML.R 3dLME.R 3dMEMA.R
++  3dMVM.R 3dSignatures.R ExamineXmat.R smooth.R 3dRprogDemo.R)
++
++# everything else that is not meant to be a standalone script
++SET(MODULES
++  1dGC.R 1dSEMr.R 1dSVAR.R 3dKS.R AFNIio.R AFNIplot.R Level2.R Signatures.R)
++
++INSTALL(FILES ${MODULES}
++  DESTINATION ${AFNI_INSTALL_SCRIPT_DIR} COMPONENT Runtime
++  PERMISSIONS ${FILE_PERMISSIONS})
++INSTALL(PROGRAMS ${SCRIPTS}
++  DESTINATION ${AFNI_INSTALL_SCRIPT_DIR} COMPONENT Runtime)
+--- /dev/null
++++ b/SUMA/CMakeLists.txt
+@@ -0,0 +1,178 @@
++PROJECT(SUMA)
++
++##
++## Define options to customize the build-process
++##
++
++OPTION(AFNI_BUILD_LOCAL_GLW
++       "Build and use AFNI's local copy of libGLw"
++       OFF)
++
++##
++## Check for and configure for external dependencies
++##
++
++FIND_PACKAGE(OpenGL REQUIRED)
++FIND_PACKAGE(GLUT REQUIRED)
++INCLUDE_DIRECTORIES(${OPENGL_INCLUDE_DIR} ${GLUT_INCLUDE_DIR})
++
++# gts (and glib headers) are only needed for SurfMesh
++INCLUDE(FindPkgConfig)
++pkg_check_modules(GTS gts)
++IF(GTS_FOUND)
++  # Macro to turn a list into a string (why doesn't CMake have this
++  # built-in?)
++  MACRO (LIST_TO_STRING _string _list)
++  SET (${_string})
++    FOREACH (_item ${_list})
++      SET (${_string} "${${_string}} ${_item}")
++    ENDFOREACH (_item)
++  ENDMACRO (LIST_TO_STRING)
++
++  LIST_TO_STRING(XGTS_CFLAGS "${GTS_CFLAGS}")
++  MESSAGE(STATUS "GTS library found - compiling SurfMesh")
++ELSE(GTS_FOUND)
++  MESSAGE(STATUS "GTS library not found - compiling without SurfMesh")
++ENDIF(GTS_FOUND)
++
++#
++# libSUMA
++#
++SET(LIBSUMA_SRCS
++  SUMA_trackball.c SUMA_SVmanip.c SUMA_input.c SUMA_MiscFunc.c
++  SUMA_IV_XYZextract.c SUMA_IV_FaceSetsextract.c SUMA_SurfNorm.c
++  SUMA_DOmanip.c SUMA_Load_Surface_Object.c SUMA_CreateDO.c
++  SUMA_help.c SUMA_display.c SUMA_display_b.c SUMA_ParseCommands.c SUMA_Engine.c
++  SUMA_Surface_IO.c SUMA_VolData.c SUMA_niml.c SUMA_Color.c SUMA_GeomComp.c
++  SUMA_SphericalMapping.c SUMA_DataSets.c SUMA_HomerFunc.c SUMA_xColBar.c
++  SUMA_IsoSurfaceFunc.c SUMA_BrainWrap.c SUMA_global.c SUMA_ExpEval.c
++  SUMA_SurfaceToSurface.c SUMA_LocalStat.c SUMA_spharm.c
++  SUMA_dot.c SUMA_plot.c SUMA_volume_render.c SUMA_SegFunc.c SUMA_SegOpts.c
++  SUMA_driver.c
++  PLY/plyfile.c PLY/obj_io.c MarchingCubes/MarchingCubes.c)
++
++# add libGLw symbols if requested
++IF(AFNI_BUILD_LOCAL_GLW)
++  LIST(APPEND LIBSUMA_SRCS GLw_local/GLwDrawA.c)
++  INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/GLw_local)
++ELSE(AFNI_BUILD_LOCAL_GLW)
++  FIND_LIBRARY(GLW_LIBRARY GLw)
++ENDIF(AFNI_BUILD_LOCAL_GLW)
++
++INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/PLY ${CMAKE_SOURCE_DIR}/avovk/)
++
++# TODO determine what this is for
++ADD_DEFINITIONS(-DSUMA_COMPILED -DnoGLwidget)
++
++SET(SUMA_LIBS
++  ${AFNI_LIBS}
++  ${TRACKTOOLS_LIBS}
++  SUMA
++  ${THREEDEDGE_LIBS}
++  ${OPENGL_LIBRARIES}
++  ${GLUT_LIBRARIES}
++  ${SEGTOOLS_LIBS})
++
++ADD_LIBRARY(SUMA ${LIBSUMA_SRCS})
++TARGET_LINK_LIBRARIES(SUMA
++   # -lXm should be loaded before e.g. Xt which is linked to by mri etc
++   -Wl,--no-as-needed ${MOTIF_LIBRARIES} -Wl,--as-needed
++   ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES}
++   mrix mri tracktools ${THREEDEDGE_LIBS} segtools)
++# need to link against GLw if not included in the library
++IF(NOT AFNI_BUILD_LOCAL_GLW)
++  TARGET_LINK_LIBRARIES(SUMA ${GLW_LIBRARY})
++ENDIF(NOT AFNI_BUILD_LOCAL_GLW)
++
++#
++# Programs
++#
++SET(PROGRAMS
++  suma prompt_user MakeColorMap ScaleToMap
++  inflate_compare SurfaceMetrics ConvertSurface
++  ConvertDset ROI2dataset SurfSmooth SurfPatch SurfQual SurfClust IsoSurface
++  ConvexHull 3dSkullStrip 3dSeg 3dCRUISEtoAFNI 3dGenPriors 3dGenFeatureDist 3dBRAIN_VOYAGERtoAFNI 3dVol2Surf
++  SurfMeasures FSread_annot SampBias volume_render 3dSurfMask SurfToSurf
++  ROIgrow AnalyzeTrace DriveSuma SurfDist SpharmReco SpharmDeco SurfDsetInfo
++  SurfLocalStat SurfFWHM NikoMap SurfInfo 3dSurf2Vol SurfRetinoMap ParseName
++  RestSym SurfExtrema 3dinfill 3dHist HalloSuma InstaTract niprobe
++  inspec quickspec
++  CreateIcosahedron MapIcosahedron)
++
++# automatically add targets for all programs following to frequently used
++# naming scheme
++FOREACH(program ${PROGRAMS})
++  ADD_EXECUTABLE(${program} SUMA_${program}.c)
++ENDFOREACH(program)
++
++# SUMA prefixed programs
++FOREACH(program SUMA_glxdino SUMA_paperplane SUMA_pixmap2eps
++                SUMA_Load_Surface_Object SUMA_inflate_compare SUMA_Homer)
++  ADD_EXECUTABLE(${program} ${program}.c)
++  LIST(APPEND PROGRAMS ${program})
++ENDFOREACH(program)
++
++#
++# Additonal targets
++#
++ADD_EXECUTABLE(SumaProgramTemplate SUMA_ProgramTemplate.c)
++LIST(APPEND PROGRAMS SumaProgramTemplate)
++
++ADD_EXECUTABLE(SUMA_Read_SpecFile SUMA_Load_Surface_Object.c)
++LIST(APPEND PROGRAMS SUMA_Read_SpecFile)
++
++ADD_EXECUTABLE(CompareSurfaces SUMA_compare_surfaces.c)
++LIST(APPEND PROGRAMS CompareSurfaces)
++
++
++# Source files missing
++#ADD_EXECUTABLE(resolvitivity SUMA_resolvitivity.c)
++#LIST(APPEND PROGRAMS resolvitivity)
++
++#ADD_EXECUTABLE(3dfilter SUMA_3dfilter.c)
++#LIST(APPEND PROGRAMS 3dfilter)
++
++ADD_EXECUTABLE(Surf2VolCoord SUMA_Surf2VolCoord_demo.c)
++LIST(APPEND PROGRAMS Surf2VolCoord)
++
++#error: too few arguments to function 'Debug_Move'
++#ADD_EXECUTABLE(toy_circle SUMA_toy_circle.c SUMA_SurfWarp.c)
++#LIST(APPEND PROGRAMS toy_circle)
++
++ADD_EXECUTABLE(path_optimize SUMA_path_optimize.c SUMA_SurfWarp.c)
++TARGET_LINK_LIBRARIES(path_optimize ${SUMA_LIBS})
++LIST(APPEND PROGRAMS path_optimize)
++
++# Source files missing
++#ADD_EXECUTABLE(spharm_test SUMA_spharm.c)
++#LIST(APPEND PROGRAMS spharm_test)
++
++IF(GTS_FOUND)
++  SET(SUMAGTS_SRCS SUMA_gts.c SUMA_gts_insert.c)
++  ADD_LIBRARY(SUMAGTS ${SUMAGTS_SRCS})
++  TARGET_LINK_LIBRARIES(SUMAGTS ${SUMA_LIBS} ${GLUT_LIBRARIES} ${GLIB2_LIBRARIES})
++
++  ADD_EXECUTABLE(SurfMesh SUMA_coarsen.c)
++  SET_TARGET_PROPERTIES(SurfMesh PROPERTIES COMPILE_FLAGS ${XGTS_CFLAGS})
++  TARGET_LINK_LIBRARIES(SurfMesh SUMAGTS ${GTS_LIBRARIES})
++  LIST(APPEND PROGRAMS SurfMesh)
++
++  ADD_EXECUTABLE(BrainSkin SUMA_BrainSkin.c)
++  TARGET_LINK_LIBRARIES(BrainSkin SUMAGTS ${GTS_LIBRARIES})
++  LIST(APPEND PROGRAMS BrainSkin)
++ENDIF(GTS_FOUND)
++
++# all programs link against SUMA_LIBS
++FOREACH(program ${PROGRAMS})
++  TARGET_LINK_LIBRARIES(${program} ${SUMA_LIBS})
++ENDFOREACH(program)
++
++SET_TARGET_PROPERTIES(volume_render PROPERTIES COMPILE_FLAGS -DDO_VOLUME_MAIN)
++
++#
++# Install targets
++#
++INSTALL(TARGETS SUMA SUMAGTS ${PROGRAMS}
++  RUNTIME DESTINATION ${AFNI_INSTALL_BIN_DIR} COMPONENT Runtime
++  LIBRARY DESTINATION ${AFNI_INSTALL_LIB_DIR} COMPONENT Runtime
++  ARCHIVE DESTINATION ${AFNI_INSTALL_LIB_DIR} COMPONENT Development)
+--- /dev/null
++++ b/avovk/CMakeLists.txt
+@@ -0,0 +1,26 @@
++PROJECT(segtools)
++
++if (GSL_LIBRARY)
++  MESSAGE(STATUS "Found GSL library, compiling segtools")
++  SET(SOURCES thd_segtools_fNM.c cluster_floatNOMASK.c)
++  ADD_LIBRARY(segtools ${SOURCES})
++  TARGET_LINK_LIBRARIES(segtools mri ${GSL_LIBRARIES})
++  SET(PROGRAMS fit_onesign Aclustering 3dfit_onesign 3dkmeans)
++
++  ADD_EXECUTABLE(fit_onesign fit_onesign.c)
++  ADD_EXECUTABLE(Aclustering Aclustering.c)
++  ADD_EXECUTABLE(3dfit_onesign 3dfit_onesign.c)
++  #ADD_EXECUTABLE(3dAclustering_fNM 3dAclustering_floatNM.c)
++  ADD_EXECUTABLE(3dkmeans 3dkmeans.c cluster_floatNOMASK.c thd_segtools_fNM.c)
++
++  FOREACH(program ${PROGRAMS})
++    TARGET_LINK_LIBRARIES(${program} ${AFNI_LIBS} ${SEGTOOLS_LIBS} ${GSL_LIBRARIES})
++  ENDFOREACH(program)
++
++  INSTALL(TARGETS segtools ${PROGRAMS}
++    RUNTIME DESTINATION ${AFNI_INSTALL_BIN_DIR} COMPONENT Runtime
++    LIBRARY DESTINATION ${AFNI_INSTALL_LIB_DIR} COMPONENT Runtime
++    ARCHIVE DESTINATION ${AFNI_INSTALL_LIB_DIR} COMPONENT Development)
++ELSE(GSL_LIBRARY)
++  MESSAGE("GNU Scientific Library not found - not compiling segtools!")
++ENDIF(GSL_LIBRARY)
+--- /dev/null
++++ b/coxplot/CMakeLists.txt
+@@ -0,0 +1,25 @@
++PROJECT(coxplot)
++
++SET(SOURCES
++ color.c curve.c frame.c frstpt.c labmod.c memplt.c
++ line.c perim.c periml.c phdot.c phline.c point.c
++ points.c pwrit.c pwritf.c set.c setdsh.c
++ setfrm.c setlin.c setw.c srface.c tick4.c vector.c
++ zzaxxx.c zzaxyy.c zzchar.c zzclip.c zzlabl.c zzlgin.c
++ zzline.c zzlinx.c zzliny.c zzlogx.c zzlogy.c
++ zzperi.c zzphph.c zzphys.c
++ ppak_perim.c ppak_pwrit.c ppak_pwritf.c ppak_srface.c
++ plot_cox.c plot_ps.c plot_ps2.c plot_x11.c
++ plot_motif.c plot_ts.c ppak_commons.c plot_strip.c
++)
++
++ADD_LIBRARY(coxplot ${SOURCES})
++TARGET_LINK_LIBRARIES(coxplot
++   ${MOTIF_LIBRARIES}
++   ${X11_LIBRARIES} ${X11_Xt_LIB}
++   ${F2C_LIBRARY} m mri)
++
++INSTALL(TARGETS coxplot
++  RUNTIME DESTINATION ${AFNI_INSTALL_BIN_DIR} COMPONENT Runtime
++  LIBRARY DESTINATION ${AFNI_INSTALL_LIB_DIR} COMPONENT Runtime
++  ARCHIVE DESTINATION ${AFNI_INSTALL_LIB_DIR} COMPONENT Development)
+--- /dev/null
++++ b/faces/CMakeLists.txt
+@@ -0,0 +1,8 @@
++PROJECT(FACES)
++
++FILE(GLOB ALLFACES face_*.jpg)
++FILE(GLOB ALLSPLASH splash_*.jpg)
++
++
++INSTALL(FILES ${ALLFACES} ${ALLSPLASH}
++  DESTINATION ${AFNI_INSTALL_PICS_DIR} COMPONENT Runtime)
+--- /dev/null
++++ b/poems/CMakeLists.txt
+@@ -0,0 +1,6 @@
++PROJECT(POEMS)
++
++FILE(GLOB ALLPOEMS poem_*.txt)
++
++INSTALL(FILES ${ALLPOEMS}
++  DESTINATION ${AFNI_INSTALL_POEMS_DIR} COMPONENT Runtime)
+--- /dev/null
++++ b/python_scripts/CMakeLists.txt
+@@ -0,0 +1,27 @@
++PROJECT(PYTHON_SCRIPTS)
++
++# script being programs on their own
++SET(SCRIPTS
++  1d_tool.py afni_proc.py afni_restproc.py afni_system_check.py
++  align_epi_anat.py auto_warp.py @DoPerRoi.py eg_main_chrono.py
++  gen_epi_review.py gen_group_command.py gen_ss_review_scripts.py gui_xmat.py
++  lpc_align.py make_pq_script.py make_random_timing.py make_stim_times.py
++  neuro_deconvolve.py python_module_test.py quick.alpha.vals.py realtime_receiver.py
++  slow_surf_clustsim.py timing_tool.py uber_align_test.py uber_proc.py
++  uber_skel.py uber_subject.py uber_ttest.py xmat_tool.py gen_ss_review_table.py
++  fat_mvm_gridconv.py fat_mvm_scripter.py lib_fat_funcs.py fat_mvm_prep.py fat_roi_row.py)
++
++# everything else that is not meant to be a standalone script
++SET(MODULES
++  afni_base.py afni_util.py afni_xmat.py ask_me.py db_mod.py
++  gui_uber_align_test.py gui_uber_skel.py gui_uber_subj.py gui_uber_ttest.py
++  lib_afni1D.py lib_matplot.py lib_qt_gui.py lib_realtime.py lib_RR_plot.py
++  lib_subjects.py lib_surf_clustsim.py lib_system_check.py lib_textdata.py lib_timing.py
++  lib_uber_align.py lib_uber_skel.py lib_uber_subject.py lib_uber_ttest.py
++  lib_wx.py module_test_lib.py option_list.py ui_xmat.py)
++
++INSTALL(FILES ${MODULES}
++  DESTINATION ${AFNI_INSTALL_SCRIPT_DIR} COMPONENT Runtime
++  PERMISSIONS ${FILE_PERMISSIONS})
++INSTALL(PROGRAMS ${SCRIPTS}
++  DESTINATION ${AFNI_INSTALL_SCRIPT_DIR} COMPONENT Runtime)
+--- /dev/null
++++ b/rickr/CMakeLists.txt
+@@ -0,0 +1,32 @@
++PROJECT(rickr)
++
++IF(NOT AFNI_BUILD_CORELIBS_ONLY)
++  SET(PROGRAMS 3dresample file_tool Dimon1 Dimon serial_helper column_cat)
++
++  ADD_EXECUTABLE(3dresample 3dresample.c)
++  TARGET_LINK_LIBRARIES(3dresample ${AFNI_LIBS})
++
++  ADD_EXECUTABLE(file_tool file_tool.c fields.c)
++  TARGET_LINK_LIBRARIES(file_tool ${AFNI_LIBS}) # Just for ge4_header
++
++  SET(IMON_OBS l_mcw_glob.c realtime.c)
++# yoh: Has not been built by upstream for a while
++#  ADD_EXECUTABLE(Imon Imon.c ${IMON_OBS})
++#  TARGET_LINK_LIBRARIES(Imon ${AFNI_LIBS}) # For thd_iochan
++
++  ADD_EXECUTABLE(Dimon
++          Dimon.c realtime.c)
++  TARGET_LINK_LIBRARIES(Dimon ${AFNI_LIBS}) # For thd_iochan
++
++  ADD_EXECUTABLE(Dimon1
++          Dimon1.c realtime1.c)
++  TARGET_LINK_LIBRARIES(Dimon1 ${AFNI_LIBS}) # For thd_iochan
++
++  ADD_EXECUTABLE(serial_helper serial_helper.c)
++  ADD_EXECUTABLE(column_cat column_cat.c)
++ENDIF(NOT AFNI_BUILD_CORELIBS_ONLY)
++
++INSTALL(TARGETS ${PROGRAMS}
++  RUNTIME DESTINATION ${AFNI_INSTALL_BIN_DIR} COMPONENT Runtime
++  LIBRARY DESTINATION ${AFNI_INSTALL_LIB_DIR} COMPONENT Runtime
++  ARCHIVE DESTINATION ${AFNI_INSTALL_LIB_DIR} COMPONENT Development)
+--- /dev/null
++++ b/html/CMakeLists.txt
+@@ -0,0 +1,7 @@
++PROJECT(HTML)
++
++FILE(GLOB ALLHTML afnigui*.html)
++FILE(GLOB ALLJPEG afnigui*.jpg)
++
++INSTALL(FILES ${ALLHTML} ${ALLJPEG}
++  DESTINATION ${AFNI_INSTALL_HTML_DIR} COMPONENT Runtime)
+--- /dev/null
++++ b/ptaylor/CMakeLists.txt
+@@ -0,0 +1,24 @@
++PROJECT(tracktools)
++
++IF (GSL_LIBRARY AND GTS_FOUND)
++  MESSAGE(STATUS "Found GSL and GTS libraries, compiling tracktools")
++  SET(SOURCES DoTrackit.c TrackIO.c rsfc.c diffusiony.c FuncTrac.c roiing.c Fat_Labels.c)
++  ADD_LIBRARY(tracktools ${SOURCES})
++  TARGET_LINK_LIBRARIES(tracktools gts mri ${GSL_LIBRARIES})
++  SET(PROGRAMS
++    3dTrackID 3dProbTrackID 3dDWUncert 3dReHo 3dRSFC map_TrackID 3dROIMaker
++    3dMatch 3dNetCorr 1dDW_Grad_o_Mat 3dEigsToDT 3dDTtoNoisyDWI
++    3dTORTOISEtoHere)
++
++  FOREACH(program ${PROGRAMS})
++    ADD_EXECUTABLE(${program} ${program}.c)
++    TARGET_LINK_LIBRARIES(${program} ${AFNI_LIBS} ${SUMA_LIBS} tracktools ${GSL_LIBRARIES} ${GTS_LIBRARIES})
++  ENDFOREACH(program)
++
++  INSTALL(TARGETS tracktools ${PROGRAMS}
++    RUNTIME DESTINATION ${AFNI_INSTALL_BIN_DIR} COMPONENT Runtime
++    LIBRARY DESTINATION ${AFNI_INSTALL_LIB_DIR} COMPONENT Runtime
++    ARCHIVE DESTINATION ${AFNI_INSTALL_LIB_DIR} COMPONENT Development)
++ELSE (GSL_LIBRARY AND GTS_FOUND)
++    MESSAGE(STATUS "GSL and/or GTS libraries not found -- not compiling tracktools")
++ENDIF (GSL_LIBRARY AND GTS_FOUND)
+--- /dev/null
++++ b/pkundu/CMakeLists.txt
+@@ -0,0 +1,8 @@
++PROJECT(PKUNDU)
++
++# script being programs on their own
++SET(SCRIPTS meica.py)
++
++
++INSTALL(PROGRAMS ${SCRIPTS}
++  DESTINATION ${AFNI_INSTALL_SCRIPT_DIR} COMPONENT Runtime)
+--- /dev/null
++++ b/pkundu/meica.libs/CMakeLists.txt
+@@ -0,0 +1,10 @@
++PROJECT(MEICA_LIBS)
++
++# script being programs on their own
++SET(SCRIPTS
++  alignp_mepi_anat.py optcom.py optcom_surf.py select_model.py
++  siemens_me2nii.py t2smap.py tedana.py tedanaX.py)
++
++
++INSTALL(PROGRAMS ${SCRIPTS}
++  DESTINATION ${AFNI_INSTALL_SCRIPT_DIR} COMPONENT Runtime)
+--- /dev/null
++++ b/3DEdge/src/CMakeLists.txt
+@@ -0,0 +1,13 @@
++PROJECT(3DEdge)
++
++SET(SOURCES
++ connexe.c convert.c extrema.c iopnm.c recbuffer.c recline.c zcross.c
++)
++
++ADD_LIBRARY(3DEdge ${SOURCES})
++TARGET_LINK_LIBRARIES(3DEdge m)
++
++INSTALL(TARGETS 3DEdge
++  RUNTIME DESTINATION ${AFNI_INSTALL_BIN_DIR} COMPONENT Runtime
++  LIBRARY DESTINATION ${AFNI_INSTALL_LIB_DIR} COMPONENT Runtime
++  ARCHIVE DESTINATION ${AFNI_INSTALL_LIB_DIR} COMPONENT Development)

@@ -1,0 +1,26 @@
+#! /bin/sh -e
+
+# Copyright (C) 2009 by
+# Michael Hanke        michael.hanke@gmail.com
+#
+# This script is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+
+if [ "${0##*/}" = "afni_wrapper" ]; then
+	echo 'afni_wrapper: This script should not be run like this, see afni(1) for details' 1>&2
+	exit 1
+fi
+
+if [ -z "${AFNI_INSTALLDIR}" ]; then
+	. /etc/afni/afni.sh
+fi
+
+exec /usr/lib/afni/bin/${0##*/} "$@"

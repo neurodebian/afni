@@ -1,0 +1,20 @@
+--- a/thd_xwebber.c
++++ b/thd_xwebber.c
+@@ -190,6 +190,9 @@ ENTRY("htmlize") ;
+    RETURN(mmm) ;
+ }
+ 
++#if 0
++/* All uses of RefreshHTML_AtEvent were commented out anyways so
++   no need to drag/rely on having XmHTMLRefresh */
+ /*----------------------------------------------------------------------------*/
+ /* This is a callback to deal with some refresh problems
+    that should have been handled by the XmHTML library.
+@@ -201,6 +204,7 @@ void RefreshHTML_AtEvent( Widget w , XtP
+ {
+     XmHTMLRefresh(client_data);
+ }
++#endif
+ 
+ /*----------------------------------------------------------------------------*/
+ /* Open a window with an XmHTML widget containing msg.

@@ -1,0 +1,46 @@
+.TH "AFNI" "1" "June 2009" "Michael Hanke" ""
+.SH "NAME"
+afni \- toolkit for analyzing and visualizing functional MRI data
+.SH "DESCRIPTION"
+\fBAFNI\fR is an environment for processing and displaying functional MRI data.
+It provides a complete analysis toolchain, including 3D cortical surface
+models, and mapping of volumetric data (SUMA).
+
+\fBAFNI\fR can be configured using either a config file or via a large
+set of environment variables (see README.environment for more information).
+A default configuration for POSIX-compliant environments is available in
+/etc/afni/afni.sh. This is shell script that needs to be sourced. One way
+to do this automatically is to add a line containing
+.IP
+ \. /etc/afni/afni.sh
+.PP
+to the .bashrc file in a users home directory (or a corresponding file
+for other shells than bash).
+.PP
+Questions regarding the usage of \fBAFNI\fR or related theory can be
+posted in the
+\fBAFNI forum\fR (see \fIhttp://afni.nimh.nih.gov/afni/community/board\fR).
+.SH "ENVIRONMENT"
+This \fBAFNI\fR suite is built with \fBOPENMP\fR support, allowing
+some tools (e.g. 3dDespike) use multiple threads on a single box.  By
+default it will run 1 thread per each available CPU
+core.
+.Ev
+OMP_NUM_THREADS
+environment variable can be used to explicitly specify number of threads to use.
+.PP
+See
+.Pa
+/usr/share/doc/afni-common/README.environment.gz
+for description of other environment variables used by \fBAFNI\fR.
+.SH "FILES"
+.IP /etc/afni/afni.sh
+.IP /usr/share/doc/afni-common/README.environment.gz
+.SH "SEE ALSO"
+The AFNI homepage at
+.I http://afni.nimh.nih.gov
+.SH "AUTHOR"
+\fBAFNI\fR was written by Robert W. Cox, and many more people.
+.PP
+This manual page was written by Michael Hanke <michael.hanke@gmail.com>,
+for the Debian project (but may be used by others).

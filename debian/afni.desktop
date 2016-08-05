@@ -1,0 +1,10 @@
+[Desktop Entry]
+GenericName=Analysis of Functional NeuroImages
+GenericName[de]=Analyse funktioneller Bildgebung
+Name=AFNI
+Exec=afni
+TryExec=afni
+Type=Application
+Terminal=false
+Categories=Graphics;Science;MedicalSoftware;Viewer;
+Keywords=fMRI;Analysis;

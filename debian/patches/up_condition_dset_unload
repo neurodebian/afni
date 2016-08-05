@@ -1,0 +1,11 @@
+--- a/3ddata.h
++++ b/3ddata.h
+@@ -3747,7 +3747,7 @@
+ 
+     Won't do anything if the dataset is locked into memory
+ */
+-#define DSET_unload(ds) THD_purge_datablock( (ds)->dblk , DATABLOCK_MEM_ANY )
++#define DSET_unload(ds) THD_purge_datablock( ((ds!=NULL)?(ds)->dblk:NULL) , DATABLOCK_MEM_ANY )
+ 
+ /*! Unload sub-brick iv in dataset ds from memory.
+ 
