@@ -1,4 +1,5 @@
 up_condition_dset_unload
+up-fix_inflate_compare
 up_meica_tedana_upstream_mdp_api
 up_glut_init
 up_pragma_var_definition
@@ -12,4 +13,3 @@ debian_paths
 cmake_sharedlibs-noncmake
 cmake_sharedlibs-cmake
 cmake_tests
-up-fix_inflate_compare
