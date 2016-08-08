@@ -1,14 +1,15 @@
 #!/usr/bin/make -f
 
 srcpkg = $(shell LC_ALL=C dpkg-parsechangelog | grep '^Source:' | cut -d ' ' -f 2,2)
-debver = $(shell LC_ALL=C dpkg-parsechangelog | grep '^Version:' | cut -d ' ' -f 2,2 )
+debver = $(shell LC_ALL=C dpkg-parsechangelog | grep '^Version:' | cut -d ' ' -f 2,2)
 
 # this figures out the last merge point from 'upstream' into the Debian branch and
 # then described this commit relative to the last release tag (AFNI_...)
 # For this to make any sense, the local/remote upstream branch must track upstream's
 # master or any other source branch.
-gitver = $(shell [ -x /usr/bin/git ] && git describe --tags --match 'AFNI_[0-9]*.[0-9]*.[0-9]*' \
-  $$(git rev-parse --quiet --verify refs/remotes/origin/upstream && git merge-base -a HEAD origin/upstream || git merge-base -a HEAD upstream ) | sed -e 's/^AFNI_//' -e 's/-/+git/')~dfsg.1
+mergerev = $(shell git merge-base -a HEAD origin/upstream || git merge-base -a HEAD upstream)
+gitver = $(shell git describe --tags --match 'AFNI_[0-9]*.[0-9]*.[0-9]*' \
+  $(mergerev) | sed -e 's/^AFNI_//' -e 's/-/+git/')~dfsg.1
 
 # Enable hardening on systems which support it
 # yoh: do not use hardening magic in cc/ld -- leads to spurious
