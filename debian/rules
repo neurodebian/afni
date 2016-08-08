@@ -152,6 +152,7 @@ dfsg-source-tree:
 	@echo "Testing for uncommited changes"
 	@git diff --quiet HEAD
 	# remove undesired content
+	rm src/3DEdge/src/Makefile.orig
 	# gts, GLUT, GLw
 	rm -rf src/SUMA/{gts,GLUT,GLw_local}
 	# libjpeg
