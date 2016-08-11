@@ -309,8 +309,8 @@
 +  3dNwarpCalc dicom_hinfo apsearch 3dNormalityTest 3dmask_tool FIRdesign
 +  2perm 3dClustCount 3dTransformGroupInCorr 3dExtractGroupInCorr 3dUnifize
 +  3dNwarpCat 3dQwarp 3dLocalHistog 3dNwarpAdjust 3dNwarpFuncs 3dTproject
-+  afni_open 3dConformist 3dNwarpXYZ 3dTRfix 3dToyProg nifti1_tool
-+  gifti_tool cifti_tool images_equal uniq_images GLTsymtest 3dPval ${EXTRAS})
++  afni_open 3dConformist 3dNwarpXYZ 3dTRfix 3dToyProg
++  images_equal uniq_images GLTsymtest 3dPval ${EXTRAS})
 +
 +SET(SCRIPTS
 +  @4Daverage @CommandGlobb @GetAfniOrient @DTI_studio_reposition
@@ -1161,7 +1161,7 @@
 +  SET(PROGRAMS
 +    3dTrackID 3dProbTrackID 3dDWUncert 3dReHo 3dRSFC map_TrackID 3dROIMaker
 +    3dMatch 3dNetCorr 1dDW_Grad_o_Mat 3dEigsToDT 3dDTtoNoisyDWI
-+    3dTORTOISEtoHere 3dVec_to_RGBind)
++    3dTORTOISEtoHere)
 +
 +  FOREACH(program ${PROGRAMS})
 +    ADD_EXECUTABLE(${program} ${program}.c)
