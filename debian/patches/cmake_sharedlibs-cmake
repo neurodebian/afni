@@ -265,7 +265,7 @@
 +ENDIF(NOT AFNI_BUILD_CORELIBS_ONLY)
 --- /dev/null
 +++ b/src/CMakeLists_apps.txt
-@@ -0,0 +1,229 @@
+@@ -0,0 +1,230 @@
 +##
 +## This file is to be included in the toplevel CMakeLists.txt
 +##
@@ -276,7 +276,7 @@
 +
 +# Programs using only AFNI_LIBS
 +SET(PROGRAMS
-+  to3d from3d abut 3dclust nsize 3dinfo 3dproject 3dmerge count sfim tfim
++  to3d from3d abut 3dclust 3dETC nsize 3dinfo 3dproject 3dmerge count sfim tfim
 +  ftosh 3dttest 3ddup imrotate imreg imstat 3dnvals imand sqwave immask
 +  imdump imaver 3dhistog cdf 2swap 4swap mritopgm 3dANOVA 3dANOVA2
 +  3dANOVA3 plugout_tta waver 3dnewid 3dcalc ccalc imcalc 1dmatcalc 3drefit
@@ -290,8 +290,9 @@
 +  3dZregrid 3dEntropy ent16 3dRowFillin 1dgrayplot 3dToutcount 1dsum
 +  3dExtrema strblast 3dZcutup 3dZcat 3dTqual 3dGetrow 3dTcorrelate
 +  3dAnatNudge 3dcopy Vecwarp 3dMINCtoAFNI 3dCM fdrval 3dAFNItoANALYZE
-+  siemens_vision ge_header mayo_analyze 3dAFNItoNIFTI 3dAutoTcorrelate
-+  3dFDR rtfeedme 3dAutomask 3dAFNItoMINC 3dBrickStat 3dThreetoRGB Ifile
++  siemens_vision stimband 1dNLfit ge_header mayo_analyze 3dAFNItoNIFTI
++  3dAutoTcorrelate 3dFDR rtfeedme 3dAutomask 3dAFNItoMINC 3dBrickStat
++  3dThreetoRGB Ifile
 +  3dAutobox 3dLRflip 3dANALYZEtoAFNI dicom_hdr 3dDespike dicom_to_raw
 +  rotcom 1ddot 1dsvd 3dAnhist 3dAFNIto3D 3dWarp nicat fftest 3dDTeig
 +  3dWarpDrive plugout_drive 3dLSS 3dMedianFilter 3dAFNItoNIML 3dAFNItoRaw
@@ -306,11 +307,11 @@
 +  3dSetupGroupInCorr 3dGroupInCorr 3dDimRed 3dSatCheck 3dTcorr1D 3dSimARMA11
 +  3dClustSim 3dRetinoPhase 3dMaskToASCII 3dttest++ 3dDTtoDWI niccc
 +  3dRankizer 3dXYZcat 3dDeghost 3dPolyfit 3dNwarpApply 1dCorrelate 3dCountSpikes
-+  3dNwarpCalc dicom_hinfo apsearch 3dNormalityTest 3dmask_tool FIRdesign
-+  2perm 3dClustCount 3dTransformGroupInCorr 3dExtractGroupInCorr 3dUnifize
-+  3dNwarpCat 3dQwarp 3dLocalHistog 3dNwarpAdjust 3dNwarpFuncs 3dTproject
-+  afni_open 3dConformist 3dNwarpXYZ 3dTRfix 3dToyProg
-+  images_equal uniq_images GLTsymtest 3dPval ${EXTRAS})
++  3dNwarpCalc dicom_hinfo apsearch 3dNormalizer 3dNormalityTest 3dmask_tool
++  FIRdesign 2perm 3dClustCount 3dTransformGroupInCorr 3dExtractGroupInCorr
++  3dUnifize 3dNwarpCat 3dQwarp 3dLocalHistog 3dNwarpAdjust 3dNwarpFuncs
++  3dTproject afni_open 3dConformist 3dNwarpXYZ 3dTRfix 3dToyProg images_equal
++  uniq_images GLTsymtest 3dPval csfft_cache 3dLocalACF ${EXTRAS})
 +
 +SET(SCRIPTS
 +  @4Daverage @CommandGlobb @GetAfniOrient @DTI_studio_reposition
@@ -333,9 +334,9 @@
 +  @Shift_Volume @help.AFNI @1dDiffMag @FSlabel2dset @Install_InstaCorr_Demo
 +  @Quiet_Talkers @radial_correlate @DeblankFileNames @clean_help_dir
 +  @global_parse @AfniEnv @Atlasize @Install_TSrestMovieDemo
-+  @Install_AfniRetinoDemo @Install_FATCAT_DEMO
++  @Install_AfniRetinoDemo @get.afni.version @Install_FATCAT_DEMO
 +  @Install_RSFMRI_Motion_Group_Demo @Install_MEICA_Demo @T1scale 3dMVM
-+  @compute_gcor 3dLME @Install_ClustScat_Demo @Install_FATMVM_DEMO
++  @compute_gcor 3dLME @Install_ClustScat_Demo @Install_FATMVM_DEMO @GradFlipTest
 +  @move.to.series.dirs @toMNI_Awarp @toMNI_Qwarpar
 +  @simulate_motion @afni.run.me 3dRprogDemo @ExamineGenFeatDists rPkgsInstall
 +  @Install_DBSproc @Install_3dPFM_Demo 3dPFM @diff.files @diff.tree)
@@ -497,7 +498,7 @@
 +  DESTINATION ${AFNI_INSTALL_SCRIPT_DIR} COMPONENT Runtime)
 --- /dev/null
 +++ b/src/CMakeLists_libs.txt
-@@ -0,0 +1,221 @@
+@@ -0,0 +1,222 @@
 +##
 +## This file is to be included in the toplevel CMakeLists.txt
 +##
@@ -566,7 +567,8 @@
 +  afni_vedit.c thd_fdrcurve.c thd_dset_to_vectim.c thd_bandpass.c
 +  thd_instacorr.c thd_svdblur.c thd_ttest.c thd_satcheck.c thd_dumdset.c
 +  ktaub.c bilinear_warp3D.c thd_table.c thd_atlas.c thd_warp_tables.c
-+  thd_lasso.c thd_mean_dset.c thd_despike_L1.c thd_Tcorr1D.c thd_selenium.c)
++  thd_lasso.c thd_mean_dset.c thd_despike_L1.c thd_Tcorr1D.c thd_selenium.c
++  thd_openimage.c)
 +
 +SET(EDT_SRC
 +  edt_addbrick.c edt_blur.c edt_buildmask.c edt_checkargv.c edt_clust.c
@@ -1022,7 +1024,7 @@
 +ENDIF(GSL_LIBRARY)
 --- /dev/null
 +++ b/src/coxplot/CMakeLists.txt
-@@ -0,0 +1,25 @@
+@@ -0,0 +1,26 @@
 +PROJECT(coxplot)
 +
 +SET(SOURCES
@@ -1036,6 +1038,7 @@
 + ppak_perim.c ppak_pwrit.c ppak_pwritf.c ppak_srface.c
 + plot_cox.c plot_ps.c plot_ps2.c plot_x11.c
 + plot_motif.c plot_ts.c ppak_commons.c plot_strip.c
++ find_color_name.c
 +)
 +
 +ADD_LIBRARY(coxplot ${SOURCES})
@@ -1084,7 +1087,7 @@
 +  python_module_test.py quick.alpha.vals.py realtime_receiver.py
 +  slow_surf_clustsim.py timing_tool.py uber_align_test.py uber_proc.py
 +  uber_skel.py uber_subject.py uber_ttest.py xmat_tool.py read_matlab_files.py
-+  afni_skeleton.py @DoPerRoi.py lpc_align.py
++  afni_skeleton.py parse_fs_lt_log.py @DoPerRoi.py lpc_align.py
 +  )
 +
 +# everything else that is not meant to be a standalone script
@@ -1161,7 +1164,7 @@
 +  SET(PROGRAMS
 +    3dTrackID 3dProbTrackID 3dDWUncert 3dReHo 3dRSFC map_TrackID 3dROIMaker
 +    3dMatch 3dNetCorr 1dDW_Grad_o_Mat 3dEigsToDT 3dDTtoNoisyDWI
-+    3dTORTOISEtoHere)
++    3dTORTOISEtoHere 3dVecRGB_to_HSL 3ddot_beta 3dLombScargle 3dAmpToRSFC)
 +
 +  FOREACH(program ${PROGRAMS})
 +    ADD_EXECUTABLE(${program} ${program}.c)
