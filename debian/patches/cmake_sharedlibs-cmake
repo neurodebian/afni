@@ -265,7 +265,7 @@
 +ENDIF(NOT AFNI_BUILD_CORELIBS_ONLY)
 --- /dev/null
 +++ b/src/CMakeLists_apps.txt
-@@ -0,0 +1,227 @@
+@@ -0,0 +1,229 @@
 +##
 +## This file is to be included in the toplevel CMakeLists.txt
 +##
@@ -309,7 +309,8 @@
 +  3dNwarpCalc dicom_hinfo apsearch 3dNormalityTest 3dmask_tool FIRdesign
 +  2perm 3dClustCount 3dTransformGroupInCorr 3dExtractGroupInCorr 3dUnifize
 +  3dNwarpCat 3dQwarp 3dLocalHistog 3dNwarpAdjust 3dNwarpFuncs 3dTproject
-+  afni_open 3dConformist 3dNwarpXYZ 3dTRfix ${EXTRAS})
++  afni_open 3dConformist 3dNwarpXYZ 3dTRfix 3dToyProg nifti1_tool
++  gifti_tool cifti_tool images_equal uniq_images GLTsymtest 3dPval ${EXTRAS})
 +
 +SET(SCRIPTS
 +  @4Daverage @CommandGlobb @GetAfniOrient @DTI_studio_reposition
@@ -336,7 +337,8 @@
 +  @Install_RSFMRI_Motion_Group_Demo @Install_MEICA_Demo @T1scale 3dMVM
 +  @compute_gcor 3dLME @Install_ClustScat_Demo @Install_FATMVM_DEMO
 +  @move.to.series.dirs @toMNI_Awarp @toMNI_Qwarpar
-+  @simulate_motion @afni.run.me 3dRprogDemo @ExamineGenFeatDists rPkgsInstall)
++  @simulate_motion @afni.run.me 3dRprogDemo @ExamineGenFeatDists rPkgsInstall
++  @Install_DBSproc @Install_3dPFM_Demo 3dPFM @diff.files @diff.tree)
 +
 +
 +##
@@ -437,7 +439,7 @@
 +  afni_pplug_2dfunc.c afni_friends.c afni_ttren.c afni_pplug_1dfunc.c
 +  afni_driver.c afni_niml.c afni_sumafunc.c afni_version.c afni_lock.c
 +  afni_vol2surf.c afni_pplug_instacorr.c afni_pplug_instacalc.c
-+  afni_filer.c)
++  afni_filer.c afni_whelp.c)
 +# This is for compiling to an object that was called afni_pcor_float.o
 +SET_SOURCE_FILES_PROPERTIES(afni_pcor_update.c
 +                            PROPERTIES COMPILE_FLAGS "-DDTYPE=float")
@@ -534,8 +536,8 @@
 +  mri_dicom_stuff.c mri_check.c mri_allzero.c mri_subset.c mri_to_fvect.c
 +  mri_genalign_util.c rcmat.c dmat44.c mri_rbfinterp.c matrix.c
 +  gifti_choice.c zfun.c cs_pv.c cs_sort_iv.c cs_sort_d misc_math.c
-+  mri_sharpness.c mri_genARMA11.c mri_catvol.c mri_polyfit.c mri_nwarp.c mri_extract.c
-+  retroicor.c)
++  mri_sharpness.c mri_genARMA11.c mri_catvol.c mri_polyfit.c mri_nwarp.c
++  mri_extract.c mri_to_pval.c retroicor.c)
 +
 +SET(THD_SRC
 +  thd_atr.c thd_dsetto1D.c thd_initalldir.c thd_reconpar.c thd_auxdata.c
@@ -564,7 +566,7 @@
 +  afni_vedit.c thd_fdrcurve.c thd_dset_to_vectim.c thd_bandpass.c
 +  thd_instacorr.c thd_svdblur.c thd_ttest.c thd_satcheck.c thd_dumdset.c
 +  ktaub.c bilinear_warp3D.c thd_table.c thd_atlas.c thd_warp_tables.c
-+  thd_lasso.c thd_mean_dset.c thd_despike_L1.c thd_Tcorr1D.c)
++  thd_lasso.c thd_mean_dset.c thd_despike_L1.c thd_Tcorr1D.c thd_selenium.c)
 +
 +SET(EDT_SRC
 +  edt_addbrick.c edt_blur.c edt_buildmask.c edt_checkargv.c edt_clust.c
@@ -575,7 +577,7 @@
 +  edt_geomcon.c edt_floatize.c)
 +
 +SET(SUMA_SRC
-+  suma_datasets.c suma_algorithms.c suma_string_manip.c suma_utils.c)
++  suma_datasets.c suma_algorithms.c suma_help.c suma_string_manip.c suma_utils.c)
 +
 +SET(CS_SRC
 +  cs_sort_fi.c cs_sort_di.c cs_symeig.c cs_sort_ii.c cs_sort_ff.c
@@ -904,13 +906,13 @@
 +  suma prompt_user MakeColorMap ScaleToMap
 +  inflate_compare SurfaceMetrics ConvertSurface
 +  ConvertDset ROI2dataset SurfSmooth SurfPatch SurfQual SurfClust IsoSurface
-+  ConvexHull 3dSkullStrip 3dSeg 3dCRUISEtoAFNI 3dGenPriors 3dGenFeatureDist 3dBRAIN_VOYAGERtoAFNI 3dVol2Surf
-+  SurfMeasures FSread_annot SampBias volume_render 3dSurfMask SurfToSurf
-+  ROIgrow AnalyzeTrace DriveSuma SurfDist SpharmReco SpharmDeco SurfDsetInfo
-+  SurfLocalStat SurfFWHM NikoMap SurfInfo 3dSurf2Vol SurfRetinoMap ParseName
-+  RestSym SurfExtrema 3dinfill 3dHist HalloSuma InstaTract niprobe
-+  inspec quickspec
-+  CreateIcosahedron MapIcosahedron)
++  ConvexHull 3dSkullStrip 3dSeg 3dCRUISEtoAFNI 3dGenPriors 3dGenFeatureDist
++  3dBRAIN_VOYAGERtoAFNI 3dVol2Surf SurfMeasures FSread_annot SampBias
++  volume_render 3dSurfMask SurfToSurf ROIgrow AnalyzeTrace DriveSuma SurfDist
++  SpharmReco SpharmDeco SurfDsetInfo SurfLocalStat SurfFWHM NikoMap SurfInfo
++  3dSurf2Vol SurfRetinoMap ParseName RestSym SurfExtrema 3dinfill 3dHist
++  HalloSuma InstaTract niprobe inspec quickspec CreateIcosahedron
++  MapIcosahedron)
 +
 +# automatically add targets for all programs following to frequently used
 +# naming scheme
@@ -1068,28 +1070,33 @@
 +  DESTINATION ${AFNI_INSTALL_POEMS_DIR} COMPONENT Runtime)
 --- /dev/null
 +++ b/src/python_scripts/CMakeLists.txt
-@@ -0,0 +1,27 @@
+@@ -0,0 +1,32 @@
 +PROJECT(PYTHON_SCRIPTS)
 +
 +# script being programs on their own
 +SET(SCRIPTS
 +  1d_tool.py afni_proc.py afni_restproc.py afni_system_check.py
-+  align_epi_anat.py auto_warp.py @DoPerRoi.py eg_main_chrono.py
-+  gen_epi_review.py gen_group_command.py gen_ss_review_scripts.py gui_xmat.py
-+  lpc_align.py make_pq_script.py make_random_timing.py make_stim_times.py
-+  neuro_deconvolve.py python_module_test.py quick.alpha.vals.py realtime_receiver.py
++  align_epi_anat.py auto_warp.py  eg_main_chrono.py fat_lat_csv.py
++  fat_mat_sel.py fat_mvm_gridconv.py fat_mvm_prep.py fat_mvm_scripter.py
++  fat_roi_row.py fat_mvm_review.py gen_epi_review.py gen_group_command.py
++  gen_ss_review_scripts.py gen_ss_review_table.py make_pq_script.py
++  make_random_timing.py make_stim_times.py meica.py neuro_deconvolve.py
++  python_module_test.py quick.alpha.vals.py realtime_receiver.py
 +  slow_surf_clustsim.py timing_tool.py uber_align_test.py uber_proc.py
-+  uber_skel.py uber_subject.py uber_ttest.py xmat_tool.py gen_ss_review_table.py
-+  fat_mvm_gridconv.py fat_mvm_scripter.py lib_fat_funcs.py fat_mvm_prep.py fat_roi_row.py)
++  uber_skel.py uber_subject.py uber_ttest.py xmat_tool.py read_matlab_files.py
++  afni_skeleton.py @DoPerRoi.py lpc_align.py
++  )
 +
 +# everything else that is not meant to be a standalone script
 +SET(MODULES
 +  afni_base.py afni_util.py afni_xmat.py ask_me.py db_mod.py
 +  gui_uber_align_test.py gui_uber_skel.py gui_uber_subj.py gui_uber_ttest.py
-+  lib_afni1D.py lib_matplot.py lib_qt_gui.py lib_realtime.py lib_RR_plot.py
-+  lib_subjects.py lib_surf_clustsim.py lib_system_check.py lib_textdata.py lib_timing.py
-+  lib_uber_align.py lib_uber_skel.py lib_uber_subject.py lib_uber_ttest.py
-+  lib_wx.py module_test_lib.py option_list.py ui_xmat.py)
++  gui_xmat.py lib_afni1D.py lib_fat_funcs.py lib_matplot.py lib_qt_gui.py
++  lib_realtime.py lib_RR_plot.py lib_subjects.py lib_surf_clustsim.py
++  lib_system_check.py lib_textdata.py lib_timing.py lib_uber_align.py
++  lib_uber_skel.py lib_uber_subject.py lib_uber_ttest.py lib_wx.py
++  module_test_lib.py option_list.py ui_xmat.py
++  )
 +
 +INSTALL(FILES ${MODULES}
 +  DESTINATION ${AFNI_INSTALL_SCRIPT_DIR} COMPONENT Runtime
@@ -1148,13 +1155,13 @@
 +
 +IF (GSL_LIBRARY AND GTS_FOUND)
 +  MESSAGE(STATUS "Found GSL and GTS libraries, compiling tracktools")
-+  SET(SOURCES DoTrackit.c TrackIO.c rsfc.c diffusiony.c FuncTrac.c roiing.c Fat_Labels.c)
++  SET(SOURCES DoTrackit.c TrackIO.c rsfc.c diffusiony.c FuncTrac.c roiing.c Fat_Labels.c colorbasic.c)
 +  ADD_LIBRARY(tracktools ${SOURCES})
 +  TARGET_LINK_LIBRARIES(tracktools gts mri ${GSL_LIBRARIES})
 +  SET(PROGRAMS
 +    3dTrackID 3dProbTrackID 3dDWUncert 3dReHo 3dRSFC map_TrackID 3dROIMaker
 +    3dMatch 3dNetCorr 1dDW_Grad_o_Mat 3dEigsToDT 3dDTtoNoisyDWI
-+    3dTORTOISEtoHere)
++    3dTORTOISEtoHere 3dVec_to_RGBind)
 +
 +  FOREACH(program ${PROGRAMS})
 +    ADD_EXECUTABLE(${program} ${program}.c)
