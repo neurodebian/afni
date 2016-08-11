@@ -1,5 +1,3 @@
-diff --git a/src/afni_ports.c b/src/afni_ports.c
-index 9cd5726..ff28401 100644
 --- a/src/afni_ports.c
 +++ b/src/afni_ports.c
 @@ -1,7 +1,7 @@
@@ -11,3 +9,14 @@ index 9cd5726..ff28401 100644
  #include <stdlib.h>
  
  /*************************************************************************/
+--- a/src/powell_int.c
++++ b/src/powell_int.c
+@@ -2,7 +2,7 @@
+ #include <stddef.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+-#include <cs.h>
++#include "cs.h"
+ #include "mrilib.h"
+ #include "f2c.h"
+ #include <time.h>
