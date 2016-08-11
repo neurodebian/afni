@@ -495,12 +495,13 @@
 +  DESTINATION ${AFNI_INSTALL_SCRIPT_DIR} COMPONENT Runtime)
 --- /dev/null
 +++ b/src/CMakeLists_libs.txt
-@@ -0,0 +1,220 @@
+@@ -0,0 +1,221 @@
 +##
 +## This file is to be included in the toplevel CMakeLists.txt
 +##
 +
 +INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}
++                    ${CMAKE_SOURCE_DIR}/src
 +                    ${CMAKE_SOURCE_DIR}/src/niml
 +                    ${CMAKE_SOURCE_DIR}/src/rickr
 +                    ${CMAKE_SOURCE_DIR}/src/ptaylor)
