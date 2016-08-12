@@ -112,8 +112,8 @@ override_dh_auto_test:
 	cd $(DEB_BUILDDIR_STATIC) && ctest $(CTEST_FLAGS)
 	: # Just to verify that previous fixes on linking are inplace
 	set -e; for b in 3dSkullStrip; do \
-		ldd $(DEB_BUILDDIR)/SUMA/$$b | grep '=>.*lib3DEdge.so'; \
-		ldd $(DEB_BUILDDIR)/SUMA/$$b | grep '=>.*libSUMA.so'; \
+		ldd $(DEB_BUILDDIR)/src/SUMA/$$b | grep '=>.*lib3DEdge.so'; \
+		ldd $(DEB_BUILDDIR)/src/SUMA/$$b | grep '=>.*libSUMA.so'; \
 	done
 
 override_dh_auto_install:
@@ -121,22 +121,22 @@ override_dh_auto_install:
 	dh_auto_install --builddirectory=$(DEB_BUILDDIR_STATIC) -- \
 	  DESTDIR=$(CURDIR)/debian/tmp/static 
 	# fix tcsh interpreter location
-	for f in $$(egrep -lR '^#![ ]*/bin/tcsh' debian/tmp); do \
-		echo "Fixing tcsh interpreter location in '$$f'" ; \
-		sed -i -e 's|^#![ ]*/bin/tcsh|#!/usr/bin/tcsh|' $$f ; \
+	for f in debian/tmp/share/afni/scripts/*; do \
+		head -n1 $${f} | grep -q '^#![ ]*/bin/tcsh' \
+			&& echo "Fixing tcsh interpreter location in '$$f'" \
+			&& sed -i -e '1s|^#![ ]*/bin/tcsh|#!/usr/bin/tcsh|' $$f \
+			|| true; \
 	done
 	# for some reason 3dSetupGroupInCorr gets destroyed during install
 	# need to redo and fix rpath manually
-	cp $(DEB_BUILDDIR)/3dSetupGroupInCorr debian/tmp/lib/afni/bin/
+	cp $(DEB_BUILDDIR)/src/3dSetupGroupInCorr debian/tmp/lib/afni/bin/
 	chrpath -r /usr/lib/afni/lib debian/tmp/lib/afni/bin/3dSetupGroupInCorr
 	# matlab stuff -- fix permission
 	install -d debian/tmp/matlab
-	install -m 644 -t debian/tmp/matlab matlab/*
+	install -m 644 -t debian/tmp/matlab src/matlab/*
 	# remove @update.afni.* (e.g. .binaries) so it doesn't interfer
 	# with packaged installation
 	find debian/ -iname @update.afni.\* -delete
-	# some permissions fixes
-	chmod a+rx /usr/lib/afni/bin/afni_util.py
 
 override_dh_auto_clean:
 	dh_auto_clean --builddirectory=$(DEB_BUILDDIR)
