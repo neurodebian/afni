@@ -10,6 +10,7 @@ ttatlas_location
 ffmpeg_support
 unmod_f2c
 fixes
+disable_runtimetests
 debian_paths
 cmake_sharedlibs-noncmake
 cmake_sharedlibs-cmake

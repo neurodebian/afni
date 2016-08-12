@@ -1,0 +1,28 @@
+diff --git a/tests/CMakeLists.txt b/tests/CMakeLists.txt
+index 8d3501a..74aa94f 100644
+--- a/tests/CMakeLists.txt
++++ b/tests/CMakeLists.txt
+@@ -8,13 +8,15 @@ PROJECT(TESTS)
+ #      this solution with tests/ directory
+ #
+ 
+-ADD_TEST(afni:start ../../tests/xvfb-driver -- afni -com "OPEN_WINDOW axialimage; SAVE_JPEG axialimage test1; QUIT")
+-
+-# TODO: figure out how to reference it correctly, or just copy to this
+-# target tests/ build directory
+-# Allow for 1 error and 2 failures reported -- due to the ones upon exit
+-ADD_TEST(do.examples ../../tests/xvfb-driver -e 0 -f 0 -- @DO.examples -auto_test)
+-SET_TESTS_PROPERTIES(do.examples PROPERTIES LABELS GLX)
+-
++# All tests below are runtime tests (i.e. require an installed AFNI).
++# we disable them in Debian and redo them as autopkg_tests
++#ADD_TEST(afni:start ../../tests/xvfb-driver -- afni -com "OPEN_WINDOW axialimage; SAVE_JPEG axialimage test1; QUIT")
++#
++## TODO: figure out how to reference it correctly, or just copy to this
++## target tests/ build directory
++## Allow for 1 error and 2 failures reported -- due to the ones upon exit
++#ADD_TEST(do.examples ../../tests/xvfb-driver -e 0 -f 0 -- @DO.examples -auto_test)
++#SET_TESTS_PROPERTIES(do.examples PROPERTIES LABELS GLX)
++#
+ 
+ 
