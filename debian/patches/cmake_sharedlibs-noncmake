@@ -5,16 +5,6 @@ Description: Alternative CMAKE-based buildsystem and shared lib configuration
  .
  This patch also introduces changes that are required to build all AFNI-internal
  libraries as shared libs -- dramatically reducing the size of the binary build.
- .
- The patch is work in progress. Although it has been in production for almost a
- year now (with no major complaints) it needs careful checking whether all tools
- get built. Especially the SUMA component needs attention, as there is a
- significant duplication of code between AFNI and SUMA that might cause issues.
- .
- Currently, the 'avovk' component is not yet integrated into the CMAKE setup.
- Additionally, CMAKE doesn't handle various 3rd party software code that is
- shipped with AFNI, but tries to locate installed versions of the respective
- libraries at build time.
 Forwarded: Rick Reynolds <reynoldr@mail.nih.gov>
 Author: Michael Hanke <michael.hanke@gmail.com>, Bernd Feige <bernd.feige@uniklinik-freiburg.de>
 Last-Update: 2010-09-21
@@ -214,3 +204,13 @@ Last-Update: 2010-09-21
           dyn.load(ll)
        } else {
           rio <- 1
+--- a/src/powell_int.c
++++ b/src/powell_int.c
+ /** cf. powell_newuoa.[fc] **/
+ 
+ #ifdef USE_OMP
+-# include "powell_newuoa.c"
++//# include "powell_newuoa.c"
+ #else
+   extern int newuoa_(integer *n, integer *npt, doublereal *x,
+                      doublereal *rhobeg, doublereal *rhoend, integer *maxfun,
