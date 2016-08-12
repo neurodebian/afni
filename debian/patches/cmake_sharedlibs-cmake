@@ -192,7 +192,7 @@
 +   # Link to -lXm before -lXt mri is linked to. Even with explicit
 +   # order it is not guaranteed to be in effect if --as-needed
 +   -Wl,--no-as-needed ${MOTIF_LIBRARIES} -Wl,--as-needed
-+   mrix mri coxplot
++   mri
 +   ${VOLPACK_LIBRARY} ${NETCDF_LIBRARY}
 +   ${F2C_LIBRARY} ${XMHTML_LIBRARY} ${JPEG_LIBRARY} m)
 +
@@ -265,7 +265,7 @@
 +ENDIF(NOT AFNI_BUILD_CORELIBS_ONLY)
 --- /dev/null
 +++ b/src/CMakeLists_apps.txt
-@@ -0,0 +1,230 @@
+@@ -0,0 +1,203 @@
 +##
 +## This file is to be included in the toplevel CMakeLists.txt
 +##
@@ -313,34 +313,7 @@
 +  3dTproject afni_open 3dConformist 3dNwarpXYZ 3dTRfix 3dToyProg images_equal
 +  uniq_images GLTsymtest 3dPval csfft_cache 3dLocalACF ${EXTRAS})
 +
-+SET(SCRIPTS
-+  @4Daverage @CommandGlobb @GetAfniOrient @DTI_studio_reposition
-+  @GetAfniPrefix @NoExt @UpdateAfni @RenamePanga @2dwarper @GetAfniView
-+  @SUMA_AlignToExperiment @SUMA_Make_Spec_FS @Purify_1D @SUMA_Make_Spec_SF
-+  @make_stim_file @Align_Centers suma_change_spec @CheckForAfniDset
-+  @clip_volume @AfniOrient2RAImap @parse_afni_name @auto_align @auto_tlrc
-+  @FromRAI @ToRAI @AfniOrientSign @VolCenter @Center_Distance
-+  @fix_FSsphere @parse_name @align_partial_oblique @np 3dMax @IsoMasks
-+  @SUMA_Make_Spec_Caret @FindAfniDsetPath @GetAfniID @float_fix @escape-
-+  3dPAR2AFNI.pl @DriveAfni @DriveSuma @AddEdge
-+  @SurfSmooth.HEAT_07.examples @SUMA_FSvolToBRIK @isOblique afni_run_R
-+  @GetAfniDims @GetAfniRes @NoisySkullStrip @statauxcode @ScaleVolume
-+  @ShowDynamicRange AFNI_Batch_R @DO.examples
-+  @Spharm.examples @GetAfniBin @fast_roi
-+  @make_plug_diff @build_afni_Xlib @update.afni.binaries @ROI_Corr_Mat
-+  @FS_roi_label @demo_prompt @ScriptCheck @NoPound @Reorder 3dSignatures 3dMEMA
-+  @DiceMetric @R_funclist @TimeDiff @FullPath @RetinoProc @ANATICOR
-+  @MakeLabelTable @ElectroGrid ExamineXmat 1dRplot @2dwarper.Allin
-+  @Shift_Volume @help.AFNI @1dDiffMag @FSlabel2dset @Install_InstaCorr_Demo
-+  @Quiet_Talkers @radial_correlate @DeblankFileNames @clean_help_dir
-+  @global_parse @AfniEnv @Atlasize @Install_TSrestMovieDemo
-+  @Install_AfniRetinoDemo @get.afni.version @Install_FATCAT_DEMO
-+  @Install_RSFMRI_Motion_Group_Demo @Install_MEICA_Demo @T1scale 3dMVM
-+  @compute_gcor 3dLME @Install_ClustScat_Demo @Install_FATMVM_DEMO @GradFlipTest
-+  @move.to.series.dirs @toMNI_Awarp @toMNI_Qwarpar
-+  @simulate_motion @afni.run.me 3dRprogDemo @ExamineGenFeatDists rPkgsInstall
-+  @Install_DBSproc @Install_3dPFM_Demo 3dPFM @diff.files @diff.tree)
-+
++FILE(GLOB SCRIPTS scripts_install/*)
 +
 +##
 +## Targets
@@ -498,7 +471,7 @@
 +  DESTINATION ${AFNI_INSTALL_SCRIPT_DIR} COMPONENT Runtime)
 --- /dev/null
 +++ b/src/CMakeLists_libs.txt
-@@ -0,0 +1,222 @@
+@@ -0,0 +1,223 @@
 +##
 +## This file is to be included in the toplevel CMakeLists.txt
 +##
@@ -591,7 +564,7 @@
 +# Assimilate NIfTI lib pieces into libmri, if we do not link against a
 +# system NIfTI lib
 +IF(AFNI_BUILD_LOCAL_NIFTICLIBS)
-+  LIST(APPEND CS_SRC nifti/niftilib/nifti1_io.c nifti/znzlib/znzlib.c
++  LIST(APPEND CS_SRC nifti/nifti2/nifti2_io.c nifti/znzlib/znzlib.c
 +       nifti/utils/nifti_stats.c nifti/nifticdf/nifticdf.c nifti_statlib.c)
 +  SET_SOURCE_FILES_PROPERTIES(nifti/nifticdf/nifticdf.c
 +                PROPERTIES COMPILE_FLAGS "-D__COMPILE_UNUSED_FUNCTIONS__")
@@ -670,11 +643,20 @@
 +#ENDFOREACH(src)
 +
 +#
++# from old libmrix
++#
++SET(IMSRC
++  display.c imseq.c bbox.c xim.c xutil.c LiteClue.c thd_xwebber.c)
++
++#
 +# libmri
 +#
-+ADD_LIBRARY(mri ${MRILIB_SOURCES})
++ADD_LIBRARY(mri ${MRILIB_SOURCES} ${IMSRC})
 +TARGET_LINK_LIBRARIES(mri ${X11_Xt_LIB} ${VOLPACK_LIBRARY} ${NETCDF_LIBRARY}
-+                          ${F2C_LIBRARY} giftiio nifticdf niftiio m z)
++                          ${F2C_LIBRARY} giftiio nifticdf niftiio m z
++
++                          ${MOTIF_LIBRARIES} ${X11_LIBRARIES} coxplot XmHTML)
++
 +# if libmri doesn't have niftilib built-in, we need to link against it
 +IF(NOT AFNI_BUILD_LOCAL_NIFTICLIBS)
 +  TARGET_LINK_LIBRARIES(mri nifticdf niftiio)
@@ -683,14 +665,6 @@
 +IF(NOT AFNI_BUILD_LOCAL_GIFTI)
 +  TARGET_LINK_LIBRARIES(mri giftiio)
 +ENDIF(NOT AFNI_BUILD_LOCAL_GIFTI)
-+
-+#
-+# libmrix
-+#
-+SET(IMSRC
-+  display.c imseq.c bbox.c xim.c xutil.c LiteClue.c thd_xwebber.c)
-+ADD_LIBRARY(mrix ${IMSRC})
-+TARGET_LINK_LIBRARIES(mrix ${MOTIF_LIBRARIES} ${X11_LIBRARIES} mri coxplot XmHTML)
 +
 +#
 +# librio
@@ -709,7 +683,7 @@
 +#
 +# Install targets
 +#
-+INSTALL(TARGETS mri mrix rio
++INSTALL(TARGETS mri rio
 +  RUNTIME DESTINATION ${AFNI_INSTALL_BIN_DIR} COMPONENT Runtime
 +  LIBRARY DESTINATION ${AFNI_INSTALL_LIB_DIR} COMPONENT Runtime
 +  ARCHIVE DESTINATION ${AFNI_INSTALL_LIB_DIR} COMPONENT Development)
@@ -814,7 +788,7 @@
 +  DESTINATION ${AFNI_INSTALL_SCRIPT_DIR} COMPONENT Runtime)
 --- /dev/null
 +++ b/src/SUMA/CMakeLists.txt
-@@ -0,0 +1,178 @@
+@@ -0,0 +1,180 @@
 +PROJECT(SUMA)
 +
 +##
@@ -876,7 +850,7 @@
 +  FIND_LIBRARY(GLW_LIBRARY GLw)
 +ENDIF(AFNI_BUILD_LOCAL_GLW)
 +
-+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/PLY ${CMAKE_SOURCE_DIR}/avovk/)
++INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/PLY ${CMAKE_SOURCE_DIR}/src/avovk/)
 +
 +# TODO determine what this is for
 +ADD_DEFINITIONS(-DSUMA_COMPILED -DnoGLwidget)
@@ -895,7 +869,7 @@
 +   # -lXm should be loaded before e.g. Xt which is linked to by mri etc
 +   -Wl,--no-as-needed ${MOTIF_LIBRARIES} -Wl,--as-needed
 +   ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES}
-+   mrix mri tracktools ${THREEDEDGE_LIBS} segtools)
++   mri tracktools ${THREEDEDGE_LIBS} segtools)
 +# need to link against GLw if not included in the library
 +IF(NOT AFNI_BUILD_LOCAL_GLW)
 +  TARGET_LINK_LIBRARIES(SUMA ${GLW_LIBRARY})
@@ -907,7 +881,7 @@
 +SET(PROGRAMS
 +  suma prompt_user MakeColorMap ScaleToMap
 +  inflate_compare SurfaceMetrics ConvertSurface
-+  ConvertDset ROI2dataset SurfSmooth SurfPatch SurfQual SurfClust IsoSurface
++  ConvertDset ROI2dataset SurfSmooth SurfPatch SurfQual SurfClust
 +  ConvexHull 3dSkullStrip 3dSeg 3dCRUISEtoAFNI 3dGenPriors 3dGenFeatureDist
 +  3dBRAIN_VOYAGERtoAFNI 3dVol2Surf SurfMeasures FSread_annot SampBias
 +  volume_render 3dSurfMask SurfToSurf ROIgrow AnalyzeTrace DriveSuma SurfDist
@@ -974,9 +948,11 @@
 +  TARGET_LINK_LIBRARIES(SurfMesh SUMAGTS ${GTS_LIBRARIES})
 +  LIST(APPEND PROGRAMS SurfMesh)
 +
-+  ADD_EXECUTABLE(BrainSkin SUMA_BrainSkin.c)
-+  TARGET_LINK_LIBRARIES(BrainSkin SUMAGTS ${GTS_LIBRARIES})
-+  LIST(APPEND PROGRAMS BrainSkin)
++  FOREACH(program BrainSkin IsoSurface)
++    ADD_EXECUTABLE(${program} SUMA_${program}.c)
++    TARGET_LINK_LIBRARIES(${program} SUMAGTS ${GTS_LIBRARIES})
++    LIST(APPEND PROGRAMS ${program})
++  ENDFOREACH(program)
 +ENDIF(GTS_FOUND)
 +
 +# all programs link against SUMA_LIBS
@@ -1024,7 +1000,7 @@
 +ENDIF(GSL_LIBRARY)
 --- /dev/null
 +++ b/src/coxplot/CMakeLists.txt
-@@ -0,0 +1,26 @@
+@@ -0,0 +1,18 @@
 +PROJECT(coxplot)
 +
 +SET(SOURCES
@@ -1041,16 +1017,8 @@
 + find_color_name.c
 +)
 +
-+ADD_LIBRARY(coxplot ${SOURCES})
-+TARGET_LINK_LIBRARIES(coxplot
-+   ${MOTIF_LIBRARIES}
-+   ${X11_LIBRARIES} ${X11_Xt_LIB}
-+   ${F2C_LIBRARY} m mri)
-+
-+INSTALL(TARGETS coxplot
-+  RUNTIME DESTINATION ${AFNI_INSTALL_BIN_DIR} COMPONENT Runtime
-+  LIBRARY DESTINATION ${AFNI_INSTALL_LIB_DIR} COMPONENT Runtime
-+  ARCHIVE DESTINATION ${AFNI_INSTALL_LIB_DIR} COMPONENT Development)
++ADD_LIBRARY(coxplot STATIC ${SOURCES})
++SET_TARGET_PROPERTIES(coxplot PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 --- /dev/null
 +++ b/src/faces/CMakeLists.txt
 @@ -0,0 +1,8 @@
@@ -1078,12 +1046,12 @@
 +
 +# script being programs on their own
 +SET(SCRIPTS
-+  1d_tool.py afni_proc.py afni_restproc.py afni_system_check.py
++  1d_tool.py afni_proc.py afni_util.py afni_restproc.py afni_system_check.py
 +  align_epi_anat.py auto_warp.py  eg_main_chrono.py fat_lat_csv.py
 +  fat_mat_sel.py fat_mvm_gridconv.py fat_mvm_prep.py fat_mvm_scripter.py
 +  fat_roi_row.py fat_mvm_review.py gen_epi_review.py gen_group_command.py
 +  gen_ss_review_scripts.py gen_ss_review_table.py make_pq_script.py
-+  make_random_timing.py make_stim_times.py meica.py neuro_deconvolve.py
++  make_random_timing.py make_stim_times.py neuro_deconvolve.py
 +  python_module_test.py quick.alpha.vals.py realtime_receiver.py
 +  slow_surf_clustsim.py timing_tool.py uber_align_test.py uber_proc.py
 +  uber_skel.py uber_subject.py uber_ttest.py xmat_tool.py read_matlab_files.py
@@ -1092,7 +1060,7 @@
 +
 +# everything else that is not meant to be a standalone script
 +SET(MODULES
-+  afni_base.py afni_util.py afni_xmat.py ask_me.py db_mod.py
++  afni_base.py afni_xmat.py ask_me.py db_mod.py
 +  gui_uber_align_test.py gui_uber_skel.py gui_uber_subj.py gui_uber_ttest.py
 +  gui_xmat.py lib_afni1D.py lib_fat_funcs.py lib_matplot.py lib_qt_gui.py
 +  lib_realtime.py lib_RR_plot.py lib_subjects.py lib_surf_clustsim.py
@@ -1153,12 +1121,13 @@
 +  DESTINATION ${AFNI_INSTALL_HTML_DIR} COMPONENT Runtime)
 --- /dev/null
 +++ b/src/ptaylor/CMakeLists.txt
-@@ -0,0 +1,24 @@
+@@ -0,0 +1,25 @@
 +PROJECT(tracktools)
 +
 +IF (GSL_LIBRARY AND GTS_FOUND)
 +  MESSAGE(STATUS "Found GSL and GTS libraries, compiling tracktools")
-+  SET(SOURCES DoTrackit.c TrackIO.c rsfc.c diffusiony.c FuncTrac.c roiing.c Fat_Labels.c colorbasic.c)
++  SET(SOURCES DoTrackit.c TrackIO.c rsfc.c diffusiony.c FuncTrac.c roiing.c
++              Fat_Labels.c colorbasic.c LS_funcs.c)
 +  ADD_LIBRARY(tracktools ${SOURCES})
 +  TARGET_LINK_LIBRARIES(tracktools gts mri ${GSL_LIBRARIES})
 +  SET(PROGRAMS
