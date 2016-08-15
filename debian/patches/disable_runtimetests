@@ -1,8 +1,6 @@
-diff --git a/tests/CMakeLists.txt b/tests/CMakeLists.txt
-index 8d3501a..74aa94f 100644
 --- a/tests/CMakeLists.txt
 +++ b/tests/CMakeLists.txt
-@@ -8,13 +8,15 @@ PROJECT(TESTS)
+@@ -8,13 +8,15 @@
  #      this solution with tests/ directory
  #
  

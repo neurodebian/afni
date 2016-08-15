@@ -206,6 +206,7 @@ Last-Update: 2010-09-21
           rio <- 1
 --- a/src/powell_int.c
 +++ b/src/powell_int.c
+@@ -19,7 +19,7 @@
  /** cf. powell_newuoa.[fc] **/
  
  #ifdef USE_OMP
