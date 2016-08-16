@@ -83,7 +83,10 @@ Description: header and static libraries for AFNI plugin development
 
 Package: afni-dbg
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Section: contrib/debug
+Depends: afni (=${binary:Version}),
+         ${shlibs:Depends},
+         ${misc:Depends}
 Description: debug symbols for AFNI
  AFNI is an environment for processing and displaying functional MRI data.
  It provides a complete analysis toolchain, including 3D cortical surface
