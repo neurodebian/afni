@@ -1,4 +1,4 @@
 src/AFNI.Xdefaults
 src/AFNI*rc
-src/README.*
+doc/README/*
 debian/README*
