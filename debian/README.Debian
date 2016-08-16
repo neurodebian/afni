@@ -1,7 +1,7 @@
 afni for Debian
 ---------------
 
-In comparision to the binaries distributed by the AFNI developers the Debian
+In comparison to the binaries distributed by the AFNI developers the Debian
 version of AFNI is lacking some features, due to the restrictive licensing
 of some of its dependencies. This concerns the following tools:
 
