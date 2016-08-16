@@ -265,7 +265,7 @@
 +ENDIF(NOT AFNI_BUILD_CORELIBS_ONLY)
 --- /dev/null
 +++ b/src/CMakeLists_apps.txt
-@@ -0,0 +1,203 @@
+@@ -0,0 +1,207 @@
 +##
 +## This file is to be included in the toplevel CMakeLists.txt
 +##
@@ -436,6 +436,10 @@
 +
 +  ADD_EXECUTABLE(nifti_stats nifti/utils/nifti_stats.c)
 +  TARGET_LINK_LIBRARIES(nifti_stats ${AFNI_LIBS})
++
++  ADD_EXECUTABLE(cifti_tool
++    nifti/cifti/cifti_tool.c nifti/cifti/afni_xml_io.c nifti/cifti/afni_xml.c)
++  TARGET_LINK_LIBRARIES(cifti_tool ${AFNI_LIBS})
 +
 +  LIST(APPEND PROGRAMS nifti1_test nifti_tool nifti_stats)
 +  MESSAGE(STATUS "Using internal NIfTI libs, compiling nifti_* tools")
