@@ -1,0 +1,6 @@
+# we are not using autotools, but patch in a CMake buildsystem
+afni source: outdated-autotools-helper-file src/SUMA/gts/config.guess 2004-11-12
+afni source: outdated-autotools-helper-file src/SUMA/gts/config.sub 2004-11-30
+afni source: ancient-autotools-helper-file src/mpegtoppm_dir/autotools/config.guess 2002-09-03
+afni source: ancient-autotools-helper-file src/mpegtoppm_dir/autotools/config.sub 2002-09-05
+afni source: ancient-libtool src/mpegtoppm_dir/autotools/ltmain.sh 1.4.2
