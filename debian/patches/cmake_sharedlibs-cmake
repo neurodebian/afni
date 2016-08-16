@@ -1076,11 +1076,12 @@
 +  DESTINATION ${AFNI_INSTALL_SCRIPT_DIR} COMPONENT Runtime)
 --- /dev/null
 +++ b/src/rickr/CMakeLists.txt
-@@ -0,0 +1,32 @@
+@@ -0,0 +1,36 @@
 +PROJECT(rickr)
 +
 +IF(NOT AFNI_BUILD_CORELIBS_ONLY)
-+  SET(PROGRAMS 3dresample file_tool Dimon1 Dimon serial_helper column_cat)
++  SET(PROGRAMS 3dresample file_tool Dimon1 Dimon serial_helper column_cat
++               tokens)
 +
 +  ADD_EXECUTABLE(3dresample 3dresample.c)
 +  TARGET_LINK_LIBRARIES(3dresample ${AFNI_LIBS})
@@ -1103,6 +1104,9 @@
 +
 +  ADD_EXECUTABLE(serial_helper serial_helper.c)
 +  ADD_EXECUTABLE(column_cat column_cat.c)
++
++  ADD_EXECUTABLE(tokens tokens.c)
++
 +ENDIF(NOT AFNI_BUILD_CORELIBS_ONLY)
 +
 +INSTALL(TARGETS ${PROGRAMS}
