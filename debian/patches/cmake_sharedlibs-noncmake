@@ -42,35 +42,6 @@ Last-Update: 2010-09-21
  /*------------------------------------------------------------------------
     Compute the median of an array of floats.  Will rearrange (partially
     sort) the array in the process.  The algorithm is based on Quicksort,
---- a/src/gifti_choice.c
-+++ b/src/gifti_choice.c
-@@ -10,15 +10,18 @@
- 
- #ifdef HAVE_GIFTI
- 
--    /* pretend the gifti source is here, along with thd_gifti functions */
--    
--    #include "mcw_malloc.h"     /* Need this to use same allocation functions */
--    
--    #include "gifti_io.c"       /* library */
--    #include "gifti_xml.c"
-+/* On Debian we have a proper library for gifti -- no need for this:
-+ * -----------------------------------------------------------------
-+ *   pretend the gifti source is here, along with thd_gifti functions
-+ *
-+ *  #include "mcw_malloc.h"      Need this to use same allocation functions
-+ *
-+ *  #include "gifti_io.c"        library
-+ *  #include "gifti_xml.c"
-+ */
-+   #include "thd_gifti.c"       /* afni interface */
-+   #include "suma_gifti.c"      /* suma interface */
- 
--    #include "thd_gifti.c"      /* afni interface */
--    #include "suma_gifti.c"     /* suma interface */
- #else
- 
-     /* if we do not love or even want GIFTI, include failure functions here */
 --- a/src/mri_dicom_hdr.c
 +++ b/src/mri_dicom_hdr.c
 @@ -95,18 +95,18 @@
