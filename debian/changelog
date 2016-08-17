@@ -1,7 +1,27 @@
 afni (16.2.07~dfsg.1-1) UNRELEASED; urgency=medium
 
-  * Major update after a long time.
-  * Bump debian/compat to 9.
+  * Major update after a long time
+    - New programs: 3dToyProg, nifti_tool, nifti1_tool, nifti1_test,
+      nifti_stats, gifti_tool, cifti_tool, images_equal, uniq_images,
+      GLTsymtest, 3dPval, 3dETC, stimband, 1dNLfit, csfft_cache, 3dLocalACF,
+      3dNormalizer, 3dVecRGB_to_HSL, 3ddot_beta, 3dLombScargle, 3dAmpToRSFC,
+      tokens, csfft_cache
+    - New scripts: @Install_DBSproc, @Install_D99_macaque, @Install_3dPFM_Demo,
+      3dPFM, @diff.files, @diff.tree, @get.afni.version, @GradFlipTest,
+      @fat_tract_colorize
+    - New Python scripts: fat_lat_csv.py fat_mat_sel.py fat_mvm_review.py,
+      read_matlab_files.py, afni_skeleton.py, @DoPerRoi.py,
+      lpc_align.py, parse_fs_lt_log.py
+    - New Matlab scripts: afni_isdigit.m, afni_swapbytes.m
+    - 19 new faces, 10 new splashes, and 172 new quotes
+    - run afni_history for a more detailed account of upstream changes
+  * Now built as a fork from upstream's github repo
+  * Updated CMake build system
+  * Build and bundle AFNI's copy of both gifti and nifti
+    - due to the latest versions being here in AFNI rather than upstream :-/
+  * debian/patches
+    - up_include_right: some include fixes
+  * Bump debian/compat to 9
 
  -- Michael Hanke <mih@debian.org>  Fri, 05 Aug 2016 12:49:14 +0200
 
