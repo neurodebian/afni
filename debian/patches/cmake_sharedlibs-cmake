@@ -1216,14 +1216,16 @@
 +ENDFOREACH(test)
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -1,15 +1,67 @@
+@@ -1,15 +1,69 @@
  ## Rudimentary cmake setup for now just to run tests
  
 +cmake_minimum_required(VERSION 2.6)
 +if(COMMAND cmake_policy)
 +  cmake_policy(SET CMP0002 NEW)
 +  cmake_policy(SET CMP0003 NEW)
-+  cmake_policy(SET CMP0048 OLD)
++  if(POLICY CMP0048)
++    cmake_policy(SET CMP0048 OLD)
++  endif(POLICY CMP0048)
 +endif(COMMAND cmake_policy)
 +
 +# Here upstream should specify the version!
