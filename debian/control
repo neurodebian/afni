@@ -33,7 +33,7 @@ Build-Depends: cmake (>= 2.6.4), debhelper (>= 9~),
                xvfb, xauth, libgl1-mesa-dri, mesa-utils,
                tcsh,
                libjpeg-turbo-progs | libjpeg-progs,
-Standards-Version: 3.9.5
+Standards-Version: 3.9.8
 Homepage: http://afni.nimh.nih.gov
 Vcs-Browser: http://git.debian.org/?p=pkg-exppsy/afni.git
 Vcs-Git: git://git.debian.org/git/pkg-exppsy/afni.git
