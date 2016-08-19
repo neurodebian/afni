@@ -475,7 +475,7 @@
 +  DESTINATION ${AFNI_INSTALL_SCRIPT_DIR} COMPONENT Runtime)
 --- /dev/null
 +++ b/src/CMakeLists_libs.txt
-@@ -0,0 +1,223 @@
+@@ -0,0 +1,226 @@
 +##
 +## This file is to be included in the toplevel CMakeLists.txt
 +##
@@ -660,6 +660,9 @@
 +                          ${F2C_LIBRARY} giftiio nifticdf niftiio m z
 +
 +                          ${MOTIF_LIBRARIES} ${X11_LIBRARIES} coxplot XmHTML)
++# this workaround is brought to you by Ubuntu! Where you can link to libXext
++# but still don't get its symbols resolved -- only in Ubuntu
++SET_TARGET_PROPERTIES(mri PROPERTIES LINKER_FLAGS "-Wl,--no-as-needed")
 +
 +# if libmri doesn't have niftilib built-in, we need to link against it
 +IF(NOT AFNI_BUILD_LOCAL_NIFTICLIBS)
