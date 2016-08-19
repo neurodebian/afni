@@ -662,7 +662,7 @@
 +                          ${MOTIF_LIBRARIES} ${X11_LIBRARIES} coxplot XmHTML)
 +# this workaround is brought to you by Ubuntu! Where you can link to libXext
 +# but still don't get its symbols resolved -- only in Ubuntu
-+SET_TARGET_PROPERTIES(mri PROPERTIES LINKER_FLAGS "-Wl,--no-as-needed")
++SET_TARGET_PROPERTIES(mri PROPERTIES LINK_FLAGS "-Wl,--no-as-needed")
 +
 +# if libmri doesn't have niftilib built-in, we need to link against it
 +IF(NOT AFNI_BUILD_LOCAL_NIFTICLIBS)
