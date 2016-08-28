@@ -11,7 +11,11 @@ before_install:
     # install packages needed for testing
     - sudo apt-get install xvfb xauth libgl1-mesa-dri mesa-utils tcsh libjpeg-progs
     # for Debian pkg build testing
-    - sudo apt-get install quilt build-essential fakeroot
+    - bash <(wget -q -O- http://neuro.debian.net/_files/neurodebian-travis.sh)
+    - sudo sed -i -e 's,#deb-src,deb-src,g' /etc/apt/sources.list.d/neurodebian.sources.list
+    - sudo apt-get update -q
+    - sudo apt-get install quilt
+    - sudo apt-get build-dep afni
 install:
     # In Debian branch we will build the package which will run tests etc
     # - cd src
@@ -19,7 +23,7 @@ install:
     # - make vastness
 script:
     - QUILT_PATCHES=debian/patches quilt push -a
-    - dpkg-buildpackage -uc -us -rfakeroot
+    - dpkg-buildpackage -uc -us -rfakeroot -b
     - sudo dpkg -i ../*.deb
     - source /etc/afni/afni.sh
     # - export PATH=$PATH:$PWD/$FLAVOR  # to gain access to built binaries
