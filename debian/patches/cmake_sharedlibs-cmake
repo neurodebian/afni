@@ -1048,7 +1048,7 @@
 +  DESTINATION ${AFNI_INSTALL_POEMS_DIR} COMPONENT Runtime)
 --- /dev/null
 +++ b/src/python_scripts/CMakeLists.txt
-@@ -0,0 +1,32 @@
+@@ -0,0 +1,35 @@
 +PROJECT(PYTHON_SCRIPTS)
 +
 +# script being programs on their own
@@ -1069,10 +1069,13 @@
 +SET(MODULES
 +  afni_base.py afni_xmat.py ask_me.py db_mod.py
 +  gui_uber_align_test.py gui_uber_skel.py gui_uber_subj.py gui_uber_ttest.py
-+  gui_xmat.py lib_afni1D.py lib_fat_funcs.py lib_matplot.py lib_qt_gui.py
++  gui_xmat.py lib_afni1D.py
++  lib_fat_funcs.py lib_fat_plot_sel.py lib_fat_Rfactor.py
++  lib_matplot.py lib_qt_gui.py
 +  lib_realtime.py lib_RR_plot.py lib_subjects.py lib_surf_clustsim.py
 +  lib_system_check.py lib_textdata.py lib_timing.py lib_uber_align.py
-+  lib_uber_skel.py lib_uber_subject.py lib_uber_ttest.py lib_wx.py
++  lib_uber_skel.py lib_uber_subject.py lib_uber_ttest.py
++  lib_vars_object.py lib_wx.py
 +  module_test_lib.py option_list.py ui_xmat.py
 +  )
 +
