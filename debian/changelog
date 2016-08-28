@@ -1,6 +1,7 @@
 afni (16.2.07~dfsg.1-2) neurodebian; urgency=medium
 
   * install lib_fat_plot_sel.py lib_vars_object.py lib_fat_Rfactor.py libraries
+    and unWarpEPI.py script
     (thanks Jeffrey Mark Siskind for the report)
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Sat, 27 Aug 2016 22:38:54 -0400

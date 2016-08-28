@@ -1048,7 +1048,7 @@
 +  DESTINATION ${AFNI_INSTALL_POEMS_DIR} COMPONENT Runtime)
 --- /dev/null
 +++ b/src/python_scripts/CMakeLists.txt
-@@ -0,0 +1,35 @@
+@@ -0,0 +1,36 @@
 +PROJECT(PYTHON_SCRIPTS)
 +
 +# script being programs on their own
@@ -1063,6 +1063,7 @@
 +  slow_surf_clustsim.py timing_tool.py uber_align_test.py uber_proc.py
 +  uber_skel.py uber_subject.py uber_ttest.py xmat_tool.py read_matlab_files.py
 +  afni_skeleton.py parse_fs_lt_log.py @DoPerRoi.py lpc_align.py
++  unWarpEPI.py
 +  )
 +
 +# everything else that is not meant to be a standalone script
