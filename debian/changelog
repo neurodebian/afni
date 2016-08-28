@@ -1,4 +1,11 @@
-afni (16.2.07~dfsg.1-1) UNRELEASED; urgency=medium
+afni (16.2.07~dfsg.1-2) neurodebian; urgency=medium
+
+  * install lib_fat_plot_sel.py lib_vars_object.py lib_fat_Rfactor.py libraries
+    (thanks Jeffrey Mark Siskind for the report)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sat, 27 Aug 2016 22:38:54 -0400
+
+afni (16.2.07~dfsg.1-1) neurodebian; urgency=medium
 
   * Major update after a long time
     - New programs: 3dToyProg, nifti_tool, nifti1_tool, nifti1_test,
