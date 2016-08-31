@@ -1,3 +1,9 @@
+afni (16.2.07~dfsg.1-3) neurodebian; urgency=medium
+
+  * BF for amd64 precise -- explicitly specify -fPIC for CFLAGS
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 31 Aug 2016 08:21:05 -0400
+
 afni (16.2.07~dfsg.1-2) neurodebian; urgency=medium
 
   * install lib_fat_plot_sel.py lib_vars_object.py lib_fat_Rfactor.py libraries

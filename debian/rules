@@ -2,6 +2,7 @@
 
 srcpkg = $(shell LC_ALL=C dpkg-parsechangelog | grep '^Source:' | cut -d ' ' -f 2,2)
 debver = $(shell LC_ALL=C dpkg-parsechangelog | grep '^Version:' | cut -d ' ' -f 2,2)
+debdis = $(shell LC_ALL=C dpkg-parsechangelog | grep '^Distribution:' | cut -d ' ' -f 2,2)
 
 # this figures out the last merge point from 'upstream' into the Debian branch and
 # then described this commit relative to the last release tag (AFNI_...)
@@ -26,6 +27,13 @@ DEB_BUILD_HARDENING_FORTIFY := 0
 # get install locations for matlab packages
 include /usr/share/matlab/debian/defs.make
 
+# what are we doing this for
+DEB_BUILD_GNU_TYPE ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
+# where to perform the general build
+DEB_BUILDDIR = "build-$(DEB_BUILD_GNU_TYPE)"
+# where to build the static corelibs
+DEB_BUILDDIR_STATIC = "build-$(DEB_BUILD_GNU_TYPE)-static"
+
 # filter-out below are to get a set of uniq (not already listed)
 # options to avoid cmdline clutter.  -fPIE -pie are manually filtered out
 # to prevent FTBFS on wheezy/jessie with gcc 4.7 which can't handle having
@@ -39,14 +47,13 @@ export LDFLAGS
 # appended after -Wall
 DPKGCFLAGS = $(shell dpkg-buildflags --get CFLAGS) -Wno-unused
 CFLAGS = $(filter-out $(DPKGCFLAGS) -fPIE, $(HARDENING_CFLAGS)) $(DPKGCFLAGS)
+# workaround for precise amd64
+ifeq ($(debdis),precise)
+ifeq ($(DEB_BUILD_GNU_TYPE),x86_64-linux-gnu)
+CFLAGS += -fPIC
+endif
+endif
 export CFLAGS
-
-# what are we doing this for
-DEB_BUILD_GNU_TYPE ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
-# where to perform the general build
-DEB_BUILDDIR = "build-$(DEB_BUILD_GNU_TYPE)"
-# where to build the static corelibs
-DEB_BUILDDIR_STATIC = "build-$(DEB_BUILD_GNU_TYPE)-static"
 
 # Provide details on tests which fail
 export CTEST_OUTPUT_ON_FAILURE=1
