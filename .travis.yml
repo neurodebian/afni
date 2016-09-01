@@ -24,6 +24,8 @@ install:
 script:
     - QUILT_PATCHES=debian/patches quilt push -a
     - dpkg-buildpackage -uc -us -rfakeroot -b
+    # some additional depends
+    - sudo apt-get install gifsicle
     - sudo dpkg -i ../*.deb
     - source /etc/afni/afni.sh
     # - export PATH=$PATH:$PWD/$FLAVOR  # to gain access to built binaries
