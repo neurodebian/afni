@@ -1,0 +1,10 @@
+--- a/src/SUMA/SUMA_suma.c
++++ b/src/SUMA/SUMA_suma.c
+@@ -541,6 +541,7 @@ int main (int argc,char *argv[])
+    
+     
+    SUMA_STANDALONE_INIT;
++   glutInit(& argc, argv);
+    SUMA_mainENTRY;
+    
+    
