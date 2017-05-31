@@ -1,3 +1,10 @@
+afni (16.2.07~dfsg.1-3+patchedsyslib) UNRELEASED; urgency=medium
+
+  * Fixing /usr/include/GL/GLwDrawA.h according to
+    http://marc.info/?l=cygwin-xfree&m=141268983004514&w=2
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 31 May 2017 10:22:03 -0400
+
 afni (16.2.07~dfsg.1-3) neurodebian; urgency=medium
 
   * BF for amd64 precise -- explicitly specify -fPIC for CFLAGS
