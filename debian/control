@@ -5,7 +5,6 @@ Maintainer: NeuroDebian Team <team@neuro.debian.net>
 Uploaders: Michael Hanke <mih@debian.org>, Yaroslav Halchenko <debian@onerussian.com>,
            Alex Waite <Alexqw85@gmail.com>
 Build-Depends: cmake (>= 2.6.4), debhelper (>= 9~),
-               hardening-includes,
                libmotif-dev,
                libnifti1-dev | libnifti-dev,
                libvolpack1-dev | libvolpack-dev,

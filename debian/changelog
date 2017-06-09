@@ -1,3 +1,10 @@
+afni (16.2.07~dfsg.1-5) neurodebian; urgency=medium
+
+  * Remove bdepends on hardening-includes which were removed in >=stretch, and
+    just rely on dpkg-buildflags output
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Fri, 09 Jun 2017 18:28:40 -0400
+
 afni (16.2.07~dfsg.1-4) neurodebian; urgency=medium
 
   * Placed in build-time conflict with libglw1-mesa-dev == 8.0.0-1.1

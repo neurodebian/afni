@@ -21,8 +21,6 @@ gitver = $(shell git describe --tags --match 'AFNI_[0-9]*.[0-9]*.[0-9]*' \
 #
 # Do not fortify until upstream takes care about undefined behavior of sprintf(buf, ..., buf)
 DEB_BUILD_HARDENING_FORTIFY := 0
-# instead explicitly add those flags if provided
--include /usr/share/hardening-includes/hardening.make
 
 # get install locations for matlab packages
 include /usr/share/matlab/debian/defs.make
@@ -39,14 +37,12 @@ DEB_BUILDDIR_STATIC = "build-$(DEB_BUILD_GNU_TYPE)-static"
 # to prevent FTBFS on wheezy/jessie with gcc 4.7 which can't handle having
 # both -fPIE and -fPIC added by cmake
 #
-DPKGLDFLAGS = $(shell dpkg-buildflags --get LDFLAGS)
-LDFLAGS = $(filter-out $(DPKGLDFLAGS) -fPIE -pie, $(HARDENING_LDFLAGS)) $(DPKGLDFLAGS)
+LDFLAGS = $(shell dpkg-buildflags --get LDFLAGS)
 export LDFLAGS
 
 # need to do it after inclusion of cmake class to get the flag
 # appended after -Wall
-DPKGCFLAGS = $(shell dpkg-buildflags --get CFLAGS) -Wno-unused
-CFLAGS = $(filter-out $(DPKGCFLAGS) -fPIE, $(HARDENING_CFLAGS)) $(DPKGCFLAGS)
+CFLAGS = $(shell dpkg-buildflags --get CFLAGS) -Wno-unused
 # workaround for precise amd64
 ifeq ($(debdis),precise)
 ifeq ($(DEB_BUILD_GNU_TYPE),x86_64-linux-gnu)
