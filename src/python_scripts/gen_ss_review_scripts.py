@@ -297,18 +297,21 @@ def update_field_help():
      ['This shows the average correlation across all pairs of voxels (within',
       'the brain mask: full_mask).',
       'A larger number suggests more coherence, which is likely artifactual.'])
-   add_field_help('anat/EPI mask correlation', 'r(mask_anat, full_mask)',
-     ['This is simply the correlation between the anatomical mask (mask_anat)',
-      'and the EPI mask (full_mask).',
-      'A low value might flag alignment failure.'])
+   add_field_help('anat/EPI mask Dice coef', 'Dice coef(mask_anat, full_mask)',
+     ['This is the Sorenson-Dice coefficient (twice intersection over sum of',
+      'regions) between the anat mask (mask_anat) and EPI mask (full_mask).',
+      'A low value (closer to 0 than 1, say) might flag alignment failure.'])
    add_field_help('maximum F-stat (masked)', 'max F from stats dataset',
      ['This is the maximum F-stat from the final stats dataset, restricted',
       'to the full_mask.'])
-   add_field_help('blur estimates', 'computed blur estimates',
-    ['These are the blur estimates computed over the full_mask dataset',
-     'from either the residuals or the regression input.',
-     'Such values are generally averaged across subjects and input to',
-     '3dClustSim for multiple comparison correction.'])
+   add_field_help('blur estimates (ACF)', 'computed ACF blur estimates',
+    ['These are the AutoCorrelation Function (ACF) blur estimates computed',
+     'over the full_mask dataset from either the residuals or the regression',
+     'input.  Such values are generally averaged across subjects and input to',
+     '"3dClustSim -acf" for multiple comparison correction.'])
+   add_field_help('blur estimates (FWHM)', 'computed FWHM blur estimates',
+    ['These are the related full width at half max (FWHM) blur estimates,',
+     'similarly computed and applied using "3dClustSim -fwhmxyz".'])
 
 
 # cannot have empty line
@@ -615,15 +618,27 @@ endif
 
 g_basic_finish_str = """
 # ------------------------------------------------------------'
-# note blur estimates
+# note blur estimates (try for ACF and FWHM, first)
 set blur_file = blur_est.$subj.1D
 if ( -f $blur_file ) then
-    set best = `awk '/errts/ {print $1, $2, $3}' $blur_file`
-    if ( $#best != 3 ) then
-        set best = `awk '/epits/ {print $1, $2, $3}' $blur_file`
+    set found = 0
+    set best_acf = `grep ACF $blur_file | tail -n 1 | awk '{print $1, $2, $3}'`
+    set best_fw = `grep FWHM $blur_file | tail -n 1 | awk '{print $1, $2, $3}'`
+    if ( $#best_acf == 3 ) then
+        set found = 1
+        echo "blur estimates (ACF)      : $best_acf"
     endif
-    if ( $#best == 3 ) then
-        echo "blur estimates            : $best"
+    if ( $#best_fw == 3 ) then
+        set found = 1
+        echo "blur estimates (FWHM)     : $best_fw"
+    endif
+
+    # fallback
+    if ( ! $found ) then
+       set best = `tail -n 1 $blur_file | awk '{print $1, $2, $3}'`
+       if ( $#best == 3 ) then
+           echo "blur estimates            : $best"
+       endif
     endif
 endif
 
@@ -822,13 +837,19 @@ g_history = """
    0.45 Sep  3, 2015: change: have stats dset default to REML, if it exists
    0.46 Oct 28, 2015: look for dice coef file ae_dice, as well ae_corr
    0.47 Mar 21, 2016: use nzmean for motion ave
+   0.48 Aug 17, 2016:
+        - look for new ACF/FWHM blur estimates
+        - get each last estimate (so prefer err_reml > errts > epits)
+        - update -help_fields
+   0.49 Jan 19, 2017: fix for -final_anat (thanks to N Anderson)
+   0.50 Mar 30, 2017: clust with AFNI_ORIENT=RAI, to match afni -com SET_DICOM_XYZ
+   0.51 May 30, 2017: plot volreg params with enorm/outlier plot
 """
 
-g_version = "gen_ss_review_scripts.py version 0.47, Mar 21, 2016"
+g_version = "gen_ss_review_scripts.py version 0.51, May 30, 2017"
 
 g_todo_str = """
    - add @epi_review execution as a run-time choice (in the 'drive' script)?
-   - execute basic?  save output?
 """
 
 # todo notes:
@@ -1436,7 +1457,10 @@ class MyInterface:
       """
 
       # check if already set
-      if self.uvar_already_set('final_anat'): return 0
+      if self.uvar_already_set('final_anat'):
+         if self.dsets.is_empty('final_anat'):
+            self.dsets.final_anat = BASE.afni_name(self.uvars.final_anat)
+         return 0
 
       # go after known file
       gstr = 'anat_final.%s+%s.HEAD' % (self.uvars.subj, self.uvars.final_view)
@@ -1628,15 +1652,18 @@ class MyInterface:
    def guess_motion_dset(self):
       """set uvars.motion_dset"""
 
+      mot_files = ['dfile_rall.1D', 'dfile.rall.1D', 'motion_demean.1D']
+
       # check if already set
       if self.uvar_already_set('motion_dset'): return 0
 
-      gstr = 'dfile_rall.1D'
-      if not os.path.isfile(gstr): gstr = 'dfile.rall.1D'
-
-      if os.path.isfile(gstr):
-         self.uvars.motion_dset = gstr
-         return 0
+      # check the defaults, in order
+      for gstr in mot_files:
+         if os.path.isfile(gstr):
+            self.uvars.motion_dset = gstr
+            if self.cvars.verb > 1:
+               print '-- setting motion_dset = %s' % self.uvars.motion_dset
+            return 0
 
       # else go 1D or text files with motion in the name
       glist = glob.glob('*motion*.1D')
@@ -2275,8 +2302,8 @@ class MyInterface:
        '# locate peak coords of biggest masked cluster and jump there\n'  \
        '3dcalc -a %s"[0]" -b %s -expr "a*b" \\\n'                         \
        '       -overwrite -prefix .tmp.F\n'  \
-       'set maxcoords = ( `3dclust -1thresh $thresh -dxyz=1 1 2 .tmp.F+%s \\\n'\
-       '       | & awk \'/^ / {print $14, $15, $16}\' | head -n 1` )\n'\
+       'set maxcoords = ( `3dclust -DAFNI_ORIENT=RAI -1thresh $thresh -dxyz=1 1 2 \\\n' \
+       '       .tmp.F+%s | & awk \'/^ / {print $14, $15, $16}\' | head -n 1` )\n'\
        'echo -- jumping to max coords: $maxcoords\n'                      \
        % (sset.pv(), mset.pv(), self.uvars.final_view)
 
@@ -2300,7 +2327,7 @@ class MyInterface:
 
       txt += '\n'                                                      \
              'prompt_user -pause "                                 \\\n' \
-             '   review: peruse statistical retsults               \\\n' \
+             '   review: peruse statistical results                \\\n' \
              '      - thresholding Full-F at masked 90 percentile  \\\n' \
              '        (thresh = $thresh)                           \\\n' \
              '                                                     \\\n' \
@@ -2547,6 +2574,7 @@ class MyInterface:
       # note the enorm and outcount files
       efile = self.uvars.val('enorm_dset')
       ofile = self.uvars.val('outlier_dset')
+      mfile = self.uvars.val('motion_dset')
 
       errs = 0
       if not os.path.isfile(efile):
@@ -2556,6 +2584,11 @@ class MyInterface:
          print '** missing outlier file %s' % ofile
          errs += 1
       if errs: return 1
+
+      # don't require motion file
+      if not os.path.isfile(mfile):
+         print '** missing volreg motion file %s' % mfile
+         mfile = None
 
       # maybe include -censor option
       cstr = ''
@@ -2569,13 +2602,6 @@ class MyInterface:
             cpad2 = '%s \\\n       ' % cstr
 
 
-      txt = 'echo ' + UTIL.section_divider('outliers and motion',
-                                           maxlen=60, hchar='-') + '\n\n'
-
-      txt += '1dplot -wintitle "motion, outliers" -ynames Mot OFrac \\\n' \
-             '%s'                                                         \
-             '       -sepscl %s %s &\n' % (cpad1, efile, ofile)
-
       # get total TRs from any uncensored X-matrix
       if self.dsets.is_not_empty('xmat_ad_nocen'):
          xmat = self.dsets.xmat_ad_nocen
@@ -2588,27 +2614,39 @@ class MyInterface:
       if self.dsets.is_empty('censor_dset'):
          colorstr = ':' + ' ' * len(colorstr)
 
-      txt += '1dplot -one %s%s "1D: %d@%g" &\n' % (cpad2, ofile, nt, olimit)
-      txt += '1dplot -one %s%s "1D: %d@%g" &\n' % (cpad2, efile, nt, mlimit)
+      # separate motion plot and outlier plot commands
+      ocmd = '1dplot -one %s%s "1D: %d@%g" &\n' % (cpad2, ofile, nt, olimit)
+      ecmd = '1dplot -one %s%s "1D: %d@%g" &\n' % (cpad2, efile, nt, mlimit)
+
+      # motion and outlier plot command, possibly with volreg params
+      if mfile:
+         mocmd = '1dplot -sepscl -volreg -ynames enorm outliers - \\\n'        \
+                 '       -wintitle "mot params, enorm, outliers" %s %s %s &\n' \
+                 % (mfile, efile, ofile)
+         motxt = 'enorm and mot params'
+      else:
+         mocmd = '1dplot -wintitle "motion, outliers" -ynames Mot OFrac \\\n' \
+                 '%s'                                                         \
+                 '       -sepscl %s %s &\n' % (cpad1, efile, ofile)
+         motxt = 'plotted together'
+
+      txt = 'echo ' + UTIL.section_divider('outliers and motion',
+                                           maxlen=60, hchar='-') + '\n\n'
+
+      txt += mocmd + ocmd + ecmd 
 
       txt += '\n'                                                       \
              'prompt_user -pause "                              \\\n'   \
              '   review plots %s       \\\n'                            \
-             '     - outliers and motion (plotted together)     \\\n'   \
-             '     - outliers with limit %g                    \\\n' \
-             '     - motion with limit %g                      \\\n' \
+             '     - outliers and motion (%s)     \\\n'   \
+             '     - outliers with limit %g                    \\\n'    \
+             '     - motion with limit %g                      \\\n'    \
              '                                                  \\\n'   \
              '   --- close plots and click OK when finished --- \\\n'   \
              '   "\n'                                                   \
-             'echo ""\n\n\n' % (colorstr, olimit, mlimit)
+             'echo ""\n\n\n' % (colorstr, motxt, olimit, mlimit)
 
-      self.commands_drive += \
-         '1dplot -wintitle "motion, outliers" -ynames Mot OFrac \\\n' \
-         '       -sepscl %s%s %s &\n' % (cstr, efile, ofile)
-      self.commands_drive += '1dplot -one %s%s "1D: %d@%g" &\n' \
-                             % (cstr, ofile, nt, olimit)
-      self.commands_drive += '1dplot -one %s%s "1D: %d@%g" &\n' \
-                             % (cstr, efile, nt, mlimit)
+      self.commands_drive += mocmd + ocmd + ecmd
 
       self.text_drive += txt
 

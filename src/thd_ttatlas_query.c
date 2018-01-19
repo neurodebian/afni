@@ -45,8 +45,11 @@ static int linkrbrain_link = -1;
 /* global web browser is used here, not sure where else to put it...      */
 char *GLOBAL_browser = NULL ;   /* 30 Dec 2005, moved 22 Feb 2012 [rickr] */
 
+#ifndef TINY_NUMBER
+/*! A very tiny, infinitessimal number */
+#  define TINY_NUMBER 1E-10
+#endif
 
-#define TINY_NUMBER 1E-10
 /* minimum probability (0.0-1.0) to consider with probabilistic atlases */
 static float wami_min_prob = -1.0;
 
@@ -1158,10 +1161,11 @@ char * genx_Atlas_Query_to_String (ATLAS_QUERY *wami,
 
    /* indent with HTML encoding for web output */
    if(AFNI_wami_output_mode()){
-      sprintf(histart,"<h4><dd>");
-      sprintf(hiend,"</dd></h4>");
-      sprintf(hmarkstart,"<h3><p><b>");
-      sprintf(hmarkend, "</h3></b>");
+      sprintf(histart,"      <h5>");
+      sprintf(hiend,"<br>");
+      /* these strings go around the html fields for focus point and atlas lines */
+      sprintf(hmarkstart,"     <h4><b>");
+      sprintf(hmarkend, "</b><br>");
   }
    else{
       histart[0] = '\0';
@@ -1235,8 +1239,8 @@ char * genx_Atlas_Query_to_String (ATLAS_QUERY *wami,
 
       sprintf(ylab[i],"%s mm [%c]",y_fstr,(acl[i].y<0.0)?'A':'P') ;
       sprintf(zlab[i],"%s mm [%c]",z_fstr,(acl[i].z<0.0)?'I':'S') ;
-      if((strcmp(acl[i].space_name,"MNI")==0) && (show_neurosynth_link() ||
-         show_sumsdb_link() )) {
+      if((strcmp(acl[i].space_name,"MNI")==0) && AFNI_wami_output_mode() &&
+         (show_neurosynth_link() || show_sumsdb_link() )) {
           /* make sure there's a blank string to start */
           sumsdb_link_str[0] = '\0';
           neurosynth_link_str[0] = '\0';
@@ -1545,10 +1549,11 @@ char * genx_Atlas_Query_to_String (ATLAS_QUERY *wami,
    } else {
       /*- HTML -*/
       rbuf =  THD_zzprintf(rbuf,"<head>\n"
-               "<center><title>AFNI whereami</title></center>\n"
+               "<h3><center><title>AFNI whereami</title></center>\n"
                "</head>\n"
                "<body>\n"
-               "<hr><p>\n");
+               "<hr><p>\n"
+               );
 #if 0
                "<a name=\"top\"></a>\n"
                "<center><h3>whereami report\n"
@@ -1660,17 +1665,18 @@ neurosynth_coords_link(float x, float y, float z)
    return(neurosynthpage);
 }
 
-/* show links out to neurosynth.org */
+/* show links out to sumsdb at washu */
+/* unfortunately, they stopped this service in 2016 at some point DRG - 08 Nov 2017 */
 int
 show_sumsdb_link()
 {
   if(sumsdb_link >=0)
      return(sumsdb_link);
 
-  if (AFNI_noenv("AFNI_SUMSDB"))
-     sumsdb_link = 0;
-  else
+  if (AFNI_yesenv("AFNI_SUMSDB"))
      sumsdb_link = 1;
+  else
+     sumsdb_link = 0;
   return(sumsdb_link);
 }
 
@@ -1707,15 +1713,17 @@ char * get_linkrbrain_site(void)
 /*--------------------------------------------------------------------*/
 
 /* show links out to linkrbrain */
+/* linkrbrain server has been down for quite a while. 
+ * Default to not try - DRG 08 Nov 2017 */
 int
 show_linkrbrain_link()
 {
   if(linkrbrain_link >=0)
      return(linkrbrain_link);
-  if( AFNI_noenv("AFNI_LINKRBRAIN") )  /* 01 Oct 2015 */
-     linkrbrain_link = 0;
-  else
+  if( AFNI_yesenv("AFNI_LINKRBRAIN") )  /* 01 Oct 2015 */
      linkrbrain_link = 1;
+  else
+     linkrbrain_link = 0;
   return(linkrbrain_link);
 }
 
@@ -4232,7 +4240,7 @@ char *approx_string_diff_info(APPROX_STR_DIFF *D, APPROX_STR_DIFF_WEIGHTS *Dwi)
 {
    static char res[10][512];
    static int icall=-1;
-   char sbuf[32];
+   char sbuf[40];
    int i;
 
    if (!Dwi) Dwi = init_str_diff_weights(Dwi);
@@ -4980,6 +4988,19 @@ void suggest_best_prog_option(char *prog, char *str)
          return;
       }
    }
+
+   /* prevent recursion of system commands if we are searching for a
+    * non-existent -help (or similar) option     12 Apr 2017 [rickr] */
+   if( ! strcmp(str, "-help") || ! strcmp(str, "-HELP") ) {
+      fprintf(stderr,"** program %s does not seem to have a -help option...\n",
+              prog);
+      return;
+   } else if( ! strncmp(str, "-h_", 3) ) {
+      fprintf(stderr,"** suggest option: will not search for any '-h_' opts\n"
+                     "   to recommend match for '%s %s'\n", prog, str);
+      return;
+   }
+
    ws = approx_str_sort_phelp(prog, 0, &N_ws, str,
                    1, &ws_score,
                    NULL, &D, 0, '\\');
@@ -8715,10 +8736,11 @@ char **atlas_reference_string_list(char *atname, int *N_refs) {
    return(NULL);
 }
 
-char **atlas_chooser_formatted_labels(char *atname) {
+char **atlas_chooser_formatted_labels(char *atname, int flipxy ) {
    char **at_labels=NULL;
    ATLAS_POINT_LIST *apl=NULL;
    int ii;
+   int sgnxy = (flipxy) ? -1 : 1 ;  /* 10 Jan 2017 */
 
    if (!(apl = atlas_point_list(atname))) {
       if (wami_verb()) {
@@ -8730,7 +8752,7 @@ char **atlas_chooser_formatted_labels(char *atname) {
    for( ii=0 ; ii < apl->n_points ; ii++ ){
       at_labels[ii] = (char *) malloc( sizeof(char) * TTO_LMAX ) ;
       sprintf( at_labels[ii] , TTO_FORMAT , apl->at_point[ii].name ,
-         apl->at_point[ii].xx , apl->at_point[ii].yy , apl->at_point[ii].zz ) ;
+         sgnxy*(apl->at_point[ii].xx) , sgnxy*(apl->at_point[ii].yy) , apl->at_point[ii].zz ) ;
    }
 
    return(at_labels);
@@ -9171,6 +9193,125 @@ int AFNI_get_dset_label_val(THD_3dim_dataset *dset, double *val, char *str)
 }
 
 
+/* An integer version of AFNI_get_dset_label_val(), which assumes ints
+ * to begin with.                                  30 Nov 2016 [rickr]
+ *
+ * NOTE: the return values have been expanded in this version
+ *
+ * return  1 if found
+ *         0 if not
+ *        -1 on error
+*/
+int AFNI_get_dset_label_ival(THD_3dim_dataset *dset, int *val, char *str)
+{
+   ATR_string * atr=NULL;
+   char       * str_lab=NULL;
+   int          found;
+
+   ENTRY("AFNI_get_dset_label_ival") ;
+
+   if (!dset || !val || !str) {
+      ERROR_message("AGDLIv: missing params, have %p, %p, %p\n",dset,val,str);
+      RETURN(-1);
+   }
+
+   *val = 0;
+   found = 0;
+
+   /* initialize hash table */
+   if (!dset->Label_Dtable &&
+       (atr = THD_find_string_atr( dset->dblk , "VALUE_LABEL_DTABLE" ))) {
+      dset->Label_Dtable = Dtable_from_nimlstring(atr->ch);
+   }
+
+   /* try to find label in dataset */
+   if (dset->Label_Dtable) {
+      str_lab = findin_Dtable_b(str, dset->Label_Dtable);
+      /* fprintf(stderr,"ZSS: Have value '%s' for label '%s'\n",
+                     str_lab ? str_lab:"NULL", str); */
+      if (str_lab) {
+         *val = strtol(str_lab, NULL, 10);
+         RETURN(1);
+      }
+   }
+
+   RETURN(0);
+}
+
+
+/* Fill the int_list with a single label value or an expanded list
+ *
+ * return: -1 on error, else number of ints found
+ * 
+ * needs expanding
+*/
+int thd_LT_label_to_int_list(THD_3dim_dataset *dset, int_list *ilist, char *str)
+{
+   int ival, rv;
+
+   ENTRY("thd_LT_label_to_int_list") ;
+
+   if (!dset || !ilist || !str) {
+      ERROR_message("TLLTIL: missing params, have %p, %p, %p\n",dset,ilist,str);
+      RETURN(-1);
+   }
+
+   /* empty the list, but do not free it */
+   ilist->num = 0;
+
+   /* see if this is a single lable in the dataset label table */
+   rv = AFNI_get_dset_label_ival(dset, &ival, str);
+   if( rv < 0 ) RETURN(-1);
+   if( rv > 0 ) {
+      /* if there was a match, insert into list and return */
+      if( add_to_int_list(ilist, ival, 16) < 0 ) {
+         ERROR_message("TLLTIL: failed to add 1 val to int list, n=%d\n",
+                       ilist->num);
+         RETURN(-1);
+      }
+      RETURN(1); /* returning 1 value */
+   }
+
+   /* no match yet, try string as globally known label */
+
+   if( known_atlas_label_to_int_list(ilist, str) < 0 )
+      RETURN(-1);  /* error */
+
+   /* further ponder ilist->num == 0 ? */
+
+   RETURN(ilist->num);
+}
+
+
+/* top-level function for converting globally known labels to a corresponding
+ * list of ints
+ * 
+ * e.g. AFNI_GLAB_FS5_WM might expand to a list of FreeSurfer 5 WM values
+ * e.g. AFNI_GLAB_FS6_WM might be useful if FreeSurfer 6 changes the numbers
+ *
+ * This should realy be done using a hash table (or a list of them), akin to
+ * how findin_Dtable_b() works.
+ *
+ * return -1 on error, else num returned values           30 Nov 2016 [rickr]
+ */
+int known_atlas_label_to_int_list(int_list * ilist, char * str)
+{
+   ENTRY("known_atlas_label_to_int_list");
+
+   if( !ilist || !str ) {
+      ERROR_message("KALTIL: missing params, have %p, %p\n", ilist, str);
+      RETURN(-1);
+   }
+
+   ilist->num = 0;
+
+
+   /* display this list via some verbosity flag (wami_verb()?) */
+
+   RETURN(ilist->num);
+}
+
+
 /* open Elsevier's BrainNavigator in webpage */
 /* xyz input should be in RAI in the same space as atlas,
    but BrainNavigator takes "RSA" as xyz order, so coords need
@@ -9536,6 +9677,8 @@ char *linkrbrain_XML_get(char *data, FILE *fp, int offset)
    return("linkrbrain_corr");
 }
 
+extern int afni_uses_selenium(void) ;
+extern int selenium_open_webpage(char *) ;
 
 int whereami_browser(char *url)
 {

@@ -1,26 +1,22 @@
+a. To update your AFNI any time in the future, just run::
 
+     @update.afni.binaries -d
 
-From this point onward, you can easily keep your AFNI uptodate just
-by running a single command::
+   That's it!! 
 
-  @update.afni.binaries -d
+   **Purpose:** This will automatically download the correct, latest
+   AFNI version to your computer, replacing your old binaries.  It
+   will also update the ``apearch`` help information. Update often!
 
-That's it!! It will automatically download the correct latest version
-to your computer, replacing your old binaries.  It will also update
-the apearch help information.
+#. Check your AFNI version by typing::
 
-| *Q: When should you update?*
-| *A: Often! You don't want to be left behind, do you?*
+     afni -ver
 
-You can always check your version by typing::
+   **Purpose:** Report this useful info, whenever asking a question on
+   the Message Board!
 
-  afni -ver
-
-(And you should always check and report your version if you have
-questions/comments/etc.)
-
-.. note:: The record of changes (new options, new programs, bug fixes,
-          et al.) is maintained for all the see in the online `AFNI
-          History
+.. note:: The record of all changes (new options, new programs, bug
+          fixes, et al.) in AFNI programs is maintained for all to see
+          in the online `AFNI History
           <https://afni.nimh.nih.gov/pub/dist/doc/misc/history/index.html>`_.
 

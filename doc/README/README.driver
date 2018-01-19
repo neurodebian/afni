@@ -45,8 +45,13 @@ ready for user interaction after the image file was saved.
 
 N.B.: If you are adroit, you could use the virtual X11 server program Xvfb
 to create images as indicated above with no need for an actual X11 display.
-For an example of how this can work, see the AFNI message board:
- https://afni.nimh.nih.gov/afni/community/board/read.php?f=1&i=20001&t=19993&v=f
+A sample script is given later -- search forward to find the string 'Xvfb'.
+Also see the script @snapshot_volreg for a practical example.
+
+N.B.: The 'Render Dataset' plugin can be partially controlled by a script,
+but not by the Driver functionality described here. Instead, see the
+README.render_scripts file and the Help button in that plugin for more
+information.
 
 ==============================================================================
 Advanced AFNI Programming: Extending the AFNI Driver Functionality
@@ -77,9 +82,13 @@ with some identifier; for example, a hypothetical diffusion tensor analysis
 plugin could give command names starting with "DTI_".  Or perhaps use your
 institution's name or your initials as a prefix, as in "NIMH_" or "RWC_".
 
+For the most part, driving AFNI is implemented in source code file
+afni_driver.c, if you want to see how it works. (So far, no one outside
+the AFNI team has looked at this, as far as I know.)
+
 =============================================================================
-AFNI COMMANDS (in no coherent order)
-------------------------------------
+AFNI DRIVING COMMANDS (in no coherent order)
+--------------------------------------------
 
 ADD_OVERLAY_COLOR colordef colorlab
   Adds the color defined by the string "colordef" to the list of overlay
@@ -95,7 +104,8 @@ SET_THRESHOLD [c.]val [dec]
   will set the '**' (decimal) level of the slider to 2 and the slider value to
   30 (=0.3000*100).
   ++ You can also use "SET_FUNC_THRESH" for the command name.
-  ++ The newer SET_THRESHNEW command is probably better for your needs.
+  ++ The newer SET_THRESHNEW command is probably better for your needs;
+     this older command is left here for historical compatibility reasons.
 
 SET_THRESHNEW [c] val [flags]
   Sets the threshold slider for controller index 'c' (default='A') to the
@@ -147,9 +157,12 @@ SET_PBAR_ALL [c.]{+|-}99 topval colorscale_name [options]
 PBAR_ROTATE [c.]{+|-}
   Rotates the color pbar in the positive ('+') or negative ('-') direction:
     PBAR_ROTATE A.+
+  ++ You could use this to make fun movies, but otherwise it is hard to
+     see what value this command has.
 
 DEFINE_COLORSCALE name number=color number=color ...
-or DEFINE_COLORSCALE name color color color
+ or
+DEFINE_COLORSCALE name color color color
   Defines a new colorscale with the given name.  The format of the following
   arguments is either like "1.0=#ffff00" or like "#ff00ff" (all must be in the
   same format).  See https://afni.nimh.nih.gov/afni/afni_colorscale.html for
@@ -197,8 +210,13 @@ SET_FUNC_ALPHA [c.]{Off|Linear|Quadratic} [floor]
 
 OPEN_PANEL [c.]Panel_Name
   Opens the specified controller panel, where 'Panel_Name' is one of
-  'Define_Overlay', 'Define_Datamode', or 'Define_Markers'.  At this time,
-  there is no way to close a panel except from the GUI.
+  'Define_Overlay', 'Define_Datamode', 'Define_Markers', or 'Etc'.
+  (Panel name is not case-sensitive.)
+
+CLOSE_PANEL [c.]Panel_Name
+  Closes the specified controller panel, where 'Panel_Name' is one of
+  'Define_Overlay', 'Define_Datamode', 'Define_Markers', or 'Etc'.
+  (Panel name is not case-sensitive.)
 
 SYSTEM command string
   Executes "command string" using the system() library function; for
@@ -223,7 +241,7 @@ SET_SESSION [c.]directoryname
 SET_VIEW [c.]view
   Switches controller 'c' to the named "view", which can be one of
   'orig', 'acpc' or 'tlrc'.  The underlay dataset must have an
-  appropriate transformation.
+  appropriate transformation, or appropriate version.
 
 SET_ANATOMY [c.]prefix [i]
   Switches controller 'c' to be looking at the anatomical dataset with
@@ -233,6 +251,8 @@ SET_ANATOMY [c.]prefix [i]
      prefix, this is the sub-brick index to view.
   ++ You can also use "SWITCH_ANATOMY" or "SWITCH_UNDERLAY" for the command.
   ++ The 'prefix' can also be the dataset IDcode string, if you insist.
+  ++ The 'prefix' does NOT include the directory name; if you try to do
+     that, the driving operation will fail.
 
 SET_FUNCTION [c.]prefix [j [k]]
   Same, but for the functional dataset in controller 'c'.
@@ -270,6 +290,7 @@ OPEN_WINDOW [c.]windowname [options]
                            each one can only send one keystroke;
                            example: "keypress=Z keypress=Z"
                            to zoom in twice in an image viewer.
+
   For image windows, other options available are:
     ifrac=number     -> set image fraction in window to number (<= 1.0);
                         setting this to exactly 1 will turn off the
@@ -280,10 +301,22 @@ OPEN_WINDOW [c.]windowname [options]
     crop=x1:x2,y1:y2 -> crop images from voxels x1 to x2, and y1 to y2
                         (inclusive) -- mostly for use in .afni.startup_script;
                         use x1=x2=0 and y1=y2=0 to turn cropping off.
+
+    overlay_label="some string"
+                     -> This option sets the "Label Append String";
+                        you can use 'single' or "double" quotes.
+                        This string will be shown only if the overlay
+                        label is turned on, which is done from the
+                        image window intensity bar popup, or via
+                        the AFNI_IMAGE_LABEL_MODE environment variable.
+                      * You can also set this string via environment
+                        variable AFNI_IMAGE_LABEL_STRING.
+
   For graph windows, other options available are:
     matrix=number     -> use 'number' sub-graphs (<= 21)
     pinnum=number     -> pin the graph length to 'number' time points
     pinbot=a pintop=b -> pin the graph time window to run from 'a..b'
+
   You can also open plugin windows with a windowname like so:
     A.plugin.buttonlabel
   where buttonlabel is the plugin's button label with blanks replaced
@@ -301,6 +334,25 @@ CLOSE_WINDOW [c.]windowname
   Closes a window from controller 'c'.  You can only close graph and image
   viewer windows this way, not plugin windows.
 
+DATASET#N dataset ...
+  Drives the Dataset#N plugin for graph viewer windows. Each 'dataset'
+  is a dataset prefix name (without directory!). You can also add a
+  color name label (taken from the color menus) separated by '::'.
+  For example, to put 2 extra graphs on top of the underlay graph:
+    DATASET#N Fred.nii::red Elvis::blue
+  This driver command was added at the request of AFNI bootcamp students
+  in Guangzhou (Dec 2017).
+  ++ See the note about resizing the window with 'geom=PxQ' in the SAVE_JPEG
+     command, described below. It seems to be necessary to save the image
+     of a graph viewer separately from the resizing command, probably because
+     the timing of these two operations can end of happening out of order.
+  ++ Also, note that driving the plugin will NOT change the visible controls
+     if you open the plugin controller. The chosen datasets (and colors) are
+     saved, but these choices will not show up in the graphical interface for
+     this plugin.
+  ++ At this time [Dec 2017], this command is the only one that can drive the
+     internal operation of an AFNI plugin.
+
 SAVE_JPEG [c.]windowname filename
   Save a JPEG dump of the given window to 'filename' (using the cjpeg filter,
   which must be in the path).  The windowname can be one of 'axialimage',
@@ -316,6 +368,18 @@ SAVE_JPEG [c.]windowname filename
      variable AFNI_IMAGE_SAVESQUARE to YES (cf. SETENV below).
      This comment applies to all image SAVE_* commands below, except
      for SAVE_RAW* (where AFNI_IMAGE_SAVESQUARE has no effect).
+  ++ For reasons I do not understand, if you OPEN (or ALTER) a window's
+     size with 'geom=PxQ', then do SAVE_JPEG on the window, using the
+     '-com' option on the AFNI command line, the image will still be
+     saved at the window's original size. The workaround for this
+     is to force the save with plugout_drive instead, after AFNI starts.
+     A sample script is below:
+       afni -com 'SWITCH_UNDERLAY run1_time'                      \
+            -com 'DATASET#N run2_time::blue run3_time::red'       \
+            -com 'OPEN_WINDOW axialgraph keypress=I geom=900x600' \
+            -yesplugouts
+       sleep 1
+       plugout_drive -quit -com 'SAVE_JPEG axialgraph ag.jpg' -com 'QUITT'
 
 SAVE_PNG [c.]windowname filename
   Like SAVE_JPEG, but saves to the lossless PNG format.
@@ -499,6 +563,11 @@ QUIT
   (with existing technology), this action forestalls all further attempts
   to send commands to AFNI.
 
+QUITT
+  AFNI will exit even more immediately!  That is, none of the usual
+  things at the end (e.g., 'goodbye' messages) will be done, and the
+  program just stops.
+
 SETENV name value
   Set the environment variable "name" to "value" in AFNI; for example
     SETENV AFNI_CROSSHAIR_LINES YES
@@ -532,6 +601,90 @@ NOISY_PLUGOUTS
 
 TRACE {YES | NO}
   Turns debug tracing on or off.  Mostly for AFNI developers.
+
+==============================================================================
+Sample Script Using Xvfb
+------------------------
+This script uses the output files in a set of directories created by
+afni_proc.py.  It overlays the registered EPI with the structural image,
+and saves an image snapshot from each directory.  The goal is to give
+the user a quick way of looking for grossly bad registrations.
+
+You probably cannot use the script exactly as it is shown here. You will have
+to modify the filenames to meet your needs, at least. This script relies on
+the NetPBM package being installed on your system.
+
+#!/bin/tcsh
+#
+# start the X Virtual Frame Buffer program (on screen 9)
+#
+ Xvfb :9 -screen 0 1024x768x24 &
+#
+# set some environment variables
+#
+ setenv AFNI_NOSPLASH    YES
+ setenv AFNI_SPLASH_MELT NO
+ setenv DISPLAY          :9
+#
+# make directory for output images
+#
+ mkdir -p snapshots
+#
+# loop over the afni_proc.py results directories
+#
+ foreach ddd ( *.results )
+    set sub  = `basename $ddd .results`
+    set epi  = pb02.${sub}.r01.volreg+tlrc
+    set anat = anat_final.${sub}+tlrc
+# max value in EPI brick
+    set mval = `3dBrickStat -max $ddd/$epi'[0]'`
+# clip level for EPI brick
+    set cval = `3dClipLevel $ddd/$epi'[0]'`
+# threshold value to use for EPI brick overlay
+    set tval = `ccalc "min($cval,$mval/4)"`
+# upper limit for EPI brick overlay
+    set uval = `ccalc "max(3*$cval,0.666*$mval)"`
+# name for output image file
+    set jnam = $sub
+# drive AFNI to get the images we want
+    afni -noplugins -no_detach                               \
+         -com "OPEN_WINDOW sagittalimage opacity=6"          \
+         -com "OPEN_WINDOW axialimage opacity=6"             \
+         -com "OPEN_WINDOW coronalimage opacity=6"           \
+         -com "SET_PBAR_ALL +99 1 gray_scale"                \
+         -com "SET_FUNC_RANGE $uval"                         \
+         -com "SET_THRESHNEW $tval *"                        \
+         -com "SWITCH_OVERLAY $epi                           \
+         -com "SEE_OVERLAY +"                                \
+         -com "SAVE_JPEG sagittalimage sag.jpg blowup=2"     \
+         -com "SAVE_JPEG coronalimage  cor.jpg blowup=2"     \
+         -com "SAVE_JPEG axialimage    axi.jpg blowup=2"     \
+         -com "QUITT"                                        \
+       $ddd/$anat $ddd/$epi'[0]'
+#
+# convert the JPEG outputs to PNM for NetPBM manipulations
+#
+    djpeg sag.jpg > sag.pnm
+    djpeg cor.jpg > cor.pnm
+    djpeg axi.jpg > axi.pnm
+#
+# the commands below make a labeled composite image, and require NetPBM
+#
+# glue the images together
+    pnmcat -lr -jcenter -black sag.pnm axi.pnm cor.pnm > qqq.pnm
+# make a text overlay
+    pbmtext $jnam                                      > qqq.pbm
+# overlay the text image on the composite, convert to JPEG
+    pamcomp -xoff=1 -yoff=1 qqq.pbm qqq.pnm | cjpeg -quality 95 > snapshots/$jnam.jpg
+# throw away the trash
+    \rm sag.* axi.* cor.* qqq.*
+ end
+#
+# done: kill the Xvfb process, then vamoose
+#
+ killall Xvfb
+ exit 0
+
 
 ==============================================================================
 ** GRAPHS **
@@ -666,5 +819,4 @@ WRITE_CONT_SPX_HELP filename
 
 SNAP_CONT image.jpg
    Take a snapshot of the main controller and save into image.jpg
-   
 

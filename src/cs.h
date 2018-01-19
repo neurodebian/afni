@@ -17,9 +17,19 @@
 
 #include "mcw_malloc.h"
 
+#ifndef TYPEDEF_double_pair
+#define TYPEDEF_double_pair
+typedef struct { double a,b ; } double_pair ;
+#endif
+
 #ifdef  __cplusplus
 extern "C" {
 #endif
+
+#ifdef QS_STACK
+#undef QS_STACK
+#endif
+#define QS_STACK 66666
 
 /***** Quicksort routines in various flavonoids *****/
 
@@ -38,6 +48,7 @@ extern float qmed_float     ( int , float * ) ;
 extern float qmean_float    ( int , float * ) ;               /* 26 Mar 2013 */
 extern void  qmedmad_float  ( int,float *,float *,float * ) ; /* 08 Mar 2001 */
 extern void  meansigma_float( int,float *,float *,float * ) ; /* 07 Dec 2006 */
+extern float qfrac_float    ( int , float , float * ) ;       /* 31 Oct 2016 */
 
 extern void qmedmadbmv_float   ( int, float *, float *, float *, float * ) ;
 extern void qmedmadmeanad_float( int, float *, float *, float *, float * ) ;
@@ -142,6 +153,8 @@ extern int strcmp_aboot( char * , char * ) ;        /* 12 Mar 2007 */
 
 extern char * afni_fgets( char *buf , int nbuf , FILE *fp ) ; /* 20 Dec 2011 */
 extern void   afni_fgets_setskip(int) ;
+
+extern double_pair gam_find_pq( double peak , double fwhm ) ; /* 07 Jan 2018 */
 
 #ifndef DEBLANK
 #define DEBLANK(cc) do{ if( (cc) != NULL ){                   \

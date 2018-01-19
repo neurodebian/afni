@@ -38,9 +38,11 @@ static char * g_history[] =
   "       So re-wrote the troubling part.\n"
   "0.5  22 Oct 2014: if zeropadding for dilations, reset ijk_to_dicom_real\n",
   "       to preserve any oblique matrix\n"
+  "0.6  11 Dec 2017: fix result-dilation bug, noted by mwlee on MB\n",
+  "     - if pad but not convert, inset == dnew, so do not delete\n"
 };
 
-static char g_version[] = "3dmask_tool version 0.5, 1 October 2014";
+static char g_version[] = "3dmask_tool version 0.6, 11 December 2017";
 
 #include "mrilib.h"
 
@@ -263,7 +265,8 @@ THD_3dim_dataset * apply_dilations(THD_3dim_dataset * dset, int_list * D,
 
    /* undo any zeropadding (delete original and temporary datasets) */
    if( pad ) {
-      DSET_delete(inset);
+      /* if pad and not convert, dnew == inset    11 Dec 2017 [rickr] */
+      if( dnew != inset ) DSET_delete(inset);
       inset = THD_zeropad(dnew, -pad, -pad, -pad, -pad, -pad, -pad, "pad", 0);
       DSET_delete(dnew);
       dnew = inset;
@@ -651,18 +654,18 @@ int show_help(void)
    "      3dmask_tool -input mask_anat.*+tlrc.HEAD -prefix ma.close.result \\\n"
    "                  -dilate_result 5 -5\n"
    "\n"
-   "   c1. compute an intersection mask\n"
+   "   c1. compute an intersection mask, this time with EPI masks\n"
    "\n"
-   "      3dmask_tool -input mask_anat.*+tlrc.HEAD -prefix mask_inter \\\n"
+   "      3dmask_tool -input full_mask.*+tlrc.HEAD -prefix mask_inter \\\n"
    "                  -frac 1.0\n"
    "\n"
    "   c2. compute a mask of 70%% overlap\n"
    "\n"
-   "      3dmask_tool -input mask_anat.*+tlrc.HEAD -prefix mask_overlap.7 \\\n"
+   "      3dmask_tool -input full_mask.*+tlrc.HEAD -prefix mask_overlap.7 \\\n"
    "                  -frac 0.7\n"
    "   c3. simply count the voxels that overlap\n"
    "\n"
-   "      3dmask_tool -input mask_anat.*+tlrc.HEAD -prefix mask.counts \\\n"
+   "      3dmask_tool -input full_mask.*+tlrc.HEAD -prefix mask.counts \\\n"
    "                  -count\n"
    "\n"
    "   d. fill holes\n"

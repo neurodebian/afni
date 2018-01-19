@@ -72,12 +72,12 @@ static int   g_exp_ipieces = 1000; /* vals per unit length */
 static int     g_exp_nvals = 0;   /* maxval*ipieces + 1 */
 static float * g_exp_ts  = NULL;  /* exp(-x) for x at index VAL*pieces */
 
-static THD_3dim_dataset * g_saset=NULL; /* stimulus aperature dataset */
+static THD_3dim_dataset * g_saset=NULL; /* stimulus aperture dataset */
 
 /* prototypes */
 static void conv_set_ref( int num , float * ref );
 static int signal_model( float * , int , float ** , float *, int );
-static int reset_stim_aperature_dset(int);
+static int reset_stim_aperture_dset(int);
 static int reset_exp_time_series(void);
 
 static THD_3dim_dataset * convert_to_blurred_masks(THD_3dim_dataset *);
@@ -126,7 +126,7 @@ static int    genv_sigma_ratio_nsteps = 4; /* integers >= 1, or any >= 1 if 0 */
 static int    genv_theta_nsteps = 6;   /* truncate [-PI/2,PI/2) to S steps
 					  (if > 0) */
 
-static int    genv_get_help = 0;      /* AFNI_MODEL_HELP_ALL or HELP_CONV_PRF */
+static int    genv_get_help = 0;      /* AFNI_MODEL_HELP_ALL/HELP_CONV_PRF_6 */
 
 static int set_env_vars(void)
 {
@@ -161,7 +161,7 @@ static int set_env_vars(void)
               genv_sigma_ratio_nsteps, genv_theta_nsteps);
 
    /* help */
-   genv_get_help = AFNI_yesenv("AFNI_MODEL_HELP_CONV_PRF")
+   genv_get_help = AFNI_yesenv("AFNI_MODEL_HELP_CONV_PRF_6")
                 || AFNI_yesenv("AFNI_MODEL_HELP_ALL");
 
    return 0;
@@ -230,7 +230,7 @@ static void conv_set_ref( int num , float * ref )
 /* any failure should leave g_saset == NULL
  *
  * return 0 on success */
-static int reset_stim_aperature_dset(int needed_length)
+static int reset_stim_aperture_dset(int needed_length)
 {
    THD_3dim_dataset * sanew;
    int                errs=0;
@@ -607,13 +607,13 @@ static void conv_model( float *  gs      , int     ts_length ,
    }
 
    /*** make sure there is a reference function to convolve with ***/
-   /*   it may be used in reset_stim_aperature_dset */
+   /*   it may be used in reset_stim_aperture_dset */
 
    if( refnum <= 0 ) conv_set_ref( 0 , NULL ) ;
 
-   /* create stim aperature dset */
+   /* create stim aperture dset */
    if( g_iter == 0 ) {
-      (void)reset_stim_aperature_dset(ts_length); /* free and reload saset */
+      (void)reset_stim_aperture_dset(ts_length); /* free and reload saset */
       (void)reset_exp_time_series();     /* pre-compute exp(x) */
       if( genv_debug ) fprintf(stderr, "== start time %d\n", NI_clock_time());
    }
@@ -799,7 +799,7 @@ MODEL_interface * initialize_model ()
          gs[4] = sigrat = sigma ratio = sigma_y / sigma_x
          gs[5] = theta  = angle from "due north"
 
-  For each TR, integrate g(x,y) over stim aperature dset.
+  For each TR, integrate g(x,y) over stim aperture dset.
 
          g(x,y) = e^-[((x-x0)^2+(y-y0)^2)/(2*sigma^2)]
 
@@ -815,7 +815,7 @@ static int signal_model
   int      debug        /* make some noise */
 )
 {
-  int    maxind;        /* largest dimension */
+  int    maxind, tmpmax;/* largest dimension */
   float  A, x, y, sigma;/* model params */
   float  sigrat, theta;
 
@@ -834,8 +834,14 @@ static int signal_model
   if( ! ISVALID_3DIM_DATASET(g_saset) ) return 0;
 
   maxind = ts_length;
-  if( maxind > DSET_NX(g_saset) ) maxind = DSET_NX(g_saset);
+  if( genv_on_grid ) tmpmax = DSET_NX(g_saset);
+  else               tmpmax = DSET_NVALS(g_saset);
+
+  if( maxind > tmpmax ) maxind = tmpmax;
   if( maxind == 0 ) return 0;
+
+  if( debug ) 
+      fprintf( stderr,"-d NT orig=%d, applied=%d\n", ts_length, maxind);
 
   /* time array must be ordered according to stim dset */
   if( genv_on_grid ) /* scale data directly from grid */
@@ -1194,7 +1200,7 @@ static int model_help(void)
 "\n"
 "      3dNLfim -input epi.scale.demean+tlrc \\\n"
 "              -noise Zero                  \\\n"
-"              -signal Conv_PRF             \\\n"
+"              -signal Conv_PRF_6           \\\n"
 "              -sconstr 0 -10.0 10.0        \\\n"
 "              -sconstr 1 -1.0 1.0          \\\n"
 "              -sconstr 2 -1.0 1.0          \\\n"
@@ -1275,19 +1281,19 @@ static int model_help(void)
 "   -----------------------------------\n"
 "   helpful:\n"
 "\n"
-"      AFNI_MODEL_HELP_CONV_PRF    : Y/N - output this help\n"
+"      AFNI_MODEL_HELP_CONV_PRF_6  : Y/N - output this help\n"
 "\n"
-"         e.g. setenv AFNI_MODEL_HELP_CONV_PRF YES\n"
+"         e.g. setenv AFNI_MODEL_HELP_CONV_PRF_6 YES\n"
 "\n"
 "         When set, the model initialization function will output this help.\n"
 "\n"
 "         Consider:\n"
 "\n"
-"            3dNLfim -signal Conv_PRF\n"
+"            3dNLfim -signal Conv_PRF_6\n"
 "\n"
 "         or more directly (without setenv):\n"
 "\n"
-"            3dNLfim -DAFNI_MODEL_HELP_CONV_PRF=Y -signal Conv_PRF\n"
+"            3dNLfim -DAFNI_MODEL_HELP_CONV_PRF_6=Y -signal Conv_PRF_6\n"
 "\n"
 "      AFNI_MODEL_DEBUG            : specify debug/verbosity level\n"
 "\n"

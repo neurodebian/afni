@@ -444,6 +444,8 @@ void CALC_read_opts( int argc , char * argv[] )
          nopt++ ;
          if( nopt >= argc )
            ERROR_exit("need argument after -prefix!\n") ;
+         if( !THD_filename_ok(argv[nopt]) )
+           ERROR_exit("argument after -prefix is not a good name: '%s'",argv[nopt]) ;
          MCW_strncpy( CALC_output_prefix , argv[nopt++] , THD_MAX_NAME ) ;
          continue ;
       }
@@ -461,14 +463,14 @@ void CALC_read_opts( int argc , char * argv[] )
 
       if( strncasecmp(argv[nopt],"-expr",4) == 0 ){
          if( CALC_code != NULL )
-           ERROR_exit("cannot have 2 -expr options!\n") ;
+           ERROR_exit("you cannot have 2 -expr options!\n") ;
          nopt++ ;
          if( nopt >= argc )
             ERROR_exit("need argument after -expr!\n") ;
          PARSER_set_printout(1) ;  /* 21 Jul 2003 */
          CALC_code = PARSER_generate_code( argv[nopt++] ) ;
          if( CALC_code == NULL )
-            ERROR_exit("illegal expression!\n") ;
+            ERROR_exit("illegal expression -- see the help for details") ;
          PARSER_mark_symbols( CALC_code , CALC_has_sym ) ; /* 15 Sep 1999 */
          continue ;
       }
@@ -507,15 +509,15 @@ void CALC_read_opts( int argc , char * argv[] )
 
          ival = argv[nopt][1] - 'a' ;
          if( VAR_DEFINED(ival) )
-            ERROR_exit("Can't define %c symbol twice\n",argv[nopt][1]);
+            ERROR_exit("Can't define %c symbol twice",argv[nopt][1]);
 
          isub = (ids == 2) ? 0 : strtol(argv[nopt]+2,NULL,10) ;
          if( isub < 0 )
-            ERROR_exit("Illegal sub-brick value: %s\n",argv[nopt]) ;
+            ERROR_exit("Illegal negative sub-brick value: %s",argv[nopt]) ;
 
          nopt++ ;
          if( nopt >= argc )
-            ERROR_exit("need argument after %s\n",argv[nopt-1]);
+            ERROR_exit("need argument after %s",argv[nopt-1]);
 
          /*-- 22 Feb 2005: allow for I:, J:, K: prefix --*/
 
@@ -566,10 +568,10 @@ void CALC_read_opts( int argc , char * argv[] )
             /*- sanity checks -*/
 
             if( ids > 2 )
-              ERROR_exit("Can't combine %s with differential subscripting %s\n",
+              ERROR_exit("Can't combine %s with differential subscripting %s",
                          argv[nopt-1],argv[nopt]) ;
             if( CALC_dset[jds] == NULL )
-              ERROR_exit("Must define dataset %c before using it in %s\n",
+              ERROR_exit("Must define dataset %c before using it in %s",
                          argv[nopt][0] , argv[nopt] ) ;
 
             /*- get subscripts -*/
@@ -674,7 +676,12 @@ void CALC_read_opts( int argc , char * argv[] )
             }
             if( nxyz != CALC_nvox ){
                ERROR_exit(
-                "dataset %s differs in size [%d voxels] from others [%d]\n",
+                "dataset %s differs in size [%d voxels] from others [%d]\n"
+                "    -->> Since calculations are done voxel-by-voxel and\n"
+                "         volume-by-volume, datasets must match both in\n"
+                "         number of voxels per volume, and number of volumes.\n"
+                "    -->> Depending on what you are doing, program 3dresample\n"
+                "         might be useful to you.\n" ,
                 argv[nopt-1] , nxyz , CALC_nvox ) ;
             }
         }
@@ -692,7 +699,7 @@ void CALC_read_opts( int argc , char * argv[] )
              if( DSET_BRICK_TYPE(dset,ii) != MRI_float ){
                far = calloc( sizeof(float) , nxyz ) ;
                if( far == NULL )
-                 ERROR_exit("can't malloc space for conversion\n");
+                 ERROR_exit("can't malloc space for conversion -- ran out of memory :(");
                EDIT_coerce_scale_type( nxyz , DSET_BRICK_FACTOR(dset,ii) ,
                                        DSET_BRICK_TYPE(dset,ii), DSET_ARRAY(dset,ii),
                                        MRI_float , far ) ;
@@ -786,7 +793,7 @@ void CALC_read_opts( int argc , char * argv[] )
            break ;
 
            default:
-             ERROR_exit("Dataset %s has illegal data type: %s\n" ,
+             ERROR_exit("Dataset %s has illegal data type for 3dcalc: %s\n" ,
                         argv[nopt-1] , MRI_type_name[CALC_type[ival]] ) ;
 
          } /* end of switch over type switch */
@@ -852,7 +859,10 @@ DSET_DONE: continue;  /*** target for various goto statements above ***/
 
    for (ids=0; ids < 26; ids ++)
       if (ntime[ids] > 1 && ntime[ids] != ntime_max ) {
-         ERROR_exit("Multi-brick datasets don't have same number of volumes!\n");
+         ERROR_exit("Multi-brick datasets don't have same number of volumes [%d]!\n"
+                    "    -->> Since calculations are done voxel-by-voxel and\n"
+                    "         volume-by-volume, datasets must match both in\n"
+                    "         number of voxels per volume, and number of volumes.",ntime_max);
       }
 
    /* 17 Apr 1998: if all input datasets are 3D only (no time),
@@ -912,7 +922,7 @@ void CALC_Syntax(void)
     "Program: 3dcalc                                                         \n"
     "Author:  RW Cox et al                                                   \n"
     "                                                                        \n"
-    "3dcalc - AFNI's calculator program                                      \n"
+    "3dcalc - AFNI's calculator program ~1~                                  \n"
     "                                                                        \n"
     "     This program does voxel-by-voxel arithmetic on 3D datasets         \n"
     "     (only limited inter-voxel computations are possible).              \n"
@@ -930,13 +940,13 @@ void CALC_Syntax(void)
     "     For statistics from a region around each voxel: cf. 3dLocalstat    \n"
     "                                                                        \n"
     "------------------------------------------------------------------------\n"
-    "Usage:                                                                  \n"
+    "Usage: ~1~                                                              \n"
     "-----                                                                   \n"
     "       3dcalc -a dsetA [-b dsetB...] \\                                 \n"
     "              -expr EXPRESSION       \\                                 \n"
     "              [options]                                                 \n"
     "                                                                        \n"
-    "Examples:                                                               \n"
+    "Examples: ~1~                                                           \n"
     "--------                                                                \n"
     "1. Average datasets together, on a voxel-by-voxel basis:                \n"
     "                                                                        \n"
@@ -1068,7 +1078,7 @@ void CALC_Syntax(void)
     "        dilation: -expr 'amongst(1,a,b,c,d,e,f,g)'                      \n"
     "                                                                        \n"
     "------------------------------------------------------------------------\n"
-    "ARGUMENTS for 3dcalc (must be included on command line):                \n"
+    "ARGUMENTS for 3dcalc (must be included on command line): ~1~            \n"
     "---------                                                               \n"
     "                                                                        \n"
     " -a dname    = Read dataset 'dname' and call the voxel values 'a' in the\n"
@@ -1095,6 +1105,12 @@ void CALC_Syntax(void)
     "                  The subscript notation is more flexible, as it can    \n"
     "                  be used to select a collection of sub-bricks.         \n"
 #endif
+    "               ** If you just want to test some 3dcalc expression,      \n"
+    "                  you can supply a dataset 'name' of the form           \n"
+    "                    jRandomDataset:64,64,16,40                          \n"
+    "                  to have the program create and use a dataset          \n"
+    "                  with a 3D 64x64x16 grid, with 40 time points,         \n"
+    "                  filled with random numbers (uniform on [-1,1]).       \n"
     "                                                                        \n"
     " -expr       = Apply the expression - within quotes - to the input      \n"
     "               datasets (dnames), one voxel at time, to produce the     \n"
@@ -1125,7 +1141,7 @@ void CALC_Syntax(void)
     "------------------------------------------------------------------------\n"
    ) ;
    printf(
-    " OPTIONS for 3dcalc:                                                    \n"
+    " OPTIONS for 3dcalc: ~1~                                                \n"
     " -------                                                                \n"
     "                                                                        \n"
     "  -help      = Show this help.\n"
@@ -1259,7 +1275,7 @@ void CALC_Syntax(void)
 #endif
     "                                                                        \n"
     "------------------------------------------------------------------------\n"
-    "DATASET TYPES:                                                          \n"
+    "DATASET TYPES: ~1~                                                      \n"
     "-------------                                                           \n"
     "                                                                        \n"
     " The most common AFNI dataset types are 'byte', 'short', and 'float'.   \n"
@@ -1282,7 +1298,7 @@ void CALC_Syntax(void)
     " enough, then it makes sense to use the larger type, float.             \n"
     "                                                                        \n"
     "------------------------------------------------------------------------\n"
-    "3D+TIME DATASETS:                                                       \n"
+    "3D+TIME DATASETS: ~1~                                                   \n"
     "----------------                                                        \n"
     "                                                                        \n"
     " This version of 3dcalc can operate on 3D+time datasets.  Each input    \n"
@@ -1319,7 +1335,7 @@ void CALC_Syntax(void)
 #endif
     "                                                                        \n"
     "------------------------------------------------------------------------\n"
-    "1D TIME SERIES:                                                         \n"
+    "1D TIME SERIES: ~1~                                                     \n"
     "--------------                                                          \n"
     "                                                                        \n"
     " You can also input a '*.1D' time series file in place of a dataset.    \n"
@@ -1369,7 +1385,7 @@ void CALC_Syntax(void)
     "        3dcalc -a '1D: 3 4 5 | 1 2 3'\\' -expr 'cbrt(a)' -prefix -      \n"
     "                                                                        \n"
     "------------------------------------------------------------------------\n"
-    "'1D:' INPUT:                                                            \n"
+    "'1D:' INPUT: ~1~                                                        \n"
     "-----------                                                             \n"
     "                                                                        \n"
     " You can input a 1D time series 'dataset' directly on the command line, \n"
@@ -1394,7 +1410,7 @@ void CALC_Syntax(void)
     " random 3D+time dataset, which might be useful for testing purposes.    \n"
     "                                                                        \n"
     "------------------------------------------------------------------------\n"
-    "'I:*.1D' and 'J:*.1D' and 'K:*.1D' INPUT:                               \n"
+    "'I:*.1D' and 'J:*.1D' and 'K:*.1D' INPUT: ~1~                           \n"
     "----------------------------------------                                \n"
     "                                                                        \n"
     " You can input a 1D time series 'dataset' to be defined as spatially    \n"
@@ -1413,7 +1429,7 @@ void CALC_Syntax(void)
     " direction.                                                             \n"
     "                                                                        \n"
     "------------------------------------------------------------------------\n"
-    "COORDINATES and PREDEFINED VALUES:                                      \n"
+    "COORDINATES and PREDEFINED VALUES: ~1~                                  \n"
     "---------------------------------                                       \n"
     "                                                                        \n"
     " If you don't use '-x', '-y', or '-z' for a dataset, then the voxel     \n"
@@ -1457,7 +1473,7 @@ void CALC_Syntax(void)
     " The -LPI/-RAI behavior can also be achieved via the AFNI_ORIENT        \n"
     " environment variable (27 Aug, 2014).                                   \n"
     "------------------------------------------------------------------------\n"
-    "DIFFERENTIAL SUBSCRIPTS [22 Nov 1999]:                                  \n"
+    "DIFFERENTIAL SUBSCRIPTS [22 Nov 1999]: ~1~                              \n"
     "-----------------------                                                 \n"
     "                                                                        \n"
     " Normal calculations with 3dcalc are strictly on a per-voxel basis:\n"
@@ -1526,7 +1542,7 @@ void CALC_Syntax(void)
     "        3dLocalstat -nbhd 'SPHERE(9)' -stat max -prefix Amax9 A+orig\n"
     "\n"
     "------------------------------------------------------------------------\n"
-    "ISSUES:\n"
+    "ISSUES: ~1~\n"
     "------ \n"
     "\n"
     " * Complex-valued datasets cannot be processed, except via '-cx2r'.\n"
@@ -1538,7 +1554,7 @@ void CALC_Syntax(void)
 
    printf(
     "------------------------------------------------------------------------\n"
-    "EXPRESSIONS:\n"
+    "EXPRESSIONS: ~1~\n"
     "----------- \n"
     "\n"
     " As noted above, datasets are referred to by single letter variable names.\n"
@@ -1619,7 +1635,7 @@ int main( int argc , char *argv[] )
       for( ids=0 ; ids < 26 ; ids++ ) if( CALC_dset[ids] != NULL &&
                                           ntime[ids] > 1           ) break ;
    }
-   if( ids == 26 ) ERROR_exit("Can't find template dataset?!\n") ;
+   if( ids == 26 ) ERROR_exit("Can't find template dataset?! [this should never happen]") ;
 
    new_dset = EDIT_empty_copy( CALC_dset[ids] ) ;
 
@@ -1742,7 +1758,7 @@ int main( int argc , char *argv[] )
 
       buf[kt] = (float *)calloc(1,tempsiz);
       if( buf[kt] == NULL )
-        ERROR_exit("Can't malloc output dataset sub-brick %d!\n",kt) ;
+        ERROR_exit("Can't malloc output dataset sub-brick %d -- out of memory :(",kt) ;
 
       /*** loop over voxels ***/
 
@@ -2193,7 +2209,7 @@ int main( int argc , char *argv[] )
    switch( CALC_datum ){
 
       default:
-        ERROR_exit("Somehow ended up with CALC_datum = %d\n",CALC_datum) ;
+        ERROR_exit("Somehow ended up with CALC_datum = %d [this should never happen]",CALC_datum) ;
       exit(1) ;
 
       /* the easy case! */
@@ -2304,7 +2320,7 @@ int main( int argc , char *argv[] )
            /* make space for output brick and scale into it */
 
            dfim[ii] = (void *) malloc( mri_datum_size(CALC_datum) * CALC_nvox ) ;
-           if( dfim[ii] == NULL ) ERROR_exit("malloc fails at output[%d]\n",ii);
+           if( dfim[ii] == NULL ) ERROR_exit("malloc fails at output[%d] -- out of memory :(",ii);
 
            if( CALC_datum == MRI_byte ){  /* 29 Nov 2004: check for bad byte-ization */
              int nneg ;

@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+# python3 status: compatible
+
 import sys, os
 
 # system libraries : test, then import as local symbols
@@ -33,9 +35,19 @@ realtime_receiver.py - program to receive and display real-time plugin data
 
    Examples:
 
-     1. Run in test mode to just display data on the terminal window.
+     1a. Run in test mode to display verbose data on the terminal window.
 
-        realtime_receiver.py -show_data
+        realtime_receiver.py -show_data yes
+
+     1b. Run in test mode to just display motion to the terminal.
+
+        realtime_receiver.py -write_text_data stdout
+
+     1c. Write all 'extra' parameters to file my_data.txt, one set
+         per line.
+
+        realtime_receiver.py -write_text_data my_data.txt \\
+                             -data_choice all_extras
 
      2. Provide a serial port, sending the Euclidean norm of the motion params.
 
@@ -158,6 +170,11 @@ realtime_receiver.py - program to receive and display real-time plugin data
 
    other options
       -data_choice CHOICE       : pick which data to send as feedback
+                   motion       : send the 6 motion parameters
+                   motion_norm  : send the Euclidean norm of them
+                   all_extras   : send all 'extra' values (ROI or voxel values)
+                   diff_ratio   :  (a-b)/(abs(a)+abs(b)) for 2 'extra' values
+         * To add additional CHOICE methods, see the function compute_TR_data().
       -dc_params P1 P2 ...      : set data_choice parameters
                                   e.g. for diff_ratio, parmas P1 P2
                                      P1 = dr low limit, P2 = scalar -> [0,1]
@@ -170,6 +187,7 @@ realtime_receiver.py - program to receive and display real-time plugin data
       -swap                     : swap bytes incoming data
       -tcp_port PORT            : specify TCP port for incoming connections
       -verb LEVEL               : set the verbosity level
+      -write_text_data FNAME    : write data to text file 'FNAME'
 
 -----------------------------------------------------------------------------
 R Reynolds    July 2009
@@ -184,9 +202,11 @@ g_history = """
    0.3  Sep 08, 2009 : bind to open host (so /etc/hosts entry is not required)
    0.4  Jul 26, 2012 : added -show_comm_times
    0.5  Jan 16, 2013 : added -dc_params
+   0.6  Sep 16, 2016 : proceed even if requested GUI fails to load
+   1.0  Jan 01, 2018 : python3 compatible, added -write_text_data
 """
 
-g_version = "realtime_receiver.py version 0.5, Jan 16, 2013"
+g_version = "realtime_receiver.py version 1.0, January 1, 2018"
 
 g_RTinterface = None      # global reference to main class (for signal handler)
 
@@ -209,6 +229,7 @@ class ReceiverInterface:
       # lib_realtime.py class instances
       self.RTI             = None          # real-time interface RTInterface
       self.SER             = None          # serial port interface Serial
+      self.TEXT            = None          # text file interface
 
       # data choice parameters
       self.dc_params       = []
@@ -250,6 +271,8 @@ class ReceiverInterface:
                       helpstr='whether to display received data in terminal')
       valid_opts.add_opt('-show_comm_times', 0, [],
                       helpstr='display communication times')
+      valid_opts.add_opt('-write_text_data', 1, [],
+                      helpstr='write data to text file')
 
       # demo options
       valid_opts.add_opt('-show_demo_data', 1, [],
@@ -275,11 +298,11 @@ class ReceiverInterface:
 
       # if no arguments are given, apply -help
       if len(sys.argv) < 2 or '-help' in sys.argv:
-         print g_help_string
+         print(g_help_string)
          return 1
 
       if '-hist' in sys.argv:
-         print g_history
+         print(g_history)
          return 1
 
       if '-show_valid_opts' in sys.argv:
@@ -287,7 +310,7 @@ class ReceiverInterface:
          return 1
 
       if '-ver' in sys.argv:
-         print g_version
+         print(g_version)
          return 1
 
       return 0
@@ -350,6 +373,15 @@ class ReceiverInterface:
       if val != None and not err: self.RTI.server_port = val
 
       # ==================================================
+      # --- text file writing options ---
+
+      # open text file
+      val, err = uopts.get_string_opt('-write_text_data')
+      if val != None and not err:
+         self.TEXT = RT.TextFileInterface(val, verb=self.verb)
+         if not self.TEXT: return 1
+
+      # ==================================================
       # --- demo options ---
 
       val, err = uopts.get_string_opt('-show_demo_data')
@@ -359,16 +391,22 @@ class ReceiverInterface:
 
       val, err = uopts.get_string_opt('-show_demo_gui')
       if val != None and not err:
-         if val == 'yes': self.set_demo_gui()
+         if val == 'yes':
+            if self.set_demo_gui():
+               print('\n** GUI demo failed, proceeding without GUI...\n')
 
       return 0  # so continue and listen
 
    def set_demo_gui(self):
       """create the GUI for display of the demo data"""
       testlibs = ['numpy', 'wx']
-      if module_test_lib.num_import_failures(testlibs): sys.exit(1)
-      import numpy as N, wx
-      import lib_RR_plot as LPLOT
+      if module_test_lib.num_import_failures(testlibs):
+         return 1
+      try:
+         import numpy as N, wx
+         import lib_RR_plot as LPLOT
+      except:
+         return 1
 
       self.wx_app = wx.App()
       self.demo_frame = LPLOT.CanvasFrame(title='receiver demo')
@@ -387,10 +425,10 @@ class ReceiverInterface:
    def set_signal_handlers(self):
       """capture common termination signals, to properly close ports"""
 
-      if self.verb > 1: print '++ setting signals'
+      if self.verb > 1: print('++ setting signals')
 
       slist = [ signal.SIGHUP, signal.SIGINT, signal.SIGQUIT, signal.SIGTERM ]
-      if self.verb > 2: print '   signals are %s' % slist
+      if self.verb > 2: print('   signals are %s' % slist)
 
       for sig in slist: signal.signal(sig, clean_n_exit)
 
@@ -399,8 +437,9 @@ class ReceiverInterface:
    def close_data_ports(self):
       """close TCP and socket ports, except for server port"""
 
-      if self.RTI: self.RTI.close_data_ports()
-      if self.SER: self.SER.close_data_ports()
+      if self.RTI:  self.RTI.close_data_ports()
+      if self.SER:  self.SER.close_data_ports()
+      if self.TEXT: self.TEXT.close_text_file()
 
    def process_demo_data(self):
 
@@ -408,7 +447,7 @@ class ReceiverInterface:
       if length == 0: return
 
       if self.show_demo_data:
-         print '-- TR %d, demo value: ' % length, self.TR_data[length-1][0]
+         print('-- TR %d, demo value: ' % length, self.TR_data[length-1][0])
       if self.demo_frame:
          if length > 10: bot = length-10
          else: bot = 0
@@ -419,11 +458,11 @@ class ReceiverInterface:
       """return 0 to continue, 1 on valid termination, -1 on error"""
 
       if self.verb>2:
-         print '-- process_one_TR, show_demo_data = %d,' % self.show_demo_data
+         print('-- process_one_TR, show_demo_data = %d,' % self.show_demo_data)
 
       rv = self.RTI.read_TR_data()
       if rv:
-         if self.verb > 3: print '** process 1 TR: read data failure'
+         if self.verb > 3: print('** process 1 TR: read data failure')
          return rv
 
       rv, data = compute_TR_data(self)  # PROCESS DATA HERE
@@ -431,6 +470,7 @@ class ReceiverInterface:
       self.TR_data.append(data)
 
       if self.SER: self.SER.write_4byte_data(data)
+      if self.TEXT: self.TEXT.write_data_line(data)
       if self.show_demo_data or self.demo_frame: self.process_demo_data()
 
       return rv
@@ -452,18 +492,25 @@ class ReceiverInterface:
       if self.SER:
          if self.SER.open_data_port(): return 1
 
+      # possibly open a text file
+      if self.TEXT:
+         if self.TEXT.open_text_file(): return 1
+
       # process one TR at a time until 
       if self.verb > 1:
-         print '-- incoming data, data_choice = %s' % self.data_choice
+         print('-- incoming data, data_choice = %s' % self.data_choice)
 
       rv = self.process_one_TR()
-      while rv == 0: rv = self.process_one_TR()
+      while rv == 0:
+         rv = self.process_one_TR()
+         sys.stdout.flush()
 
       if self.verb > 1:
-         print '-- processed %d TRs of data' % self.RTI.nread ,
-         if rv > 0: print '(terminating on success)'
-         else:      print '(terminating on error)'
-      if self.verb > 0: print '-'*60
+         if rv > 0: vstr = '(terminating on success)'
+         else:      vstr = '(terminating on error)'
+         print('-- processed %d TRs of data %s' % (self.RTI.nread, vstr))
+      if self.verb > 0: print('-'*60)
+      sys.stdout.flush()
 
       if rv > 0: return 0               # success for one run
       else:      return 1               # some error
@@ -472,17 +519,19 @@ def clean_n_exit(signum, frame):
 
    verb = g_RTinterface.verb
 
-   if verb > 1: print '++ signal handler called with signal', signum
+   if verb > 1: print('++ signal handler called with signal', signum)
 
    g_RTinterface.close_data_ports()
+   try: sys.stdout.flush()
+   except: pass
 
    # at last, close server port
    if g_RTinterface.server_sock:
-      if g_RTinterface.verb > 1: print 'closing server port...'
+      if g_RTinterface.verb > 1: print('closing server port...')
       try: g_RTinterface.server_sock.close()
       except (RT.socket.error, RT.socket.timeout): pass
 
-   if g_RTinterface.verb > 0: print '-- exiting on signal %d...' % signum
+   if g_RTinterface.verb > 0: print('-- exiting on signal %d...' % signum)
    sys.exit(signum)
 
 def compute_TR_data(rec):
@@ -564,18 +613,18 @@ def compute_TR_data(rec):
             if rti.verb > 1:
                if rti.verb > 2: pstr = ', (params = %s)' % rec.dc_params
                else:            pstr = ''
-               print '++ diff_ratio: ival = %d (from %s)%s'%(ival,newval,pstr)
+               print('++ diff_ratio: ival = %d (from %s)%s'%(ival,newval,pstr))
 
             return 0, vals[0:npairs]    # return the partial list
 
       else:
          if rti.verb > 0 and rti.nread < 2:
-            print '** no pairs to compute diff_ratio from...'
+            print('** no pairs to compute diff_ratio from...')
          return 0, []
 
    # failure!
    else:
-      print "** invalid data_choice '%s', shutting down ..." % rec.data_choice
+      print("** invalid data_choice '%s', shutting down ..." % rec.data_choice)
       return -1, []
 
 def main():

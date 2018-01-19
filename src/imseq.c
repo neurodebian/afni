@@ -58,6 +58,21 @@ void ISQ_render_scal_CB( Widget w, XtPointer client_data, XtPointer call_data ) 
 void ISQ_popdown_render_scal( MCW_imseq *seq ) ;
 void ISQ_popup_render_scal( MCW_imseq *seq ) ;
 
+/* stuff for the VG effect */
+
+static float vgize_sigfac = 0.02f ;
+static MRI_IMAGE * mri_vgize( MRI_IMAGE *im ) ;
+#define VGFAC(sss) \
+  ( ((sss)->opt.improc_code & ISQ_IMPROC_VG) ? (sss)->vgize_fac : 0.0f )
+#if 1
+#  define VGSCAL 1.27537f
+#  define INDEX_TO_VGFAC(qq) ( powf(VGSCAL,(float)((qq)-1))*0.01f )
+#  define VGFAC_TO_INDEX(vf) ( (int)(logf(100.01f*(vf))/logf(VGSCAL)+1.01f))
+#else
+#  define INDEX_TO_VGFAC(qq) (0.01f*(qq))
+#  define VGFAC_TO_INDEX(vf) ((int)(100.01f*(vf)))
+#endif
+
 /************************************************************************
    Define the buttons and boxes that go in the "Disp" dialog
 *************************************************************************/
@@ -83,7 +98,7 @@ static MCW_action_item ISQ_disp_act[NACT_DISP] = {
 #define NBUT_DISP5  2  /* Auto- or Group- scale box */
 #define NBUT_DISP6  1  /* Free aspect box */
 #define NBUT_DISP7  2  /* Save box */          /* 26 Jul 2001: was 3, now 2 */
-#define NBUT_DISP8  3  /* IMPROC buttons */
+#define NBUT_DISP8  4  /* IMPROC buttons */
 #define NBUT_DISP9  4  /* CX buttons */
 
 #define NTOG_ROT  0    /* index of which button box control which option(s) */
@@ -119,7 +134,7 @@ static char * ISQ_dl4[NBUT_DISP4] = { "Min-to-Max" , "2%-to-98%" , "Clipped" } ;
 static char * ISQ_dl5[NBUT_DISP5] = { "Autoscale" , "Groupscale" } ;
 static char * ISQ_dl6[NBUT_DISP6] = { "Free Aspect" } ;
 static char * ISQ_dl7[NBUT_DISP7] = { "Nsize Save" , "PNM Save" } ;
-static char * ISQ_dl8[NBUT_DISP8] = { "Flatten" , "Sharpen" , "Edge Detect" } ;
+static char * ISQ_dl8[NBUT_DISP8] = { "Flatten" , "Sharpen" , "Edge Detect" , "VG paint" } ;
 static char * ISQ_dl9[NBUT_DISP9] = {
    "Complex->Mag" , "Complex->Arg" , "Complex->Real" , "Complex->Imag" } ;
 
@@ -217,13 +232,17 @@ static char * ISQ_bb8_help[NBUT_DISP8] = {
  "         OUT= Don't apply sharpening filter"                  ,
 
  "Edge: IN = Use Sobel edge detection filter on background\n"
- "      OUT= Don't use Sobel edge detector"
+ "      OUT= Don't use Sobel edge detector"                     ,
+
+ "VG: IN = Apply a painting effect to the image.\n"
+ "    OUT= Don't do this (which is just for fun)."
 } ;
 
 static char * ISQ_bb8_hint[NBUT_DISP8] = {
  "Flatten histogram of background" ,
  "Apply sharpening filter to background" ,
- "Apply Sobel edge detector to background"
+ "Apply Sobel edge detector to background" ,
+ "Apply painting effect (for fun)"
 } ;
 
 #define ISQ_CX_HELP                            \
@@ -264,6 +283,7 @@ static char ** ppmto_filter  = NULL ;
 static char ** ppmto_suffix  = NULL ;
 static int   * ppmto_bval    = NULL ;
 static int     ppmto_num     = -1 ;
+static int   * ppmto_gimpize = NULL ;
 
 static char *  ppmto_gif_filter  = NULL ;   /* 27 Jul 2001 */
 static char *  ppmto_agif_filter = NULL ;
@@ -281,6 +301,8 @@ static char *  ppmto_jpg75_filter = NULL ;  /* 27 Mar 2002 */
 static char *  ppmto_jpg95_filter = NULL ;  /* 28 Jul 2005 */
 static char *  ppmto_png_filter   = NULL ;  /* 07 Dec 2006 */
 
+static char *  gimp_path          = NULL ;  /* 27 Oct 2017 */
+
  /* the first %s will be the list of input gif filenames     */
  /* the second %s is the single output animated gif filename */
 
@@ -292,16 +314,31 @@ static char *  ppmto_png_filter   = NULL ;  /* 07 Dec 2006 */
 #define DO_MPEG(sq) ((sq)->opt.save_mpeg)
 #define DO_ANIM(sq) (DO_AGIF(sq) || DO_MPEG(sq))
 
-#define ADDTO_PPMTO(pnam,suff,bbb)                                       \
+/* below: the first DO_BLOWUP will let montages be blown up
+          the second will not [20 Dec 2016]                 */
+
+#if 1
+# define DO_BLOWUP(sss)                                  \
+   ((sss)->zoom_fac > 1 || (sss)->saver_blowup > 1)
+#else
+# define DO_BLOWUP(sss)                                  \
+   ( ((sss)->zoom_fac > 1 || (sss)->saver_blowup > 1) && \
+     ((sss)->mont_nx == 1 && (sss)->mont_ny     == 1)      )
+#endif
+
+#define ADDTO_PPMTO(pnam,suff,bbb,ggg)                                   \
   do{ ppmto_filter = (char **) realloc( ppmto_filter ,                   \
                                         sizeof(char *)*(ppmto_num+1) ) ; \
       ppmto_suffix = (char **) realloc( ppmto_suffix  ,                  \
                                         sizeof(char *)*(ppmto_num+1) ) ; \
       ppmto_bval   = (int *)   realloc( ppmto_bval    ,                  \
                                         sizeof(int)   *(ppmto_num+1) ) ; \
-      ppmto_filter[ppmto_num] = (pnam) ;                                 \
-      ppmto_suffix[ppmto_num] = (suff) ;                                 \
-      ppmto_bval  [ppmto_num] = (bbb)  ; ppmto_num++ ;                   \
+      ppmto_gimpize= (int *)   realloc( ppmto_gimpize ,                  \
+                                        sizeof(int)   *(ppmto_num+1) ) ; \
+      ppmto_filter [ppmto_num] = (pnam) ;                                \
+      ppmto_suffix [ppmto_num] = (suff) ;                                \
+      ppmto_bval   [ppmto_num] = (bbb)  ;                                \
+      ppmto_gimpize[ppmto_num] = (ggg)&&(gimp_path!=NULL); ppmto_num++;  \
       if( dbg ) fprintf(stderr,"IMSAVE: filter '%s' for suffix '%s'\n",  \
                         (pnam) , (suff) ) ;                              \
   } while(0)
@@ -331,6 +368,15 @@ void ISQ_setup_ppmto_filters(void)
 
    dbg = AFNI_yesenv("AFNI_IMSAVE_DEBUG") ;  /* 03 Sep 2004 */
 
+   /*-- path to open gimp [27 Oct 2017] --*/
+
+   pg = THD_find_executable( "gimp" ) ;
+   if( pg != NULL ) gimp_path = strdup(pg) ;
+#ifdef DARWIN
+   else if( THD_is_directory("/Applications/GIMP.app") )
+     gimp_path = strdup("open -a /Applications/GIMP.app") ;
+#endif
+
    /*-- the cheap way to write PPM  --*/
    /*-- [this must always be first] --*/
 
@@ -338,7 +384,7 @@ void ISQ_setup_ppmto_filters(void)
    if( pg != NULL ){
       str = AFMALL( char, strlen(pg)+32) ;
       sprintf(str,"%s > %%s",pg) ;
-      bv <<= 1 ; ADDTO_PPMTO(str,"ppm",bv) ;
+      bv <<= 1 ; ADDTO_PPMTO(str,"ppm",bv,0) ;
 
       /* 02 Aug 2001: also try for mpeg */
 
@@ -373,7 +419,7 @@ printf("\njpeg_compress %d\n", jpeg_compress);
 #endif
       str = AFMALL( char, strlen(pg)+32) ;
       sprintf(str,"%s -quality %d > %%s",pg,jpeg_compress);
-      bv <<= 1 ; ADDTO_PPMTO(str,"jpg",bv) ;
+      bv <<= 1 ; ADDTO_PPMTO(str,"jpg",bv,1) ;
       ppmto_jpg95_filter = strdup(str) ;  /* 28 Jul 2005 */
 
       /* lower quality JPEGs */
@@ -393,7 +439,7 @@ printf("\njpeg_compress %d\n", jpeg_compress);
 
       str = AFMALL( char, strlen(pg)+strlen(pg2)+32) ;
       sprintf(str,"%s 255 | %s > %%s",pg2,pg) ;
-      bv <<= 1 ; ADDTO_PPMTO(str,"gif",bv) ;
+      bv <<= 1 ; ADDTO_PPMTO(str,"gif",bv,0) ;
 
       /*-- 27 Jul 2001: also try for Animated GIF --*/
 
@@ -440,7 +486,7 @@ printf("\njpeg_compress %d\n", jpeg_compress);
    if( pg != NULL ){
       str = AFMALL( char, strlen(pg)+32) ;
       sprintf(str,"%s -c none %%s",pg) ;
-      bv <<= 1 ; ADDTO_PPMTO(str,"tif",bv) ;
+      bv <<= 1 ; ADDTO_PPMTO(str,"tif",bv,1) ;
    } else {                                      /* 03 Jul 2001:      */
       pg = THD_find_executable( "pnmtotiff" ) ;
       if( pg == NULL )
@@ -448,7 +494,7 @@ printf("\njpeg_compress %d\n", jpeg_compress);
       if( pg != NULL ){                          /* and pnmtotiff     */
          str = AFMALL( char, strlen(pg)+32) ;    /* differently       */
          sprintf(str,"%s > %%s",pg) ;
-         bv <<= 1 ; ADDTO_PPMTO(str,"tif",bv) ;
+         bv <<= 1 ; ADDTO_PPMTO(str,"tif",bv,1) ;
       }
       else { CANT_FIND("ppm2tiff OR pnmtotiff OR pamtotiff","TIFF"); need_netpbm++; }
    }
@@ -462,13 +508,13 @@ printf("\njpeg_compress %d\n", jpeg_compress);
      if( pg != NULL && pg2 != NULL ){
         str = AFMALL( char, strlen(pg)+strlen(pg2)+32) ;
         sprintf(str,"%s 255 | %s -windows > %%s",pg2,pg) ;
-        bv <<= 1 ; ADDTO_PPMTO(str,"bmp",bv) ;
+        bv <<= 1 ; ADDTO_PPMTO(str,"bmp",bv,0) ;
      }
      else { CANT_FIND("ppmtobmp AND/OR ppmquant","BMP"); need_netpbm++; }
    } else if( pg != NULL ){                   /* 21 Feb 2003: don't quantize */
       str = AFMALL( char, strlen(pg)+32) ;
       sprintf(str,"%s -bpp 24 -windows > %%s",pg) ;
-      bv <<= 1 ; ADDTO_PPMTO(str,"bmp",bv) ;
+      bv <<= 1 ; ADDTO_PPMTO(str,"bmp",bv,0) ;
    }
    else { CANT_FIND("ppmtobmp","BMP"); need_netpbm++; }
 
@@ -478,7 +524,7 @@ printf("\njpeg_compress %d\n", jpeg_compress);
    if( pg != NULL ){
       str = AFMALL( char, strlen(pg)+32) ;
       sprintf(str,"%s -noturn > %%s",pg) ;
-      bv <<= 1 ; ADDTO_PPMTO(str,"eps",bv) ;
+      bv <<= 1 ; ADDTO_PPMTO(str,"eps",bv,0) ;
    }
 #if 0
    else { CANT_FIND("pnmtops","EPS"); need_netpbm++; }
@@ -491,7 +537,7 @@ printf("\njpeg_compress %d\n", jpeg_compress);
    if( pg != NULL && pg2 != NULL ){            /* check pg!=NULL */
       str = AFMALL( char, strlen(pg)+strlen(pg2)+32) ;
       sprintf(str,"%s -noturn | %s --filter > %%s",pg,pg2) ;
-      bv <<= 1 ; ADDTO_PPMTO(str,"pdf",bv) ;
+      bv <<= 1 ; ADDTO_PPMTO(str,"pdf",bv,0) ;
    }
    else CANT_FIND("pnmtops AND/OR epstopdf","PDF") ;
 #endif
@@ -502,7 +548,7 @@ printf("\njpeg_compress %d\n", jpeg_compress);
    if( pg != NULL ){
       str = AFMALL( char, strlen(pg)+32) ;
       sprintf(str,"%s -compression 9 > %%s",pg) ;
-      bv <<= 1 ; ADDTO_PPMTO(str,"png",bv) ;
+      bv <<= 1 ; ADDTO_PPMTO(str,"png",bv,1) ;
       ppmto_png_filter = strdup(str) ;  /* 07 Dec 2007 */
    }
    else { CANT_FIND("pnmtopng","PNG"); need_netpbm; }
@@ -1690,9 +1736,19 @@ if( PRINT_TRACING ){
          NULL ) ;
    XtAddCallback( newseq->wbar_sharp_but, XmNactivateCallback, ISQ_wbar_menu_CB, newseq ) ;
 
+   newseq->wbar_vgize_but =
+      XtVaCreateManagedWidget(
+         "menu" , xmPushButtonWidgetClass , newseq->wbar_menu ,
+            LABEL_ARG("Choose VG factor") ,
+            XmNtraversalOn , False ,
+            XmNinitialResourcesPersistent , False ,
+         NULL ) ;
+   XtAddCallback( newseq->wbar_vgize_but, XmNactivateCallback, ISQ_wbar_menu_CB, newseq ) ;
+
    newseq->rng_bot   = newseq->rng_top = newseq->rng_ztop = 0 ;
    newseq->flat_bot  = newseq->flat_top = 0.0 ;
-   newseq->sharp_fac = 0.60 ; newseq->rng_extern = 0 ;
+   newseq->sharp_fac = 0.60f ; newseq->rng_extern = 0 ;
+   newseq->vgize_fac = INDEX_TO_VGFAC(2) ;
 
    newseq->zer_color = 0 ;
    ii = DC_find_overlay_color( newseq->dc , getenv("AFNI_IMAGE_ZEROCOLOR") ) ;
@@ -2994,6 +3050,7 @@ void ISQ_make_image( MCW_imseq *seq )
 {
    MRI_IMAGE *im , *ovim , *tim ;
    Boolean reset_done = False ;
+   float vfac = VGFAC(seq) ;
 
 ENTRY("ISQ_make_image") ;
 
@@ -3154,6 +3211,17 @@ ENTRY("ISQ_make_image") ;
       if( tim == NULL ) tim = im ;                    /* shouldn't happen */
    }
 
+   if( vfac > 0.0f ){
+     MRI_IMAGE *qim ;
+     MCW_invert_widget(seq->wbut_bot[NBUT_DISP]) ;
+     vgize_sigfac = vfac ; qim = mri_vgize(tim) ;
+     MCW_invert_widget(seq->wbut_bot[NBUT_DISP]) ;
+     if( qim != NULL ){
+       if( tim != im ) KILL_1MRI(tim);
+       tim = qim;
+     }
+   }
+
    /* convert result to XImage for display */
 
    STATUS("converting to XImage") ;
@@ -3191,6 +3259,7 @@ ENTRY("ISQ_plot_label") ;
    create_memplot_surely( "Ilabelplot" , asp ) ;
 
    set_thick_memplot(th[seq->wbar_labsz_av->ival]) ; /* 09 Dec 2011 */
+   set_opacity_memplot(1.0f) ;                       /* 21 Mar 2017 */
 
    /* get the color to plot with */
 
@@ -3849,13 +3918,7 @@ ENTRY("ISQ_but_cswap_CB") ;
      nval == 4 is the Save Many case (val = prefix, blowup, from, to)
 ---------------------------------------------------------------------*/
 
-#define USE_STUFF
-
-#ifndef USE_STUFF
-# define POPDOWN_first_one POPDOWN_string_chooser
-#else
-# define POPDOWN_first_one POPDOWN_stuff_chooser
-#endif
+#define POPDOWN_first_one POPDOWN_stuff_chooser
 
 void ISQ_saver_CB( Widget w , XtPointer cd , int nval , void **val )
 {
@@ -3869,7 +3932,7 @@ void ISQ_saver_CB( Widget w , XtPointer cd , int nval , void **val )
    int dbg ;                          /* 03 Sep 2004 */
    int adup=1 , akk,aa ;              /* 09 Feb 2009 */
 
-   char *cval1 ; int ival2 , ival3=0 , ival4=0 , ll ;  /* 26 Nov 2013 */
+   char *cval1; int ival2, ival3=0, ival4=0, ll, use_gimp=0 ; /* 26 Nov 2013 */
 
 #ifndef DONT_USE_METER
 #  define METER_MINCOUNT 20
@@ -3879,13 +3942,16 @@ void ISQ_saver_CB( Widget w , XtPointer cd , int nval , void **val )
 
 ENTRY("ISQ_saver_CB") ;
 
-   if( nval != 2 && nval != 4 ) EXRETURN ;  /* bad inputs */
+   if( nval < 2 || nval > 4 ) EXRETURN ;  /* bad inputs */
 
    cval1 = (char *)val[0] ;  /* copy input values to local variables */
    ival2 = (int)(intptr_t)val[1] ;
-   if( nval > 2 ){
+   if( nval == 4 ){
      ival3 = (int)(intptr_t)val[2] ;
      ival4 = (int)(intptr_t)val[3] ;
+   } else if( nval == 3 ){            /* 27 Oct 2017 */
+     char *cpt = (char *)val[2] ;
+     use_gimp  = (cpt != NULL) && *cpt == 'Y' ;
    }
    if( cval1 == NULL || *cval1 == '\0' ) EXRETURN ;
    ll = strlen(cval1) ; if( ll > 32 ) EXRETURN ;
@@ -3939,7 +4005,7 @@ ENTRY("ISQ_saver_CB") ;
 
       /*-- April 1996: Save One case here --*/
 
-      if( nval == 2 ){
+      if( nval == 2 || nval == 3 ){
          char *ppnm = strstr( seq->saver_prefix , ".pnm." ) ;
          int   sll  = strlen( seq->saver_prefix ) ;
 
@@ -3966,10 +4032,7 @@ ENTRY("ISQ_saver_CB") ;
 
          /* 23 Mar 2002: zoom out, if ordered */
 
-         if( (seq->zoom_fac > 1 || seq->saver_blowup > 1) &&
-             seq->mont_nx  == 1    &&
-             seq->mont_ny  == 1    &&
-             tim           != NULL && tim->kind == MRI_rgb ){
+         if( DO_BLOWUP(seq) && tim != NULL && tim->kind == MRI_rgb ){
 
            int zf = MAX(seq->zoom_fac,seq->saver_blowup) ;
            MRI_IMAGE *qim ;
@@ -3985,7 +4048,9 @@ ENTRY("ISQ_saver_CB") ;
 
          if( tim != NULL && seq->mplot != NULL && tim->kind == MRI_rgb ){
            if( dbg ) fprintf(stderr,"  overlay geometry stuff\n") ;
+           /* mri_draw_force_opaque(1) ; */
            memplot_to_RGB_sef( tim, seq->mplot, 0,0,MEMPLOT_FREE_ASPECT ) ;
+           /* mri_draw_force_opaque(0) ; */
          }
 
          /* 25 Mar 2002: perhaps cut up zoomed image
@@ -4066,6 +4131,12 @@ ENTRY("ISQ_saver_CB") ;
                   fprintf(stderr,"** filter command was %s\n",filt) ;
                   POPDOWN_first_one ; mri_free(tim) ; EXRETURN ;
                }
+
+               /* 27 Oct 2017 */
+               if( gimp_path != NULL && use_gimp && THD_is_file(fname) ){
+                 sprintf(filt,"%s %s &",gimp_path,fname) ;
+                 system(filt) ;
+               }
             }
 
             mri_free( tim ) ; tim = NULL ;  /* 17 June 1997 */
@@ -4087,6 +4158,8 @@ ENTRY("ISQ_saver_CB") ;
          EXRETURN ;
       }
    }
+
+   /*--- save many case here ---*/
 
    seq->saver_from = ival3 ;
    seq->saver_to   = ival4 ;
@@ -4238,11 +4311,11 @@ ENTRY("ISQ_saver_CB") ;
 
          /* 26 Mar 2002: zoom out, and geometry overlay, maybe */
 
-         if( (seq->zoom_fac > 1 || seq->saver_blowup > 1) && seq->mont_nx == 1 && seq->mont_ny == 1 ){
+         if( DO_BLOWUP(seq) ){
            int zf = MAX(seq->zoom_fac,seq->saver_blowup) ;
            if( dbg ) fprintf(stderr,"  zoom zoom zoom\n") ;
            if( !AFNI_yesenv("AFNI_IMAGE_ZOOM_NN") ) mri_dup2D_mode(-7) ;
-           tim=mri_dup2D(zf,flim) ;
+           tim = mri_dup2D(zf,flim) ;
            mri_dup2D_mode(7) ;
            mri_free(flim) ; flim = tim ;
          }
@@ -4254,7 +4327,9 @@ ENTRY("ISQ_saver_CB") ;
            if( mp != NULL ){
              if( dbg ) fprintf(stderr,"  perform geometry overlay\n") ;
              flip_memplot( ISQ_TO_MRI_ROT(seq->opt.rot),seq->opt.mirror,mp );
+             /* mri_draw_force_opaque(1) ; */
              memplot_to_RGB_sef( flim, mp, 0,0,MEMPLOT_FREE_ASPECT ) ;
+             /* mri_draw_force_opaque(0) ; */
              delete_memplot(mp) ;
            }
          }
@@ -4264,7 +4339,9 @@ ENTRY("ISQ_saver_CB") ;
            if( lab != NULL ){
              MEM_plotdata *mp = ISQ_plot_label( seq , lab ) ;
              if( mp != NULL ){
+               /* mri_draw_force_opaque(1) ; */
                memplot_to_RGB_sef( flim, mp, 0,0,MEMPLOT_FREE_ASPECT ) ;
+               /* mri_draw_force_opaque(0) ; */
                delete_memplot(mp) ;
              }
              free(lab) ;
@@ -4665,10 +4742,19 @@ ENTRY("ISQ_but_save_CB") ;
    seq->saver_from = seq->saver_to = -1 ;
 
    if( seq->opt.save_one && !DO_ANIM(seq) ){
-     MCW_choose_stuff( w , "Image Saver (One)" , ISQ_saver_CB , (XtPointer)seq ,
-                         MSTUF_STRING , "Prefix"  ,
-                         MSTUF_INT    , "Blowup " , 1 , 8 , ibl ,
-                       MSTUF_END ) ;
+     if( seq->opt.save_filter >= 0 &&
+         ppmto_gimpize != NULL     && ppmto_gimpize[seq->opt.save_filter] ){
+       MCW_choose_stuff( w , "Image Saver (One)" , ISQ_saver_CB , (XtPointer)seq ,
+                           MSTUF_STRING , "Prefix"  ,
+                           MSTUF_INT    , "Blowup " , 1 , 8 , ibl ,
+                           MSTUF_YESNO  , "Open in Gimp?",
+                         MSTUF_END ) ;
+     } else {
+       MCW_choose_stuff( w , "Image Saver (One)" , ISQ_saver_CB , (XtPointer)seq ,
+                           MSTUF_STRING , "Prefix"  ,
+                           MSTUF_INT    , "Blowup " , 1 , 8 , ibl ,
+                         MSTUF_END ) ;
+     }
    } else {
      MCW_choose_stuff( w , "Image Saver (Multiple)" , ISQ_saver_CB , (XtPointer)seq ,
                          MSTUF_STRING , "Prefix"  ,
@@ -8888,7 +8974,7 @@ ENTRY("ISQ_overlay_label_CB") ;
    if( seq->overlay_label != NULL ){
      free(seq->overlay_label) ; seq->overlay_label = NULL ;
    }
-   if( cbs != NULL       && cbs->reason == mcwCR_string       &&
+   if( cbs       != NULL && cbs->reason == mcwCR_string       &&
        cbs->cval != NULL && strcasecmp(cbs->cval,"NULL") != 0   ){
      seq->overlay_label = strdup(cbs->cval) ;
    }
@@ -8928,6 +9014,12 @@ ENTRY("ISQ_wbar_menu_CB") ;
       MCW_choose_integer( seq->wimage , "Sharpen Factor" ,
                           1 , 9 , (int)(10.01*seq->sharp_fac) ,
                           ISQ_set_sharp_CB , seq ) ;
+   }
+
+   else if( w == seq->wbar_vgize_but ){
+      MCW_choose_integer( seq->wimage , "VG Factor" ,
+                          1 , 9 , VGFAC_TO_INDEX(seq->vgize_fac) ,
+                          ISQ_set_vgize_CB , seq ) ;
    }
 
    else if( w == seq->wbar_graymap_pb ){   /* 24 Oct 2003 */
@@ -9012,6 +9104,22 @@ ENTRY("ISQ_set_sharp_CB") ;
    if( ! ISQ_REALZ(seq) || w == NULL || ! XtIsWidget(w) ) EXRETURN ;
 
    seq->sharp_fac = 0.1 * cbs->ival ;
+
+   ISQ_redisplay( seq , -1 , isqDR_reimage ) ;  /* redo current image */
+   EXRETURN ;
+}
+
+/*----------------------------------------------------------------------*/
+
+void ISQ_set_vgize_CB( Widget w , XtPointer cd , MCW_choose_cbs *cbs )
+{
+   MCW_imseq *seq = (MCW_imseq *) cd ;
+
+ENTRY("ISQ_set_vgize_CB") ;
+
+   if( ! ISQ_REALZ(seq) || w == NULL || ! XtIsWidget(w) ) EXRETURN ;
+
+   seq->vgize_fac = INDEX_TO_VGFAC(cbs->ival) ;
 
    ISQ_redisplay( seq , -1 , isqDR_reimage ) ;  /* redo current image */
    EXRETURN ;
@@ -9462,6 +9570,7 @@ void ISQ_make_montage( MCW_imseq *seq )
    Boolean reset_done = False ;
    float fac , wmm , hmm ;
    short gap_ov ;
+   float vfac = VGFAC(seq) ;
 
    byte  gap_rgb[3] ;  /* 11 Feb 1999 */
    void  *gapval ;
@@ -9844,6 +9953,17 @@ STATUS("Destroying overlay image array") ;
    } else {
       tim = ISQ_overlay( seq->dc , im, ovim, seq->ov_opacity ) ;
       if( tim == NULL ) tim = im ;     /* shouldn't happen */
+   }
+
+   if( vfac > 0.0f ){
+     MRI_IMAGE *qim ;
+     MCW_invert_widget(seq->wbut_bot[NBUT_DISP]) ;
+     vgize_sigfac = vfac ; qim = mri_vgize(tim) ;
+     MCW_invert_widget(seq->wbut_bot[NBUT_DISP]) ;
+     if( qim != NULL ){
+       if( tim != im ) KILL_1MRI(tim);
+       tim = qim;
+     }
    }
 
    /*--- convert result to XImage for display ---*/
@@ -12768,9 +12888,11 @@ ENTRY("ISQ_handle_keypress") ;
        }
        break ;
 
+#if 0
        case XK_F5:
          MCW_melt_widget( seq->wform ) ;
        break ;
+#endif
 
        default:
        /* case XK_F5: */
@@ -13214,7 +13336,7 @@ ENTRY("ISQ_save_image") ;
 
    /** zoom? **/
 
-   if( (seq->zoom_fac > 1 || seq->saver_blowup > 1) && seq->mont_nx == 1 && seq->mont_ny == 1 ){
+   if( DO_BLOWUP(seq) ){
      int zf = MAX(seq->zoom_fac,seq->saver_blowup) ;
      if( !AFNI_yesenv("AFNI_IMAGE_ZOOM_NN") ) mri_dup2D_mode(-7) ;
      flim = mri_dup2D(zf,tim) ;
@@ -13224,8 +13346,11 @@ ENTRY("ISQ_save_image") ;
 
    /** line drawing overlay? **/
 
-   if( seq->mplot != NULL )
+   if( seq->mplot != NULL ){
+     /* mri_draw_force_opaque(1) ; */
      memplot_to_RGB_sef( tim, seq->mplot, 0,0,MEMPLOT_FREE_ASPECT ) ;
+     /* mri_draw_force_opaque(0) ; */
+   }
 
    /** cut up zoomed image? **/
 
@@ -13557,10 +13682,10 @@ ENTRY("ISQ_save_anim") ;
 
       /* 26 Mar 2002: zoom out, and geometry overlay, maybe */
 
-      if( (seq->zoom_fac > 1 || seq->saver_blowup > 1) && seq->mont_nx == 1 && seq->mont_ny == 1 ){
+      if( DO_BLOWUP(seq) ){
         int zf = MAX(seq->zoom_fac,seq->saver_blowup) ;
         if( !AFNI_yesenv("AFNI_IMAGE_ZOOM_NN") ) mri_dup2D_mode(-7) ;
-        tim=mri_dup2D(zf,flim) ;
+        tim = mri_dup2D(zf,flim) ;
         mri_dup2D_mode(7) ;
         mri_free(flim) ; flim = tim ;
       }
@@ -13570,7 +13695,9 @@ ENTRY("ISQ_save_anim") ;
         mp = ISQ_getmemplot( kf , seq ) ;
         if( mp != NULL ){
           flip_memplot( ISQ_TO_MRI_ROT(seq->opt.rot),seq->opt.mirror,mp );
+          /* mri_draw_force_opaque(1) ; */
           memplot_to_RGB_sef( flim, mp, 0,0,MEMPLOT_FREE_ASPECT ) ;
+          /* mri_draw_force_opaque(0) ; */
           delete_memplot(mp) ;
         }
       }
@@ -13580,7 +13707,9 @@ ENTRY("ISQ_save_anim") ;
         if( lab != NULL ){
           MEM_plotdata *mp = ISQ_plot_label( seq , lab ) ;
           if( mp != NULL ){
+            /* mri_draw_force_opaque(1) ; */
             memplot_to_RGB_sef( flim, mp, 0,0,MEMPLOT_FREE_ASPECT ) ;
+            /* mri_draw_force_opaque(0) ; */
             delete_memplot(mp) ;
           }
           free(lab) ;
@@ -13746,7 +13875,8 @@ ENTRY("ISQ_save_anim") ;
                   "%s%s.*.ppm [%06d-%06d]\n"  /* prefix, tsuf, from, to */
                   "END_INPUT\n"
                , oof , frate , pattrn , qscale ,
-                 ppo,tsuf,0,akk) ;
+                 /* akk is 1 too big, was corrected elsewhere  27 Nov 2017 */
+                 ppo,tsuf,0,akk-1) ;
         fclose(fpar) ;
         if( mpar ) free(pattrn) ;
 
@@ -13781,4 +13911,202 @@ ENTRY("ISQ_save_anim") ;
    /*--- go home ---*/
 
    DESTROY_SARR(agif_list) ; free(prefix) ; free(fnamep); EXRETURN ;
+}
+
+/*----------------------------------------------------------------------------*/
+/**** Stuff for the fun fun fun VG effect [RWC Feb 2017] ****/
+
+static MRI_IMAGE * mri_streakize( MRI_IMAGE *im , MRI_IMAGE *sxim , MRI_IMAGE *syim )
+{
+   MRI_IMAGE *qim ; byte *qar , *iar ;
+   float *sxar , *syar ;
+   int nx,ny,nxy , kk,dk , ii,jj,sk, dd,di,dj , ei,ej , ns ;
+   float strk , sx,sy , rr,gg,bb , bsig,slo,shi ;
+
+   nx = im->nx ; ny = im->ny ; nxy = nx*ny ;
+   bsig = sqrtf(nx*(float)ny) ;
+
+   /* min and max streak sizes */
+   slo  = 0.004f*bsig ; if( slo < 2.0f     ) slo = 2.0f ;
+   shi  = 0.024f*bsig ; if( shi < 6.0f*slo ) shi = 6.0f*slo ;
+
+   qim = mri_copy(im) ; qar = MRI_RGB_PTR(qim) ; iar = MRI_RGB_PTR(im) ;
+   sxar = MRI_FLOAT_PTR(sxim) ; syar = MRI_FLOAT_PTR(syim) ;
+
+/* ININFO_message("mri_streakize") ; */
+
+   for( kk=0 ; kk < nxy ; kk++ ){
+     /* get streak vector */
+     sx = sxar[kk] ; sy = syar[kk] ;
+     strk = sqrtf(sx*sx+sy*sy) ;
+     if( strk == 0.0f ){
+       sx = (2.0f*drand48()-1.0f)*slo ;
+       sy = (2.0f*drand48()-1.0f)*slo ; strk = sqrtf(sx*sx+sy*sy);
+     } else if( strk < slo ){
+       sx *= (slo/strk) ; sy *= (slo/strk) ; strk = slo ;
+     }
+     sx /= strk ; sy /= strk ; /* unit vector */
+     if( strk < slo ) strk = slo; else if( strk > shi ) strk = shi ;
+     sk = (int)(strk+0.499f) ;
+     /* color at start pixel */
+     rr = iar[3*kk+0]; gg = iar[3*kk+1]; bb = iar[3*kk+2]; ns = 1;
+     ii = kk % nx ; jj = kk / nx ;
+     for( dd=1 ; dd <= sk ; dd++ ){ /* streaking */
+       di = (int)(dd*sx+0.499f) ; dj = (int)(dd*sy+0.499f) ;
+       /* if( di == 0.0f && dj == 0.0f ) continue ; */
+       ei = ii+di ; ej = jj+dj ;    /* the plus step */
+       if( ei >= 0 && ei < nx && ej >= 0 && ej < ny ){
+         dk = ei + ej*nx ;
+         rr += iar[3*dk+0] ; gg += iar[3*dk+1] ; bb += iar[3*dk+2] ; ns++ ;
+       }
+       ei = ii-di ; ej = jj-dj ;    /* the minus step */
+       if( ei >= 0 && ei < nx && ej >= 0 && ej < ny ){
+         dk = ei + ej*nx ;
+         rr += iar[3*dk+0] ; gg += iar[3*dk+1] ; bb += iar[3*dk+2] ; ns++ ;
+       }
+     }
+     if( ns > 1 ){  /* if we summed in any other pixels */
+       rr /= ns ; gg /= ns ; bb /= ns ;
+       qar[3*kk+0] = BYTEIZE(rr) ; qar[3*kk+1] = BYTEIZE(gg) ; qar[3*kk+2] = BYTEIZE(bb) ;
+     }
+   }
+
+   return qim ;
+}
+
+/*----------------------------------------------------------------------------*/
+
+static MRI_IMAGE * mri_vgize( MRI_IMAGE *iim )
+{
+   MRI_IMAGE *blim , *gxim,*gyim , *bxim,*byim , *im ;
+   float     *bar , *gxar,*gyar , *bxar,*byar ;
+   int nx,ny,nxy , ii,jj,kk,joff ;
+   float bsig , bmax , gsiz , blen , bx,by , slen , cc,ss ;
+   byte *iar ;
+
+   if( iim == NULL ) return NULL ;
+
+   im = mri_to_rgb(iim) ; iar = MRI_RGB_PTR(im) ;
+
+   nx = im->nx ; ny = im->ny ; nxy = nx*ny ;
+
+   bsig = sqrtf(nx*(float)ny) * vgize_sigfac ;
+   if( bsig < 1.9f ) bsig = 1.9f ;
+/* INFO_message("mri_vgize: nx=%d ny=%d bsig=%.3f",nx,ny,bsig) ; */
+
+#define NOIS_SIZ  27.0f
+
+   /* add colored noise to the image */
+#ifdef NOIS_SIZ
+ if( ! AFNI_noenv("AFNI_VG_RANCOLOR") ){
+   MRI_IMAGE *rrim , *ggim , *bbim , *qqim ;
+   float     *rrar , *ggar , *bbar , rmax,gmax,bmax , rr,gg,bb,qq , nois ;
+   rrim = mri_new_conforming(im,MRI_float) ; rrar = MRI_FLOAT_PTR(rrim) ;
+   ggim = mri_new_conforming(im,MRI_float) ; ggar = MRI_FLOAT_PTR(ggim) ;
+   bbim = mri_new_conforming(im,MRI_float) ; bbar = MRI_FLOAT_PTR(bbim) ;
+   nois = NOIS_SIZ + 222.2f*vgize_sigfac ;
+   for( kk=0 ; kk < nxy ; kk++ ){
+     rrar[kk] = (float)(11.0*drand48()-5.0) ;
+     ggar[kk] = (float)(10.0*drand48()-5.0) ;
+     bbar[kk] = (float)(11.0*drand48()-5.0) ;
+   }
+   qqim = mri_float_blur2D(0.4f*bsig,rrim); mri_free(rrim); rrim = qqim; rrar = MRI_FLOAT_PTR(rrim);
+   qqim = mri_float_blur2D(0.4f*bsig,ggim); mri_free(ggim); ggim = qqim; ggar = MRI_FLOAT_PTR(ggim);
+   qqim = mri_float_blur2D(0.4f*bsig,bbim); mri_free(bbim); bbim = qqim; bbar = MRI_FLOAT_PTR(bbim);
+   rmax = gmax = bmax = 0.0f ;
+   for( kk=0 ; kk < nxy ; kk++ ){
+     qq = fabsf(rrar[kk]) ; if( qq > rmax ) rmax = qq ;
+     qq = fabsf(ggar[kk]) ; if( qq > gmax ) gmax = qq ;
+     qq = fabsf(bbar[kk]) ; if( qq > bmax ) bmax = qq ;
+   }
+   rmax = NOIS_SIZ/rmax ; gmax = NOIS_SIZ/gmax ; bmax = NOIS_SIZ/bmax ;
+
+   for( kk=0 ; kk < nxy ; kk++ ){
+     rr = (float)iar[3*kk+0] + rrar[kk]*rmax; iar[3*kk+0] = BYTEIZE(rr);
+     gg = (float)iar[3*kk+1] + ggar[kk]*gmax; iar[3*kk+1] = BYTEIZE(gg);
+     bb = (float)iar[3*kk+2] + bbar[kk]*bmax; iar[3*kk+2] = BYTEIZE(bb);
+   }
+   mri_free(rrim); mri_free(ggim); mri_free(bbim);
+ }
+#endif
+
+   bxim = mri_to_float(im) ;
+   blim = mri_float_blur2D( bsig , bxim ) ; mri_free(bxim) ;
+   bar  = MRI_FLOAT_PTR(blim) ;
+
+   gxim = mri_new_conforming(blim,MRI_float) ; gxar = MRI_FLOAT_PTR(gxim) ;
+   gyim = mri_new_conforming(blim,MRI_float) ; gyar = MRI_FLOAT_PTR(gyim) ;
+
+/* ININFO_message("compute gradients") ; */
+   for( jj=0 ; jj < ny ; jj++ ){
+    joff = jj*nx ;
+    for( ii=0 ; ii < nx ; ii++ ){
+      if( jj==0 || jj==ny-1 || ii==0 || ii==nx-1 ){
+        gxar[ii+joff] = gyar[ii+joff] = 0.0f ;
+      } else {
+        gxar[ii+joff] = bar[ii+joff+1 ] - bar[ii+joff-1 ] ;
+        gyar[ii+joff] = bar[ii+joff+nx] - bar[ii+joff-nx] ;
+      }
+   }}
+
+/* ININFO_message("blur gradients") ; */
+   bxim = mri_float_blur2D(0.5f*bsig,gxim); mri_free(gxim); bxar = MRI_FLOAT_PTR(bxim);
+   byim = mri_float_blur2D(0.5f*bsig,gyim); mri_free(gyim); byar = MRI_FLOAT_PTR(byim);
+
+/* ININFO_message("find gradient max") ; */
+   bmax = 0.0f ;
+   for( kk=0 ; kk < nxy ; kk++ ){
+     gsiz = bxar[kk]*bxar[kk] + byar[kk]*byar[kk] ;
+     if( gsiz > bmax ) bmax = gsiz ;
+   }
+   bmax = sqrtf(bmax) ;
+/* ININFO_message("bmax=%g",bmax) ; */
+   if( bmax == 0.0f ){ mri_free(bxim); mri_free(byim); mri_free(im); return NULL; }
+
+   /* scale gradients by largest one */
+
+   bmax = 1.0f / bmax ;
+   slen = 1.3f * bsig ;
+   for( kk=0 ; kk < nxy ; kk++ ){
+     bx = bxar[kk]*bmax ; by = byar[kk]*bmax ; gsiz = sqrtf(bx*bx+by*by) ;
+     if( gsiz > 0.0f ){
+       cc = 0.111f + 2.69f*gsiz ; if( cc > 1.0f ) cc = 1.0f ;
+       bx *= (cc*slen/gsiz) ; by *= (cc*slen/gsiz) ;
+     }
+     bxar[kk] = by ; byar[kk] = -bx ;          /* streak direction */
+     bar[kk]  = (float)(30.0*drand48()-15.0) ; /* random angle for streak */
+   }
+
+/* ININFO_message("blur angles") ; */
+   gxim = mri_float_blur2D(0.5f*bsig,blim); mri_free(blim); gxar = MRI_FLOAT_PTR(gxim);
+   bmax = 0.0f ;
+   for( kk=0 ; kk < nxy ; kk++ ){
+     gsiz = fabsf(gxar[kk]) ; if( gsiz > bmax ) bmax = gsiz ;
+   }
+/* ININFO_message("max angle=%g",bmax) ; */
+
+   /* rotate streak directions randomly */
+   if( bmax > 0.0f ){
+     bmax = (22.2f * PI/180.0f) / bmax ;  /* max angle is 22.2 degrees */
+     for( kk=0 ; kk < nxy ; kk++ ){
+       bx = bxar[kk] ; by = byar[kk] ;
+       gsiz = sqrtf(bx*bx+by*by) ;
+       cc = cosf(bmax*gxar[kk]) ;
+       ss = sinf(bmax*gxar[kk]) ;
+       if( gsiz < 2.0f ){
+         bxar[kk] = 2.2f*cc ; byar[kk] = 2.2f*ss ;
+       } else {
+         bxar[kk] =  cc*bx + ss*by ;
+         byar[kk] = -ss*bx + cc*by ;
+       }
+     }
+   }
+   mri_free(gxim) ;
+
+   blim = mri_streakize( im , bxim , byim ) ;  /* do the streaking */
+
+   mri_free(bxim) ; mri_free(byim) ; mri_free(im) ;
+
+   im = mri_sharpen_rgb(0.666f,blim) ; mri_free(blim) ; /* 26 Sep 2017 */
+   return im ;
 }

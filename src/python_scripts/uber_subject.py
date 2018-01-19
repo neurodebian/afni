@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+# python3 status: compatible
+
 # basically, a GUI to write an afni_proc.py command
 
 import sys, os, copy, math
@@ -137,7 +139,7 @@ def get_valid_opts():
    vopts.add_opt('-svar', -2, [], helpstr='set subject variable to value')
 
    # and add all subject vars directly
-   keys = USUBJ.g_svar_dict.keys()
+   keys = list(USUBJ.g_svar_dict.keys())
    keys.sort()
    for name in keys:
       vopts.add_opt('-'+name, -1, [], helpstr=USUBJ.g_svar_dict[name])
@@ -166,29 +168,29 @@ def process_options(valid_opts, argv):
    # ------------------------------------------------------------
    # check for terminal options before processing the rest
    if '-help' in sys.argv:
-      print g_command_help
+      print(g_command_help)
       valid_opts.show('', 1, show_count=0)
-      print g_help_trailer
+      print(g_help_trailer)
       return 1, None, None, None
 
    if '-help_gui' in sys.argv:
-      print USUBJ.helpstr_usubj_gui
+      print(USUBJ.helpstr_usubj_gui)
       return 1, None, None, None
 
    if '-help_howto_program' in sys.argv:
-      print USUBJ.helpstr_howto_program
+      print(USUBJ.helpstr_howto_program)
       return 1, None, None, None
 
    if '-help_install' in sys.argv:
-      print g_install_str
+      print(g_install_str)
       return 1, None, None, None
 
    if '-help_install_nokia' in sys.argv:
-      print g_install_nokia
+      print(g_install_nokia)
       return 1, None, None, None
 
    if '-hist' in sys.argv:
-      print USUBJ.g_history
+      print(USUBJ.g_history)
       return 1, None, None, None
 
    if '-show_default_vars' in sys.argv:
@@ -202,18 +204,18 @@ def process_options(valid_opts, argv):
 
    if '-show_svar_dict' in sys.argv:
       dict = USUBJ.g_svar_dict
-      keys = dict.keys()
+      keys = list(dict.keys())
       keys.sort()
       for key in keys:
-         print '   %-20s : %s' % (key, dict[key])
+         print('   %-20s : %s' % (key, dict[key]))
       return 1, None, None, None
 
    if '-todo' in sys.argv:
-      print USUBJ.helpstr_todo
+      print(USUBJ.helpstr_todo)
       return 1, None, None, None
 
    if '-ver' in sys.argv:
-      print 'uber_subject.py: version %s' % USUBJ.g_version
+      print('uber_subject.py: version %s' % USUBJ.g_version)
       return 1, None, None, None
 
    # ------------------------------------------------------------
@@ -234,7 +236,7 @@ def process_options(valid_opts, argv):
    USUBJ.set_vstr_from_def('cvars', 'verb', ['%d'%verb], cvars)
 
    use_gui = 1 # assume GUI unless we hear otherwise
-   svar_keys = USUBJ.g_svar_dict.keys()
+   svar_keys = list(USUBJ.g_svar_dict.keys())
 
    errs = 0
 
@@ -247,13 +249,13 @@ def process_options(valid_opts, argv):
          val, err = uopts.get_string_opt('', opt=opt)
          if val == None or err: return -1, None, None, None
          if val == 'rest':
-            if verb > 1: print '-- init from rest defaults'
+            if verb > 1: print('-- init from rest defaults')
             svars.merge(USUBJ.g_rdef_strs)
       elif opt.name == '-anal_domain':
          val, err = uopts.get_string_opt('', opt=opt)
          if val == None or err: return -1, None, None, None
          if val == 'surface':
-            print '** uber_subject.py: not ready for surface analysis'
+            print('** uber_subject.py: not ready for surface analysis')
             return -1, None, None, None
 
       elif opt.name == '-svar':
@@ -261,11 +263,11 @@ def process_options(valid_opts, argv):
          if val == None or err: return -1, None, None, None
          if val[0] == '-anal_type':
             if val[1] == 'rest':
-               if verb > 1: print '-- init from rest defaults'
+               if verb > 1: print('-- init from rest defaults')
                svars.merge(USUBJ.g_rdef_strs)
          elif val[0] == '-anal_domain':
             if val[1] == 'surface':
-               print '** uber_subject.py: not ready for surface analysis'
+               print('** uber_subject.py: not ready for surface analysis')
                return -1, None, None, None
 
    # done with analysis init options
@@ -336,7 +338,7 @@ def process_options(valid_opts, argv):
             continue
 
       else:
-         print '** invalid option: %s' % opt.name
+         print('** invalid option: %s' % opt.name)
          errs += 1
          continue
 
@@ -360,10 +362,10 @@ def process_options(valid_opts, argv):
    if verb > 2: # show applied subject variables
       changestr = cvars.changed_attrs_str(USUBJ.g_cdef_strs, skiplist='name',
                                          showskip=0, showdel=0)
-      print '++ applied control variables: %s\n' % changestr
+      print('++ applied control variables: %s\n' % changestr)
       changestr = svars.changed_attrs_str(USUBJ.g_sdef_strs, skiplist='name',
                                          showskip=0, showdel=0)
-      print '++ applied subject variables: %s\n' % changestr
+      print('++ applied subject variables: %s\n' % changestr)
 
    if errs:    return -1, None, None, None
    if use_gui: return  0, svars, cvars, guiopts
@@ -378,17 +380,17 @@ def run_ap_command(svars, cvars):
 
    # write command to file
    if subj.write_ap_command():
-      print '** failed to write afni_proc.py command to disk'
+      print('** failed to write afni_proc.py command to disk')
       return None
 
    # in any case, execute the command, showing the output
    status, mesg = subj.exec_ap_command()
 
    if status:
-      print '%s\nAP Errors:\n\n%s\n' % (75*'*', mesg)
+      print('%s\nAP Errors:\n\n%s\n' % (75*'*', mesg))
       return None
    else:
-      print '%s\noutput from afni_proc.py:\n\n%s\n' % (75*'-', mesg)
+      print('%s\noutput from afni_proc.py:\n\n%s\n' % (75*'-', mesg))
       return subj
 
    return subj
@@ -397,14 +399,14 @@ def print_ap_command(svars, cvars):
    """run and optionally display the afni_proc.py command"""
 
    subj, cmd = get_ap_command(svars, cvars)
-   print cmd
+   print(cmd)
 
 def save_ap_command(svars, cvars, fname):
    """run and optionally display the afni_proc.py command"""
 
    subj, cmd = get_ap_command(svars, cvars)
    if subj.write_ap_command(fname=fname):
-      print '** failed to write afni_proc.py command to disk'
+      print('** failed to write afni_proc.py command to disk')
 
 def get_ap_command(svars, cvars):
    """return the subject and command string
@@ -417,10 +419,10 @@ def get_ap_command(svars, cvars):
    status, mesg = apsubj.get_ap_command()
 
    if status:  # then only mention errors
-      print '%s\nERRORS:\n\n%s\n' % (75*'*', mesg)
+      print('%s\nERRORS:\n\n%s\n' % (75*'*', mesg))
       cmd = ''
    else:
-      if wstr: print '%s\n**** Warnings:\n\n%s\n%s\n' % (75*'-',wstr,75*'-')
+      if wstr: print('%s\n**** Warnings:\n\n%s\n%s\n' % (75*'-',wstr,75*'-'))
       cmd = '### afni_proc.py script:\n\n%s\n' % mesg
 
    return apsubj, cmd
@@ -429,52 +431,44 @@ g_install_str = """
    ------------------------------------------------------------------
    A. Linux
 
-      A1. Fedora 10+:
+      A1. Fedora
 
-         1. yum install PyQt4
-
-   ----------
-
-      A2. current Debian/Ubuntu:
-
-         1. apt-get install python-qwt5-qt4
-
-      * Note: if your system libraries are old enough where this step does not
-              simply work (e.g. RHEL/CentOS 4 and 5), life becomes difficult.
-              I am not sure if there is a solution for even version 5.
+         yum install PyQt4
 
    ----------
 
-   B. OS X 10.6 (or later)
+      A2. Debian/Ubuntu
 
-      B1. via fink (assuming python 2.7 and the x11 version of qt4):
+         apt-get install python-qt4
 
-         0. fink should be installed and current, to make current:
+   ----------
 
-               sudo fink selfupdate
+   B. OS X
 
-         1. install pyqt4 for python version 2.7
-            (might also require making a new link to python under /sw/bin)
+      B1. via homebrew
 
-               sudo fink install pyqt4-py27
-               sudo ln -s /sw/bin/python2.7 /sw/bin/python     (if needed)
+         0. homebrew should be installed
+
+               https://afni.nimh.nih.gov/pub/dist/doc/htmldoc/background_install/install_instructs/steps_mac.html
+
+         1. install pyqt
+
+               brew install pyqt
 
             Note: for this to apply, /sw/bin needs to be before /usr/bin in
                   the PATH.
 
-         2. update PYTHONPATH to point to new site-packages directory
+         2. possibly update PYTHONPATH to point to new site-packages directory
             (put this in .cshrc)
 
-               setenv PYTHONPATH /sw/lib/qt4-x11/lib/python2.7/site-packages
+               setenv PYTHONPATH /usr/local/lib/python2.7/site-packages
 
-            Note: depending on what is installed...
+      B2. do we still need fink instructions?
 
-                - qt4-x11 might be qt4-mac
-                - 2.7 might be a different version of python
 
-   ----------
+   For extra details, see the output from:
 
-      B2. directly from Nokia - see "-help_install_nokia" (NOT recommended)
+        afni_system_check.py -check_all
 """
 
 g_install_nokia = """
@@ -520,9 +514,9 @@ g_install_nokia = """
 def run_gui(svars=None, cvars=None, guiopts=[]):
    try: from PyQt4 import QtGui
    except:
-      print '\n**** failed to import PyQt4.QtGui ****\n\n'                \
+      print('\n**** failed to import PyQt4.QtGui ****\n\n'                \
             '   PyQt4 must be installed to run the uber_subject.py GUI\n' \
-            '   --> see the output of: uber_subject.py -help_install\n'
+            '   --> see the output of: uber_subject.py -help_install\n')
       return 1
 
    # if the above worked, let any GUI import errors show normally

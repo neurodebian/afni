@@ -3,179 +3,141 @@
 .. _install_steps_linux_Fed_RH:
 
 
-*The essential system setup for:* **Fedora and Red Hat Linux**
-==============================================================
+**Fedora and Red Hat Linux**: *The essential system setup*
+==========================================================
 
+.. contents:: :local:
+
+What to do?
+-----------
 
 Here we describe installation and system setup for reasonably modern
-Linux versions of Fedora (21+) and Red Hat (RHEL) 7.
+Linux versions of Fedora (21+) and Red Hat (RHEL) 7, along with the
+corresponding CentOS 7.
 
-Several of the following steps are system dependent, for example due
-to having different package managers, so we list parallel instructions
-for each.
+.. include:: substep_intro.rst
 
-#. **Install prerequisite packages.**
+Install prerequisite packages
+-----------------------------
 
-   There are several packages and libraries that are needed to run the
-   afni and shell programs, often even including ``tcsh``:
+* *For Fedora 21 (and higher)*, copy+paste::
+   
+    sudo yum install -y tcsh libXp openmotif gsl xorg-x11-fonts-misc       \
+                        PyQt4 R-devel netpbm-progs gnome-tweak-tool ed     \
+                        xorg-x11-server-Xvfb
+    sudo yum update -y
+   
+* *For CentOS/RHEL 7*, copy+paste::
 
-   * *for Fedora 21 (and higher)*::
-      
-       sudo yum install -y tcsh libXp openmotif gsl xorg-x11-fonts-misc       \
-                           PyQt4 R-devel netpbm-progs gnome-tweak-tool ed
-       sudo yum update -y
-      
-   * *for RHEL 7*::
-      
-       sudo yum install -y tcsh libXp openmotif gsl xorg-x11-fonts-misc       \
-                           PyQt4 R-devel netpbm-progs gnome-tweak-tool ed     \
-                           libpng12
-       sudo yum update -y
-            
-   .. _setup_FRH_tcsh:
-#. **(optional, but recommended) Set "tcsh" to be the default shell.**
+    sudo yum install -y epel-release
+    sudo yum install -y tcsh libXp openmotif gsl xorg-x11-fonts-misc       \
+                        PyQt4 R-devel netpbm-progs gnome-tweak-tool ed     \
+                        libpng12 xorg-x11-server-Xvfb
+    sudo yum update -y
 
-   ::
+**Purpose:** Installs a lot of packages that AFNI depends on (so we
+don't have to reinvent the wheel!).
+         
+.. _setup_FRH_tcsh:
+Make "tcsh" default shell (optional/recommended)
+------------------------------------------------
 
-      chsh -s /usr/bin/tcsh
+Copy+paste::
 
-#. **Install AFNI.**
+   chsh -s /usr/bin/tcsh
 
-   The following will create a directory called ``$HOME/abin`` and
-   install the AFNI binaries there.
+**Purpose:** Makes ``tcsh`` your default shell in the terminal.
 
-   First, get the install script (*this* command actually works for both
-   Fedora and RHEL systems)::
-      
-      curl -O https://afni.nimh.nih.gov/pub/dist/bin/linux_fedora_21_64/@update.afni.binaries
-      
-   Then install the appropriate AFNI package.  Note that most other
-   Linux systems will probably work with linux_openmp_64:
+Install AFNI binaries
+---------------------
 
-   * *for RHEL 7*::
+Copy+paste::
+   
+  cd
+  curl -O https://afni.nimh.nih.gov/pub/dist/bin/linux_ubuntu_16_64/@update.afni.binaries
+  tcsh @update.afni.binaries -package linux_openmp_64 -do_extras
 
-       tcsh @update.afni.binaries -package linux_openmp_64 -do_extras
+**Purpose:** These commands: download and unpack the current binaries
+into your ``$HOME`` directory (and yes, that ``@update*`` file works
+even, even though it is in the "ubuntu" directory); set the AFNI
+binary directory name to ``$HOME/abin/``; and add that location to the
+``$PATH`` in both ``~/.cshrc`` and ``~/.bashrc``.
 
-   * *for Fedora 21 (and higher)*::
+.. note:: if the binary package has already been downloaded, one can
+          use ``-local_package``, followed by the location+name of the
+          binary file, e.g.::
 
-       tcsh @update.afni.binaries -package linux_fedora_21_64 -do_extras
+            tcsh @update.afni.binaries -local_package linux_openmp_64.tgz -do_extras
 
-   .. note:: if the binary package has already been downloaded, one can use ``-local_package``, followed by the location+name of the binary file, e.g.:
+Reboot
+------
 
-      tcsh @update.afni.binaries -local_package linux_openmp_64.tgz -do_extras
+Copy+paste (to reboot)::
 
-#. **Reboot.**
+   reboot
 
-   Consider a 'reboot' at this point.  That would deal with
-   system updates, the change in login shell, and an updated path::
+**Purpose:** This deals with system updates, any change in login
+shell, and path updates.
 
-      reboot
+Install R
+---------
+ 
+a. Copy+paste the following:
 
-#. **Get R setup.**
+   * *for* ``tcsh``::
+   
+       setenv R_LIBS $HOME/R
+       mkdir $R_LIBS
+       echo 'setenv R_LIBS ~/R' >> ~/.cshrc
+       curl -O https://afni.nimh.nih.gov/pub/dist/src/scripts_src/@add_rcran_ubuntu.tcsh
+       sudo tcsh @add_rcran_ubuntu.tcsh
 
-   Install current R libraries for the group analysis programs.  This
-   relies on the environment variable ``$R_LIBS``, which refers to a
-   directory that will contain the R packages.  That variable should
-   always be set, both to specify where to install the packages and
-   where to read them from later (when running R programs).
-   Therefore:
-      
-   * *for setting this variable in* ``tcsh`` 
-     *(i.e., if you did* :ref:`tcsh setup, above <setup_FRH_tcsh>`\ *)*::
-
-      setenv R_LIBS $HOME/R
-      mkdir $R_LIBS
-      echo 'setenv R_LIBS ~/R' >> ~/.cshrc
-      rPkgsInstall -pkgs ALL
-      
-   * *for setting this variable in* ``bash``::
-      
+   * *for* ``bash``::
+   
        export R_LIBS=$HOME/R
        mkdir $R_LIBS
        echo 'export R_LIBS=$HOME/R' >> ~/.bashrc
-       rPkgsInstall -pkgs ALL
+       curl -O https://afni.nimh.nih.gov/pub/dist/src/scripts_src/@add_rcran_ubuntu.tcsh
+       sudo tcsh @add_rcran_ubuntu.tcsh
 
-   ..
-     In order, this has: set (i.e., defined) an environment variable
-     called ``$R_LIBS`` to be a subdirectory called "R/" in the user's
-     home directory; then made this directory; then written this
-     information into the user's ``tcsh`` profile; and finally run an
-     AFNI command to (hopefully) get all the necessary R libraries for
-     the modern package.
+   **Purpose:** Setup modern R from scratch. This relies on the
+   environment variable ``$R_LIBS``, which specifies where to install
+   the packages and where to read them from later (when R programs
+   run).  The file obtained using ``curl`` contains instructions to
+   add a more uptodate set of R libraries to the source list.
 
+#. Copy+paste the following::
+     
+     rPkgsInstall -pkgs ALL
 
-   .. ---------- HERE/BELOW: copy for all installs --------------
+   **Purpose:** Get specific R packages needed for AFNI programs.
+   
+.. ---------- HERE/BELOW: copy for all installs --------------
 
-#. **Automatically set up AFNI/SUMA profiles.**
+Make AFNI/SUMA profiles
+-----------------------
 
-   .. include:: substep_profiles.rst
+.. include:: substep_profiles.rst
 
-#. **(optional) Prepare for an AFNI Bootcamp.**
+Prepare for Bootcamp
+--------------------
 
-   .. include:: substep_bootcamp.rst
-
-
-#. **EVALUATE THE SETUP: an important and useful step in this
-   process!**
-
-   .. include:: substep_evaluate.rst
-
-
-#. **(optional) Niceifying interfaces: it's a magical terminal.**
-
-   .. include:: substep_rcfiles.rst
+.. include:: substep_bootcamp.rst
 
 
-#. **Keeping up-to-date (remember).**
+Evaluate setup/system (**important!**)
+-----------------------------------
 
-   .. include:: substep_update.rst
-
-
-
-
-.. commented out-- older steps, unnecessary here.
-
-   #. **Setting up autoprompts for command line options.**
-
-   The following is quite useful to be set up help files for
-   tab-autocompletion of options as you type AFNI commands.  Run this
-   command::
-
-     apsearch -update_all_afni_help
-      
-   and then follow the brief instructions.
+.. include:: substep_evaluate.rst
 
 
+Niceify terminal (optional, but goood)
+--------------------------------------
 
-    #. **Quick test.**
+.. include:: substep_rcfiles.rst
 
-       Do a quick test to see that afni works::
+Keep up-to-date (remember!)
+---------------------------
 
-          afni -ver
-
-       If this doesn't produce anything constructive immediately, or if
-       ``reboot`` was skipped, try starting a new ``tcsh`` shell (e.g., by
-       opening a new terminal) and updating the path (again, specifically
-       for ``tcsh``)::
-
-          tcsh
-          set path = ( $path ~/abin )
-          rehash
-          afni -ver
-
-       | The final command should show something useful, like:
-       | ``Precompiled binary linux_ubuntu_12_64: 
-         Feb 29 2016 (Version AFNI_16.0.10)``
-
-
-       NB: ``@update.afni.binaries`` should have set the path in
-       ``$HOME/.cshrc`` (when using ``-do_extras``).  Verify this by
-       visually checking that the same 'set path' line, above, in the
-       (``tcsh``) profile::
-
-         cat ~/.cshrc
-
-       .. am inverting steps 5 and 6 from the original documentation,
-          under the idea that hte Bootcamp material is secondary to a
-          general install, which I feel should include R.
+.. include:: substep_update.rst
 

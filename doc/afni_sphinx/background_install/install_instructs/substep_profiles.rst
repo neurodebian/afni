@@ -1,20 +1,15 @@
 
-As noted in the :ref:`Technical notes <tech_notes_ENV>`, AFNI
-and SUMA have a lot of default settings, controlled using
-*environment variables*.  Vanilla-mode profiles with default values
-are easily installed:
-
-- for AFNI, copy it from the main directory of binaries::
+Copy+paste the following::
 
     cp $HOME/abin/AFNI.afnirc $HOME/.afnirc
-
-- for SUMA, run the command::
-
     suma -update_env
 
-  This makes and populates a profile called ``$HOME/.sumarc``.
+**Purpose:** As noted in the :ref:`Technical notes <tech_notes_ENV>`,
+AFNI and SUMA have a lot of default settings, controlled using
+*environment variables*.  The above initializes vanilla-mode profiles
+with default values for both AFNI and SUMA.
 
-These files can be edited to the user's heart's content, setting up
-specific profile features you want when using AFNI and SUMA (e.g.,
-having left=left when viewing axial slices, making default colorbars,
-etc.).
+These files (``$HOME/.afnirc`` and ``$HOME/.sumarc``) can be edited to
+the user's heart's content, setting up specific profile features you
+want when using AFNI and SUMA (e.g., having left=left when viewing
+axial slices, making default colorbars, etc.).

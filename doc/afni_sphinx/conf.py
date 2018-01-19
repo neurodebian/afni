@@ -152,8 +152,25 @@ html_theme_options = {
     "defaultcollapsed": "false",
     "roottarget": "index",
     "min_height": "12in",
-    "max_width": "12in"
-}
+    "max_width": "12in",
+    "lighter_header_decor": "true",
+    "linkcolor": "#1874CD",
+    "bgcolor": "#F5F5F5",
+    "bodyfont": "Arial",
+    "bodylineheight": "1.3em",
+    "codevarfont":  "Menlo,  monospace",
+    "codeblockfont": "Menlo, monospace",
+    "codetrimcolor": "#00C957",
+    "codebgcolor": "#E0EEE0",
+    "highlightcolor": "#FFEC8B",
+    "headtextcolor": "#8B0000",
+    "headlinkcolor": "#8B0000",
+    "rubricbgcolor": "#8B0000",
+    "headtextcolor": "#8B0000",
+    "headlinkcolor": "#8B0000"
+} 
+#    "borderless_decor": "true", 
+#    "linkcolor": "#009ACD",
 
 # Add any paths that contain custom themes here, relative to this directory.
 #html_theme_path = []
@@ -162,7 +179,8 @@ html_theme_path = [csp.get_theme_dir()]
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
-html_title = "%s (doc v%s)  " % (project, release) #None
+#html_title = "%s (doc v%s)  " % (project, release) #None
+html_title = "%s" % (project) # don't need doc version number
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
 #html_short_title = None

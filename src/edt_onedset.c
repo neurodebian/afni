@@ -484,10 +484,10 @@ STATUS("abs applied to meaningless type: will be ignored") ;
          /** threshold datum is shorts **/
 
          case MRI_short:{
-            short thrplu , thrmin ;
+            float thrplu , thrmin ;
             float fplu = edit_thresh / thrfac ;
             float fmin = edit_thbot  / thrfac ;
-            thrplu = SHORTIZE(fplu) ; thrmin = SHORTIZE(fmin) ;
+            thrplu = THRESH_SHORTIZE(fplu) ; thrmin = THRESH_SHORTIZE(fmin) ;
             switch( fim_type ){
                case MRI_short:   /* fim datum is shorts */
                  for( ii=0 ; ii < nxyz ; ii++ )
@@ -936,7 +936,7 @@ fprintf(stderr," -1zscore: converting\n") ;
         EDIT_zscore_vol( nxyz , fim_type , fimfac , vfim ,
                          kv , DSET_BRICK_STATAUX(dset,iv_fim) ) ;
 
-        if( ISBUCKET(dset) ){
+        if( ISBUCKET(dset) || dset->dblk->brick_statcode != NULL ){
 
 #if 0
 fprintf(stderr," -1zscore: bucketing\n") ;

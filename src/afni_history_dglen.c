@@ -1,3 +1,4 @@
+
 /** cf. afni_history.h **/
 
 #include "afni_history.h"
@@ -49,6 +50,89 @@
 
 
 afni_history_struct dglen_history[] = {
+{ 18, JAN, 2018, DRG, "3dUndump cubes",
+	MICRO, TYPE_NEW_OPT,
+	"-cubes makes cubes instead of spheres"
+},
+
+{ 18, JAN, 2018, DRG, "thickness scripts",
+	SUPER, TYPE_NEW_PROG,
+	"Scripts to compute thickness of a mask 3 ways",
+	"@measure_bb_thick, @measure_erosion_thick, @measure_in2out\n"
+	"Suite of thickness scripts to compute thickness in volume\n"
+    "and map to surface. Master script, @thickness_master, to\n"
+    "call others with option for FreeSurfer input data"
+},
+{ 9, NOV, 2017, DRG, "whereami report changes",
+	MICRO, TYPE_MODIFY,
+	"linkrbrain, sumsdb no longer working, so turned off",
+	"Also reduced line spacing in whereami html reports, default in GUI\n"
+	"and coordinates showing up as -0.0 instead of 0.0 (for Justin)."
+},
+{ 31, OCT, 2017, DRG, "SUMA popups disabled",
+	MICRO, TYPE_NEW_ENV,
+	"SUMA popups are disabled by default, SUMA_SHOWPOPUPS",
+	"Popups in SUMA that required clicking are now off\n"
+	"by default. Bracket (hemisphere) hiding and small surface\n"
+	"warnings only go to terminal. Other messages can be shown\n"
+	"in popup messages with env. variable."
+},
+{ 11, JUL, 2017 , DRG , "DriveSuma quiet variable" , 
+    MICRO , TYPE_NEW_OPT, 
+    "SUMA_DriveSumaQuiet",
+    "Make suma a little quieter with DriveSuma"
+},
+{ 19, APR, 2017 , DRG , "3dMean min, max options" , 
+    MINOR , TYPE_NEW_OPT, 
+    "3dMean computes min and max voxelwise across datasets",
+    "Options -min, -max give min and max values. This can be\n"
+    "combined with -non-zero to restrict to non-zero min and max."
+},
+{ 19, APR, 2017 , DRG , "3dLocalstat has_mask, has_mask2 options" , 
+    MINOR , TYPE_NEW_OPT, 
+    "3dLocalstat can report if neighborhood intersects specified values",
+    "Options -has_mask and -has_mask2 allow flagging with unfillvalue"
+},
+{ 5, APR, 2017 , DRG , "3dVol2Surf nzoptions" , 
+    MINOR , TYPE_NEW_OPT, 
+    "3dVol2Surf nonzero min, nonzero max, nonzero ave",
+    "Options allowing for statistics that ignore zero values"
+},
+{ 30, MAR, 2017 , DRG , "3dLocalstat" , 
+    MINOR , TYPE_NEW_OPT, 
+    "simple statistics of filled or unfilled",
+    "These options provide binary tests for whether the neighborhood shape\n"
+    "entirely fits within a mask or dataset around each voxel\n"
+    "A value can be specified for a fill and unfill value"
+},
+{ 27, MAR, 2017 , DRG , "align_epi_anat.py" , 
+    MINOR , TYPE_BUG_FIX, 
+    "rm of temporary files could delete all files in current directory",
+    "rm deletes all files that have tabs/spaces inserted in dataset names\n"
+    "The tab  or space character can be somewhat invisible if after\n"
+    "line continuation character in input script. Fix removes whitespace\n"
+    "before deleting"
+},
+{ 5, JAN, 2017 , DRG , "align_epi_anat.py" , 
+    MINOR , TYPE_BUG_FIX, 
+    "NIFTI output and output directories not always handled correctly or completely"
+},
+{ 17, NOV, 2016 , DRG , "DriveSuma" , 
+    MINOR , TYPE_NEW_OPT, 
+    "Ask suma to send current surface name to SUMA_OUTPLUG file or stdout"
+},
+{ 19, AUG, 2016 , DRG , "3dLocalstat" , 
+    MINOR , TYPE_BUG_FIX, 
+    "Neighborhoods miscalculated"
+},
+{ 17, AUG, 2016 , DRG , "align_epi_anat.py" , 
+    MICRO , TYPE_BUG_FIX, 
+    "History not updated properly on output with NIFTI dset1/anat"
+},
+{ 9, AUG, 2016 , DRG , "@SUMA_MakeSpecFS" , 
+    MINOR , TYPE_MODIFY, 
+    "Atlasize original unranked datasets too. They will have more reliable indices than the ranked"
+},
 { 11, JUL, 2016 , DRG , "3dWarp tta2mni grid dimensions bug" , 
     MINOR , TYPE_BUG_FIX, 
     "Ignored grid dimensions in transformation between Talairach to MNI"

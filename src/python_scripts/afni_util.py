@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+# python3 status: started
+
 # afni_util.py : general utilities for python programs
 
 import sys, os, math
@@ -9,22 +11,35 @@ import glob
 import pdb
 
 # global lists for basis functions
-basis_known_resp_l = ['GAM', 'BLOCK', 'dmBLOCK', 'SPMG1', 'WAV', 'MION']
-basis_one_regr_l   = ['GAM', 'BLOCK', 'dmBLOCK', 'SPMG1', 'WAV', 'EXPR', 'MION']
+basis_known_resp_l = ['GAM', 'BLOCK', 'dmBLOCK', 'dmUBLOCK', 'SPMG1',
+                      'WAV', 'MION']
+basis_one_regr_l   = basis_known_resp_l[:]
+basis_one_regr_l.append('MION')
 stim_types_one_reg = ['file', 'AM1', 'times']
 
 # this file contains various afni utilities   17 Nov 2006 [rickr]
 
-def change_path_basename(orig, prefix, suffix):
+def change_path_basename(orig, prefix='', suffix='', append=0):
     """given a path (leading directory or not) swap the trailing
        filename with the passed prefix and suffix
-
-          e.g. C_P_B('my/dir/pickles.yummy','toast','.1D') --> 'my/dir/toast.1D' 
+          e.g. C_P_B('my/dir/pickles.yummy','toast','.1D')
+                 --> 'my/dir/toast.1D' 
+       or with append...
+          e.g. C_P_B('my/dir/pickles.yummy','toast','.1D', append=1)
+                 --> 'my/dir/toastpickles.yummy.1D'
+       or maybe we want another dot then
+          e.g. C_P_B('my/dir/pickles.yummy','toast.','.1D', append=1)
+                 --> 'my/dir/toast.pickles.yummy.1D'
     """
-    if not orig or not prefix: return
+    if not orig: return ''
+    if not prefix and not suffix: return orig
+
     (head, tail) = os.path.split(orig)
-    if head == '': return "%s%s" % (prefix, suffix)
-    return "%s/%s%s" % (head, prefix, suffix)
+    if append: tail = '%s%s%s' % (prefix, tail, suffix)
+    else:      tail = '%s%s' % (prefix, suffix)
+
+    if head == '': return tail
+    return "%s/%s" % (head, tail)
 
 # write text to a file
 def write_text_to_file(fname, tdata, mode='w', wrap=0, wrapstr='\\\n', exe=0):
@@ -40,7 +55,7 @@ def write_text_to_file(fname, tdata, mode='w', wrap=0, wrapstr='\\\n', exe=0):
     """
 
     if not tdata or not fname:
-        print "** WTTF: missing text or filename"
+        print("** WTTF: missing text or filename")
         return 1
 
     if wrap: tdata = add_line_wrappers(tdata, wrapstr)
@@ -51,14 +66,20 @@ def write_text_to_file(fname, tdata, mode='w', wrap=0, wrapstr='\\\n', exe=0):
        try:
            fp = open(fname, mode)
        except:
-           print "** failed to open text file '%s' for writing" % fname
+           print("** failed to open text file '%s' for writing" % fname)
            return 1
 
     fp.write(tdata)
 
     if fname != 'stdout' and fname != 'stderr':
        fp.close()
-       if exe: os.chmod(fname, 0755)
+       if exe:
+           try: code = eval('0o755')
+           except: code = eval('0755')
+           try:
+               os.chmod(fname, code)
+           except:
+               print("** failed chmod 755 on %s" % fname)
 
     return 0
 
@@ -86,7 +107,7 @@ def read_text_file(fname='stdin', lines=1, strip=1, verb=1):
    else:
       try: fp = open(fname, 'r')
       except:
-        if verb: print "** read_text_file: failed to open '%s'" % fname
+        if verb: print("** read_text_file: failed to open '%s'" % fname)
         if lines: return []
         else:     return ''
 
@@ -132,11 +153,11 @@ def write_to_timing_file(data, fname='', nplaces=-1, verb=1):
 
    fp = open(fname, 'w')
    if not fp:
-      print "** failed to open '%s' for writing timing" % fname
+      print("** failed to open '%s' for writing timing" % fname)
       return 1
 
    if verb > 0:
-      print "++ writing %d timing rows to %s" % (len(data), fname)
+      print("++ writing %d timing rows to %s" % (len(data), fname))
 
    fp.write(make_timing_data_string(data, nplaces=nplaces, flag_empty=1,
                                     verb=verb))
@@ -151,8 +172,8 @@ def make_timing_data_string(data, row=-1, nplaces=3, flag_empty=0,
       return a string of all rows"""
 
    if verb > 2:
-      print '++ make_data_string: row = %d, nplaces = %d, flag_empty = %d' \
-            % (row, nplaces, flag_empty)
+      print('++ make_data_string: row = %d, nplaces = %d, flag_empty = %d' \
+            % (row, nplaces, flag_empty))
 
    if row >= 0:
       return make_single_row_string(data[row], row, nplaces, flag_empty)
@@ -242,11 +263,11 @@ def show_args_as_command(args, note='command:'):
      """print the given argument list as a command
         (this allows users to see wildcard expansions, for example)"""
 
-     print args_as_command(args,
+     print(args_as_command(args,
      "----------------------------------------------------------------------\n"
      "%s\n\n  " % note,
      "\n----------------------------------------------------------------------"
-     )
+     ))
 
 def exec_tcsh_command(cmd, lines=0, noblank=0):
     """execute cmd via: tcsh -cf "cmd"
@@ -311,8 +332,8 @@ def get_process_stack(pid=-1, fast=1, verb=1):
          pind = pids.index(pid)
       except:
          if verb > 1:
-            print '** GPS pid %s not in pid list:\n' % pid
-            print '%s' % plist
+            print('** GPS pid %s not in pid list:\n' % pid)
+            print('%s' % plist)
          return -1
       return pind
 
@@ -340,8 +361,8 @@ def get_process_stack(pid=-1, fast=1, verb=1):
    ac = BASE.shell_com(cmd, capture=1)
    ac.run()
    if ac.status:
-      print '** GPS command failure for: %s\n' % cmd
-      print 'error output:\n%s' % '\n'.join(ac.se)
+      print('** GPS command failure for: %s\n' % cmd)
+      print('error output:\n%s' % '\n'.join(ac.se))
       return []
 
    plist = [ll.split() for ll in ac.so]
@@ -352,7 +373,7 @@ def get_process_stack(pid=-1, fast=1, verb=1):
       pids = [int(psinfo[0]) for psinfo in plist]
       ppids = [int(psinfo[1]) for psinfo in plist]
    except:
-      print '** GPS type failure in plist\n%s' % plist
+      print('** GPS type failure in plist\n%s' % plist)
       return []
 
    # maybe the ps list is too big of a buffer, so have a backup plan
@@ -377,8 +398,8 @@ def get_process_stack_slow(pid=-1, verb=1):
       ac = BASE.shell_com(cmd, capture=1)
       ac.run()
       if ac.status:
-         print '** GPSS command failure for: %s\n' % cmd
-         print 'error output:\n%s' % '\n'.join(ac.se)
+         print('** GPSS command failure for: %s\n' % cmd)
+         print('error output:\n%s' % '\n'.join(ac.se))
          return 1, []
       ss = ac.so[0]
       entries = ss.split()
@@ -391,7 +412,7 @@ def get_process_stack_slow(pid=-1, verb=1):
          pid = int(entries[0])
          ppid = int(entries[1])
       except:
-         print '** bad GPSS entries for cmd: %s\n  %s' % (cmd, entries)
+         print('** bad GPSS entries for cmd: %s\n  %s' % (cmd, entries))
          return 1, -1, -1
       return 0, pid, ppid
 
@@ -401,8 +422,8 @@ def get_process_stack_slow(pid=-1, verb=1):
    cmd = '%s %s' % (base_cmd, mypid)
    rv, entries = get_cmd_entries(cmd)
    if rv:
-      if mypid == pid: print '** process ID %d not found' % pid
-      else:            print '** getpid() process ID %d not found' % pid
+      if mypid == pid: print('** process ID %d not found' % pid)
+      else:            print('** getpid() process ID %d not found' % pid)
       return []
    rv, mypid, ppid = get_ppids(cmd, entries)
    if rv: return []
@@ -422,7 +443,7 @@ def show_process_stack(pid=-1,fast=1,verb=1):
    """print stack of processes up to init"""
    pstack = get_process_stack(pid=pid,fast=fast,verb=verb)
    if len(pstack) == 0:
-      print '** empty process stack'
+      print('** empty process stack')
       return
    ulist = [pp[2] for pp in pstack]
    ml = max_len_in_list(ulist)
@@ -431,13 +452,13 @@ def show_process_stack(pid=-1,fast=1,verb=1):
    form = '%6s %6s  [%s]'
    ilen = len(form)+4+ml
 
-   print '%-*s : %s' % (ilen, header, 'COMMAND')
-   print '%-*s   %s' % (ilen, dashes, '-------')
+   print('%-*s : %s' % (ilen, header, 'COMMAND'))
+   print('%-*s   %s' % (ilen, dashes, '-------'))
    for row in pstack:
       ss = form % (row[0], row[1], row[2])
       if len(row) > 3: rv = ' '.join(row[3:])
       else:            rv = row[3]
-      print '%-*s : %s' % (ilen, ss, rv)
+      print('%-*s : %s' % (ilen, ss, rv))
 
 def get_login_shell():
    """return the apparent login shell
@@ -448,7 +469,7 @@ def get_login_shell():
 
    pstack = get_process_stack()
    if len(pstack) == 0:
-      print '** cannot detect shell: empty process stack'
+      print('** cannot detect shell: empty process stack')
       return
 
    # start from init and work down to find first valid shell
@@ -469,7 +490,7 @@ def get_current_shell():
 
    pstack = get_process_stack()
    if len(pstack) == 0:
-      print '** cannot detect shell: empty process stack'
+      print('** cannot detect shell: empty process stack')
       return
    pstack.reverse()
 
@@ -492,7 +513,7 @@ def show_login_shell(verb=0):
 
    pstack = get_process_stack()
    if len(pstack) == 0:
-      print '** cannot detect shell: empty process stack'
+      print('** cannot detect shell: empty process stack')
       return
 
    # start from init and work down to find first valid shell
@@ -501,13 +522,13 @@ def show_login_shell(verb=0):
       if pline[3] not in shells and pline[3] not in dshells: continue
       shell = pline[3]
       if shell[0] == '-': shell = shell[1:]      # strip any leading '-'
-      if verb: print 'apparent login shell: %s' % shell
-      else: print '%s' % shell
+      if verb: print('apparent login shell: %s' % shell)
+      else: print('%s' % shell)
       break
 
    if shell == '':
       if verb:
-         print '** failed to determine login shell, see process stack...\n'
+         print('** failed to determine login shell, see process stack...\n')
          show_process_stack()
          return
 
@@ -518,7 +539,7 @@ def show_login_shell(verb=0):
          if pline[3] not in shells and pline[3] not in dshells: continue
          sh = pline[3]
          if sh[0] == '-': sh = sh[1:]      # strip any leading '-'
-         if sh != shell: print 'differs from current shell: %s' % sh
+         if sh != shell: print('differs from current shell: %s' % sh)
          break
 
 def get_unique_sublist(inlist, keep_order=1):
@@ -559,7 +580,7 @@ def get_unique_sublist(inlist, keep_order=1):
 
     return newlist
 
-def uniq_list_as_dsets(dsets, whine=0):
+def uniq_list_as_dsets(dsets, byprefix=0, whine=0):
     """given a list of text elements, create a list of afni_name elements,
        and check for unique prefixes"""
 
@@ -570,10 +591,13 @@ def uniq_list_as_dsets(dsets, whine=0):
     elif isinstance(dsets[0], BASE.afni_name):
        anlist = dsets
     else:
-       print '** ULAD: invalid type for dset list, have value %s' % dsets[0]
+       print('** ULAD: invalid type for dset list, have value %s' % dsets[0])
        return 0
 
-    plist = [an.prefix for an in anlist]
+    if byprefix:
+       plist = [an.prefix for an in anlist]
+    else:
+       plist = dsets[:]
     plist.sort()
 
     # iterate over dsets, searching for matches
@@ -584,8 +608,7 @@ def uniq_list_as_dsets(dsets, whine=0):
           break
 
     if not uniq and whine:
-        print                                                               \
-          "-----------------------------------------------------------\n"   \
+      print("-----------------------------------------------------------\n" \
           "** dataset names are not unique\n\n"                             \
           "   (#%d == #%d, '%s' == '%s')\n\n"                               \
           "   note: if using a wildcard, please specify a suffix,\n"        \
@@ -593,7 +616,7 @@ def uniq_list_as_dsets(dsets, whine=0):
           "            e.g.  bad use:    ED_r*+orig*\n"                     \
           "            e.g.  good use:   ED_r*+orig.HEAD\n"                 \
           "-----------------------------------------------------------\n"   \
-          % (ind, ind+1, anlist[ind].pve(), anlist[ind+1].pve())
+          % (ind, ind+1, anlist[ind].pve(), anlist[ind+1].pve()))
 
     return uniq
 
@@ -625,11 +648,11 @@ def list_to_datasets(words, whine=0):
         if dset.exist():
             dsets.append(dset)
         else:
-            if whine: print "** no dataset match for '%s'" % word
+            if whine: print("** no dataset match for '%s'" % word)
             errs = 1
 
     if errs:
-        if whine: print # for separation
+        if whine: print('') # for separation
         return None
     return dsets
 
@@ -664,7 +687,7 @@ def basis_has_one_reg(basis, st='times'):
     """
     if not basis: return 0
 
-    # only 'times' or 'AM1' are acceptable
+    # only 'times', 'file' and 'AM1' are acceptable
     if not st in stim_types_one_reg: return 0
 
     if starts_with_any_str(basis, basis_one_regr_l): return 1
@@ -690,7 +713,7 @@ def get_default_polort(tr, reps):
     """
 
     if tr <= 0 or reps <= 0:
-        print "** cannot guess polort from tr = %f, reps = %d" % (tr,reps)
+        print("** cannot guess polort from tr = %f, reps = %d" % (tr,reps))
         return 2        # return some default
 
     return run_time_to_polort(tr*reps)
@@ -708,10 +731,10 @@ def index_to_run_tr(index, rlens, rstyle=1, whine=1):
        any negative return indicates an error
     """
     if index < 0:
-       if whine: print '** ind2run_tr: illegal negative index: %d' % index
+       if whine: print('** ind2run_tr: illegal negative index: %d' % index)
        return 1, index
     if len(rlens) == 0:
-       if whine: print '** ind2run_tr: missing run lengths'
+       if whine: print('** ind2run_tr: missing run lengths')
        return 1, index
 
     # if there is only 1 run and it is short, compute modulo
@@ -726,15 +749,15 @@ def index_to_run_tr(index, rlens, rstyle=1, whine=1):
     for rind, nt in enumerate(rlengths):
        if nt < 0:
           if whine:
-             print '** ind2run_tr: have negative run length in %s' % rlengths
+             print('** ind2run_tr: have negative run length in %s' % rlengths)
           return -1, -1
        if cind < nt:
           if rstyle: return rind+1, cind
           else:      return rind, cind
        cind -= nt
 
-    if whine: print '** ind2run_tr, index %d outside run list %s' \
-                    % (index, rlengths)
+    if whine: print('** ind2run_tr, index %d outside run list %s' \
+                    % (index, rlengths))
     return rind, cind+nt
 
 
@@ -757,10 +780,10 @@ def get_num_warp_pieces(dset, verb=1):
     nvals = len(result)
     npieces = nvals//30
     if npieces * 30 != nvals:
-        print '** GNWP: invalid WARP_DATA length %d' % nvals
+        print('** GNWP: invalid WARP_DATA length %d' % nvals)
         return 0
 
-    if verb > 1: print '-- dset %s has a %d-piece warp' % (dset, npieces)
+    if verb > 1: print('-- dset %s has a %d-piece warp' % (dset, npieces))
 
     del(result)
 
@@ -779,15 +802,15 @@ def get_typed_dset_attr_list(dset, attr, atype, verb=1):
 
     alist = BASE.read_attribute(dset, attr, verb=verb)
     if alist == None and verb > 0:
-        print "** GTDAL: failed to read dset attr %s, dset = %s" % (attr,dset)
+        print("** GTDAL: failed to read dset attr %s, dset = %s" % (attr,dset))
         return 1, []
 
     err = 0
     try: result = [atype(val) for val in alist]
     except:
         if verb > 0:
-           print "** GTDAL: failed to convert attr %s to type %s for dset %s"%\
-                 (attr, atype, dset)
+           print("** GTDAL: failed to convert attr %s to type %s for dset %s"%\
+                 (attr, atype, dset))
         err = 1
         result = []
 
@@ -831,19 +854,19 @@ def get_3dinfo_nt(dname, verb=1):
    command = '3dinfo -nt %s' % dname
    status, output, se = limited_shell_exec(command, nlines=1)
    if status or len(output) == 0:
-      if verb: print '** 3dinfo -nt failure: message is:\n%s%s\n' % (se,output)
+      if verb: print('** 3dinfo -nt failure: message is:\n%s%s\n' % (se,output))
       return 0
 
    output = output[0].strip()
    if output == 'NO-DSET' :
-      if verb: print '** 3dinfo -nt: no dataset %s' % dname
+      if verb: print('** 3dinfo -nt: no dataset %s' % dname)
       return 0
 
    nt = 0
    try: nt = int(output)
    except:
-      if verb: print '** 3dinfo -nt: cannot get NT from %s, for dset %s' \
-                     % (output, dname)
+      if verb: print('** 3dinfo -nt: cannot get NT from %s, for dset %s' \
+                     % (output, dname))
       return 0
 
    return nt
@@ -857,12 +880,12 @@ def get_3dinfo_val(dname, val, vtype, verb=1):
    status, output, se = limited_shell_exec(command, nlines=1)
    if status or len(output) == 0:
       if verb:
-         print '** 3dinfo -%s failure: message is:\n%s%s\n' % (val, se, output)
+         print('** 3dinfo -%s failure: message is:\n%s%s\n' % (val, se, output))
       return 0
 
    output = output[0].strip()
    if output == 'NO-DSET' :
-      if verb: print '** 3dinfo -%s: no dataset %s' % (val, dname)
+      if verb: print('** 3dinfo -%s: no dataset %s' % (val, dname))
       return 0
 
    dval = 0
@@ -877,18 +900,42 @@ def get_3dinfo_val(dname, val, vtype, verb=1):
          except:
             fail = 1
       if verb and fail:
-         print "** 3dinfo -%s: cannot get val from %s, for dset %s" \
-               % (val, output, dname)
+         print("** 3dinfo -%s: cannot get val from %s, for dset %s" \
+               % (val, output, dname))
       if fail: return vtype(0)
 
    return dval
+
+def get_3dinfo_val_list(dname, val, vtype, verb=1):
+   """run 3dinfo -val, and convert to vtype (also serves as a test)
+
+      return None on failure, else a list
+   """
+   command = '3dinfo -%s %s' % (val, dname)
+   status, output, se = limited_shell_exec(command, nlines=1)
+   if status or len(output) == 0:
+      if verb:
+         print('** 3dinfo -%s failure: message is:\n%s%s\n' % (val, se, output))
+      return None
+
+   output = output[0].strip()
+   if output == 'NO-DSET' :
+      if verb: print('** 3dinfo -%s: no dataset %s' % (val, dname))
+      return None
+
+   dlist = string_to_type_list(output, vtype)
+   if dlist == None and verb:
+      print("** 3dinfo -%s: cannot get val list from %s, for dset %s" \
+            % (val, output, dname))
+
+   return dlist
 
 def dset_view(dname):
    """return the AFNI view for the given dset"""
    command = '3dinfo -av_space %s' % dname
    status, output = exec_tcsh_command(command)
    if status: return ''
-   return output.strip('\n')
+   return output.replace('\n', '')
 
 def get_3d_statpar(dname, vindex, statcode='', verb=0):
    """return a single stat param at the given sub-brick index
@@ -897,7 +944,7 @@ def get_3d_statpar(dname, vindex, statcode='', verb=0):
    """
    ilines = get_3dinfo(dname, lines=1, verb=1)
    if ilines == None:
-      print '** failed get_3dinfo(%s)' % dname
+      print('** failed get_3dinfo(%s)' % dname)
       return -1
 
    N = len(ilines)
@@ -910,13 +957,13 @@ def get_3d_statpar(dname, vindex, statcode='', verb=0):
       if posn >= 0: break
 
    if posn < 0:
-      print '** 3d_statpar: no %s[%d]' % (dname, vindex)
+      print('** 3d_statpar: no %s[%d]' % (dname, vindex))
       return -1       # failure
 
    # check statcode?
    lind = ind + 1
    if lind >= N:
-      if verb > 1: print '** 3d_statpar: no space for statpar line'
+      if verb > 1: print('** 3d_statpar: no space for statpar line')
       return -1
 
    sline = ilines[lind]
@@ -924,28 +971,28 @@ def get_3d_statpar(dname, vindex, statcode='', verb=0):
    if statcode: 
       olist = find_opt_and_params(sline, 'statcode', 2)
       if len(olist) < 3:
-         print '** 3d_statpar: missing expected statcode'
+         print('** 3d_statpar: missing expected statcode')
          return -1
       code = olist[2]
       if code[-1] == ';': code = code[:-1]
       if code != statcode:
-         print '** 3d_statpar: statcode %s does not match expected %s'\
-               % (code, statcode)
+         print('** 3d_statpar: statcode %s does not match expected %s'\
+               % (code, statcode))
          return -1
-      if verb > 2: print '-- found %s' % olist
+      if verb > 2: print('-- found %s' % olist)
 
    # now get something like "statpar = 32 x x"
    olist = find_opt_and_params(sline, 'statpar', 4)
    if len(olist) < 3:
-      if verb: print '** 3d_statpar: missing expected statpar'
-      if verb > 2: print '   found %s in %s' % (olist, sline)
+      if verb: print('** 3d_statpar: missing expected statpar')
+      if verb > 2: print('   found %s in %s' % (olist, sline))
       return -1 
-   if verb > 2: print '-- found %s' % olist
+   if verb > 2: print('-- found %s' % olist)
 
    par = -1
    try: par = int(olist[2])
    except:
-      if verb: print '** 3d_statpar: bad stat par[2] in %s' % olist
+      if verb: print('** 3d_statpar: bad stat par[2] in %s' % olist)
       return -1 
 
    return par
@@ -976,7 +1023,7 @@ def get_truncated_grid_dim(dset, verb=1):
     # changed 2 -> 4  19 Mar 2010 
     if md >= 4.0: return math.floor(md)
     if md <= 0:
-        print '** failed to get truncated grid dim from %s' % dims
+        print('** failed to get truncated grid dim from %s' % dims)
         return 0
 
     return truncate_to_N_bits(md, 3, verb=verb, method='r_then_t')
@@ -995,7 +1042,7 @@ def truncate_to_N_bits(val, bits, verb=1, method='trunc'):
     if val < 0.0: sign, fval = -1, -float(val)
     else:         sign, fval =  1,  float(val)
 
-    if verb > 2: print 'T2NB: applying sign=%d, fval=%g' % (sign,fval)
+    if verb > 2: print('T2NB: applying sign=%d, fval=%g' % (sign,fval))
 
     # if r_then_t, start by rounding to 2*bits, then continue to truncate
     meth = method
@@ -1004,7 +1051,7 @@ def truncate_to_N_bits(val, bits, verb=1, method='trunc'):
         meth = 'trunc'
 
     if bits <= 0 or type(bits) != type(1):
-        print "** truncate to N bits: bad bits = ", bits
+        print("** truncate to N bits: bad bits = ", bits)
         return 0.0
 
     # find integer m s.t.  2^(bits-1) <= 2^m * fval < 2^bits
@@ -1019,8 +1066,8 @@ def truncate_to_N_bits(val, bits, verb=1, method='trunc'):
     retval = sign*float(ival)/pm
     
     if verb > 2:
-        print '-- T2NB: 2^%d <= 2^%d * %g < 2^%d' % (bits-1,m,fval,bits)
-        print '         ival = %g, returning %g' % (ival,retval)
+        print('-- T2NB: 2^%d <= 2^%d * %g < 2^%d' % (bits-1,m,fval,bits))
+        print('         ival = %g, returning %g' % (ival,retval))
 
     return retval
 
@@ -1028,11 +1075,11 @@ def test_truncation(top=10.0, bot=0.1, bits=3, e=0.0000001):
     """starting at top, repeatedly truncate to bits bits, and subtract e,
        while result is greater than bot"""
 
-    print '-- truncating from %g down to %g with %d bits' % (top,bot,bits)
+    print('-- truncating from %g down to %g with %d bits' % (top,bot,bits))
     val = top
     while val > bot:
         trunc = truncate_to_N_bits(val,bits)
-        print val, ' -> ', trunc
+        print(val, ' -> ', trunc)
         val = trunc - e
     
 def get_dset_reps_tr(dset, notr=0, verb=1):
@@ -1052,10 +1099,10 @@ def get_dset_reps_tr(dset, notr=0, verb=1):
 
     # store timing info in a list (to get reps and timing units)
     if reps == 0:
-        print "** failed to find the number of TRs from dset '%s'" % dset
+        print("** failed to find the number of TRs from dset '%s'" % dset)
         return 1, None, None
 
-    if verb > 1: print '-- dset %s : reps = %d, tr = %ss' % (dset, reps, tr)
+    if verb > 1: print('-- dset %s : reps = %d, tr = %ss' % (dset, reps, tr))
 
     return 0, reps, tr
 
@@ -1080,7 +1127,7 @@ def gaussian_width_to_fwhm(width, mode):
     if mode == 'rms':   return width * 2.354820
     if mode == 'sigma': return width * 4.078668
 
-    print "** GW2F: illegal mode '%s'" % mode
+    print("** GW2F: illegal mode '%s'" % mode)
 
     return 0.0
 
@@ -1140,7 +1187,7 @@ def derivative(vector, in_place=0, direct=0):
        return v[t]-v[t-1] for 1 in {1,..,len(v)-1}, d[0]=0"""
 
     if type(vector) != type([]):
-        print "** cannot take derivative of non-vector '%s'" % vector
+        print("** cannot take derivative of non-vector '%s'" % vector)
         return None
 
     if in_place: vec = vector    # reference original
@@ -1172,20 +1219,20 @@ def make_timing_string(data, nruns, tr, invert=0):
       return err code (0 on success), stim_times string"""
 
    if not data:
-      print "** make_timing_string: missing data"
+      print("** make_timing_string: missing data")
       return 1, ''
    if not type(data) == type([]):
-      print "** make_timing_string: data is not a list"
+      print("** make_timing_string: data is not a list")
       return 1, ''
 
    nvals = len(data)
    rlen  = nvals // nruns
 
    if nruns * rlen != nvals:
-      print "** make_timing_str: nruns %d does not divide nvals %d"%(rlen,nvals)
+      print("** make_timing_str: nruns %d does not divide nvals %d"%(rlen,nvals))
       return 1, ''
    if tr <= 0.0:
-      print "** make_timing_string: bad tr = %g" % tr
+      print("** make_timing_string: bad tr = %g" % tr)
       return 1, ''
 
    rstr = ''
@@ -1223,17 +1270,17 @@ def make_CENSORTR_string(data, nruns=0, rlens=[], invert=0, asopt=0, verb=1):
       return err code (0 on success), CENSORTR string"""
 
    if not data:
-      print "** CENSORTR_str: missing data"
+      print("** CENSORTR_str: missing data")
       return 1, ''
    if not type(data) == type([]):
-      print "** CENSORTR_str: data is not a list"
+      print("** CENSORTR_str: data is not a list")
       return 1, ''
 
    nvals = len(data)
 
    # we must have either nruns or a valid rlens list
    if nruns <= 0 and len(rlens) < 1:
-      print '** make_CENSORTR_string: neither nruns nor rlens'
+      print('** make_CENSORTR_string: neither nruns nor rlens')
       return 1, ''
 
    if rlens:
@@ -1244,11 +1291,11 @@ def make_CENSORTR_string(data, nruns=0, rlens=[], invert=0, asopt=0, verb=1):
       runs  = nruns
 
    if verb > 1:
-      print '-- CENSORTR: applying run lengths (%d) : %s' % (runs, rlist)
+      print('-- CENSORTR: applying run lengths (%d) : %s' % (runs, rlist))
 
    if loc_sum(rlist) != nvals:
-      print "** CENSORTR_str: sum of run lengths %d != nvals %d" \
-            % (loc_sum(rlist),nvals)
+      print("** CENSORTR_str: sum of run lengths %d != nvals %d" \
+            % (loc_sum(rlist),nvals))
       return 1, ''
 
    rstr = ''
@@ -1302,7 +1349,6 @@ def consec_len(ilist, start):
    """return the length of consecutive integers - always at least 1"""
    prev = ilist[start]
    length = len(ilist)
-   ind  = start
    for ind in range(start+1, length+1):
       if ind == length: break
       if ilist[ind] != prev + 1:
@@ -1332,7 +1378,7 @@ def restrict_by_index_lists(dlist, ilist, base=0, nonempty=1, verb=1):
     if type(ilist) == str: ilist = [ilist]
 
     if base not in [0,1]:
-        if verb: print '** restrict_by_index_list: bad base = %d' % base
+        if verb: print('** restrict_by_index_list: bad base = %d' % base)
         return 1, []
 
     # set imax to correctly imply '$' index
@@ -1342,30 +1388,30 @@ def restrict_by_index_lists(dlist, ilist, base=0, nonempty=1, verb=1):
     composite = []
     for ind, istr in enumerate(ilist):
         if type(istr) != str:
-            print '** RBIL: bad index selector %s' % istr
+            print('** RBIL: bad index selector %s' % istr)
             return 1, []
         curlist = decode_1D_ints(istr, verb=verb, imax=imax)
         if not curlist and nonempty:
-            if verb: print "** empty index list for istr[%d]='%s'" % (ind,istr)
+            if verb: print("** empty index list for istr[%d]='%s'" % (ind,istr))
             return 1, []
         composite.extend(curlist)
-        if verb > 3: print '-- index %d, ilist %s' % (ind, curlist)
+        if verb > 3: print('-- index %d, ilist %s' % (ind, curlist))
 
     if not vals_are_unique(composite):
-        if verb: print '** RBIL: composite index list elements are not unique'
+        if verb: print('** RBIL: composite index list elements are not unique')
         return 1, []
 
     cmin = min(composite)
     cmax = max(composite)
     if cmin < 0:
-        if verb: print '** RBIL: cannot choose negative indices'
+        if verb: print('** RBIL: cannot choose negative indices')
         return 1, []
     elif base and cmin == 0:
-        if verb: print '** RBIL: 1-based index list seems 0-based'
+        if verb: print('** RBIL: 1-based index list seems 0-based')
         return 1, []
     elif cmax > imax:
-        if verb: print '** RBIL: index value %d exceeds %d-based limit %d' \
-                       % (cmax, base, imax)
+        if verb: print('** RBIL: index value %d exceeds %d-based limit %d' \
+                       % (cmax, base, imax))
         return 1, []
 
     # now convert 1-based to 0-based, if needed
@@ -1385,9 +1431,9 @@ def decode_1D_ints(istr, verb=1, imax=-1):
     newstr = strip_list_brackets(istr, verb)
     slist = newstr.split(',')
     if len(slist) == 0:
-        if verb > 1: print "-- empty 1D_ints from string '%s'" % istr
+        if verb > 1: print("-- empty 1D_ints from string '%s'" % istr)
         return []
-    elif verb > 3: print "-- decoding stripped list '%s'" % newstr
+    elif verb > 3: print("-- decoding stripped list '%s'" % newstr)
     ilist = []                  # init return list
     for s in slist:
         try:
@@ -1409,7 +1455,7 @@ def decode_1D_ints(istr, verb=1, imax=-1):
                    if   step > 0: inc = 1
                    elif step < 0: inc = -1
                    else:
-                        print "** decode: illegal step of 0 in '%s'" % istr
+                        print("** decode: illegal step of 0 in '%s'" % istr)
                         return []
                    ilist.extend([i for i in range(v1, v2+inc, step)])
                 else:
@@ -1422,9 +1468,9 @@ def decode_1D_ints(istr, verb=1, imax=-1):
             else:
                 ilist.extend([int(s)])
         except:
-            print "** cannot decode_1D '%s' in '%s'" % (s, istr)
+            print("** cannot decode_1D '%s' in '%s'" % (s, istr))
             return []
-    if verb > 3: print '++ ilist: %s' % ilist
+    if verb > 3: print('++ ilist: %s' % ilist)
     del(newstr)
     return ilist
 
@@ -1459,12 +1505,12 @@ def strip_list_brackets(istr, verb=1):
       ind0 = istr.find(pairs[0])
       if ind0 >= 0:
          ind1 = istr.find(pairs[1], ind0+1)
-         if verb > 1: print '-- stripping %s%s at %d,%d in %s' % \
-                            (pairs[0],pairs[1],ind0,ind1,istr)
+         if verb > 1: print('-- stripping %s%s at %d,%d in %s' % \
+                            (pairs[0],pairs[1],ind0,ind1,istr))
          if ind1 > ind0: return istr[ind0+1:ind1]
          else:           return istr[ind0+1:]
 
-   if verb > 2: print "-- nothing to strip from '%s'" % istr
+   if verb > 2: print("-- nothing to strip from '%s'" % istr)
 
    return istr
 
@@ -1580,8 +1626,8 @@ def insert_wrappers(command, start=0, end=-1, wstring='\\\n', verb=1):
     newcmd = ''
     cur    = start
 
-    if verb > 1: print "+d insert wrappers: nfirst=%d, prefix='%s', plen=%d" \
-                       % (nfirst, prefix, plen)
+    if verb > 1: print("+d insert wrappers: nfirst=%d, prefix='%s', plen=%d" \
+                       % (nfirst, prefix, plen))
 
     #pdb.set_trace()
 
@@ -1821,7 +1867,7 @@ def vals_are_sorted(vlist, reverse=0):
                rval = 0
                break
    except:
-      print "** failed to detect sorting in list: %s" % vlist
+      print("** failed to detect sorting in list: %s" % vlist)
       rval = 0
       
    return rval
@@ -1843,7 +1889,7 @@ def vals_are_increasing(vlist, reverse=0):
                rval = 0
                break
    except:
-      print "** failed to detect sorting in list: %s" % vlist
+      print("** failed to detect sorting in list: %s" % vlist)
       rval = 0
       
    return rval
@@ -1866,22 +1912,33 @@ def vals_are_unique(vlist, dosort=1):
             rval = 0
             break
    except:
-      print "** uniq: failed to compare list elements in %s" % vlist
+      print("** uniq: failed to compare list elements in %s" % vlist)
       rval = 0
 
    del(dupe)
       
    return rval
 
-def lists_are_same(list1, list2):
-   """return 1 if the lists have identical values, else 0"""
+def lists_are_same(list1, list2, epsilon=0, doabs=0):
+   """return 1 if the lists have similar values, else 0
+
+      similar means difference <= epsilon
+   """
    if not list1 and not list2: return 1
    if not list1: return 0
    if not list2: return 0
    if len(list1) != len(list2): return 0
 
    for ind in range(len(list1)):
-      if list1[ind] != list2[ind]: return 0
+      if doabs:
+         v1 = abs(list1[ind])
+         v2 = abs(list2[ind])
+      else:
+         v1 = list1[ind]
+         v2 = list2[ind]
+      if v1 != v2: return 0
+      if epsilon:
+         if abs(v1-v2) > epsilon: return 0
 
    return 1
 
@@ -1900,6 +1957,26 @@ def string_to_float_list(fstring):
 
    return flist
 
+def string_to_type_list(sdata, dtype=float):
+   """return a list of dtype, converted from the string
+      return None on error
+   """
+
+   if type(sdata) != str: return None
+   slist = sdata.split()
+
+   if len(slist) == 0: return []
+
+   # if going to int, use float as an intermediate step
+   if dtype == int:
+      try: slist = [float(sval) for sval in slist]
+      except: return None
+
+   try: dlist = [dtype(sval) for sval in slist]
+   except: return None
+
+   return dlist
+
 def float_list_string(vals, nchar=7, ndec=3, nspaces=2, mesg='', left=0):
    """return a string to display the floats:
         vals    : the list of float values
@@ -1908,11 +1985,11 @@ def float_list_string(vals, nchar=7, ndec=3, nspaces=2, mesg='', left=0):
         nspaces : [2] number of spaces between each float
    """
 
-   if left: format = '%-*.*f%*s'
-   else:    format = '%*.*f%*s'
+   if left: form = '%-*.*f%*s'
+   else:    form = '%*.*f%*s'
 
    istr = mesg
-   for val in vals: istr += format % (nchar, ndec, val, nspaces, '')
+   for val in vals: istr += form % (nchar, ndec, val, nspaces, '')
 
    return istr
 
@@ -1921,15 +1998,15 @@ def gen_float_list_string(vals, mesg='', nchar=0, left=0):
 
    istr = mesg
 
-   if left: format = '%-'
-   else:    format = '%'
+   if left: form = '%-'
+   else:    form = '%'
 
    if nchar > 0:
-      format += '*g '
-      for val in vals: istr += format % (nchar, val)
+      form += '*g '
+      for val in vals: istr += form % (nchar, val)
    else:
-      format += 'g '
-      for val in vals: istr += format % val
+      form += 'g '
+      for val in vals: istr += form % val
 
    return istr
 
@@ -1951,7 +2028,7 @@ def invert_int_list(ilist, top=-1, bot=0):
            the passed list
    """
    if top < bot:
-      print '** invert_int_list requires bot<=top (have %d, %d)' % (bot, top)
+      print('** invert_int_list requires bot<=top (have %d, %d)' % (bot, top))
       return []
 
    return [ind for ind in range(bot, top+1) if not ind in ilist]
@@ -1965,19 +2042,19 @@ def is_valid_int_list(ldata, imin=0, imax=-1, whine=0):
       return 1 on true, 0 on false"""
 
    if not ldata or type(ldata) != type([]):
-      if whine: print "** not valid as a list: '%s'" % ldata
+      if whine: print("** not valid as a list: '%s'" % ldata)
 
    for ind in range(len(ldata)):
       val = ldata[ind]
       if type(val) != type(0):
-         if whine: print "** non-int value %d in int list (@ %d)" % (val,ind)
+         if whine: print("** non-int value %d in int list (@ %d)" % (val,ind))
          return 0
       if imin <= imax: # then also test bounds
          if val < imin:
-            if whine: print "** list value %d not in [%d,%d]" %(val,imin,imax)
+            if whine: print("** list value %d not in [%d,%d]" %(val,imin,imax))
             return 0
          elif val > imax:
-            if whine: print "** list value %d not in [%d,%d]" %(val,imin,imax)
+            if whine: print("** list value %d not in [%d,%d]" %(val,imin,imax))
             return 0
    return 1
 
@@ -2014,7 +2091,7 @@ def section_divider(hname='', maxlen=74, hchar='=', endchar=''):
     if endchar != '': maxlen -= 2*len(endchar)
     rmlen = len(name)
     if rmlen >= maxlen:
-        print "** S_DIV_STR, rmlen=%d exceeds maxlen=%d" % (rmlen, maxlen)
+        print("** S_DIV_STR, rmlen=%d exceeds maxlen=%d" % (rmlen, maxlen))
         return name
     prelen  = (maxlen - rmlen) // 2     # basically half the chars
     postlen = maxlen - rmlen - prelen   # other 'half'
@@ -2056,7 +2133,7 @@ def max_len_in_list(vlist):
        for v in vlist:
           if len(v) > mval: mval = len(v)
     except:
-       print '** max_len_in_list: cannot compute lengths'
+       print('** max_len_in_list: cannot compute lengths')
     return mval
 
 def get_rank(data, style='dense', reverse=0, uniq=0):
@@ -2108,7 +2185,7 @@ def get_rank(data, style='dense', reverse=0, uniq=0):
             if dd[ind+1][2] == dd[ind][2]:
                dd[ind+1][1] = dd[ind][1]
       else:
-         print "** UTIL.GR: invalid style '%s'" % style
+         print("** UTIL.GR: invalid style '%s'" % style)
          return 1, []
 
    dd.sort()
@@ -2128,7 +2205,7 @@ def first_last_match_strs(slist):
    """
 
    if type(slist) != list:
-      print '** FL match strings requires a list'
+      print('** FL match strings requires a list')
       return '', ''
 
    if not slist: return '', ''
@@ -2164,6 +2241,18 @@ def first_last_match_strs(slist):
    else:          tstr = ''
 
    return slist[0][0:hmatch], tstr
+
+def glob2stdout(globlist):
+   """given a list of glob forms, print all matches to stdout
+
+      This is meant to be a stream workaround to shell errors
+      like, "Argument list too long".
+
+      echo 'd1/*.dcm' 'd2/*.dcm' | afni_util.py -listfunc glob2stdout -
+   """
+   for gform in globlist:
+      for fname in glob.glob(gform):
+         print(fname)
 
 def glob_form_from_list(slist):
    """given a list of strings, return a glob form
@@ -2258,7 +2347,7 @@ def list_minus_glob_form(inlist, hpad=0, tpad=0, keep_dent_pre=0, strip=''):
    # maybe make a new list of stripped elements
    stripnames = ['dir', 'file', 'ext', 'fext']
    if strip != '' and strip not in stripnames:
-      print '** LMGF: bad strip %s' % strip
+      print('** LMGF: bad strip %s' % strip)
       strip = ''
 
    if strip in stripnames:
@@ -2277,13 +2366,13 @@ def list_minus_glob_form(inlist, hpad=0, tpad=0, keep_dent_pre=0, strip=''):
             fff, ext = os.path.splittext(inname)
             ss.append(fff)
          else:
-            print '** LMGF: doubly bad strip %s' % strip
+            print('** LMGF: doubly bad strip %s' % strip)
             break
       # check for success
       if len(ss) == len(slist): slist = ss
 
    if hpad < 0 or tpad < 0:
-      print '** list_minus_glob_form: hpad/tpad must be non-negative'
+      print('** list_minus_glob_form: hpad/tpad must be non-negative')
       hpad = 0 ; tpad = 0
 
    # get head, tail and note lengths
@@ -2373,13 +2462,13 @@ def okay_as_lr_spec_names(fnames, verb=0):
    nfiles = len(fnames)
    if nfiles == 0: return 1     # no problems, anyway
    if nfiles > 2:
-      if verb: print '** only 1 or 2 spec files allowed (have %d)' % nfiles
+      if verb: print('** only 1 or 2 spec files allowed (have %d)' % nfiles)
       return 0
 
    if nfiles == 1:
       if fnames[0].find('lh')>=0 or fnames[0].find('rh')>=0: return 1 # success
       # failure
-      if verb: print "** spec file '%s' missing 'lh' or 'rh'" % fnames[0]
+      if verb: print("** spec file '%s' missing 'lh' or 'rh'" % fnames[0])
       return 0
 
    # so we have 2 files
@@ -2388,7 +2477,7 @@ def okay_as_lr_spec_names(fnames, verb=0):
 
    for h in hlist:
       if h != 'rh' and h != 'lh':
-         if verb: print '** multiple spec files must only differ in lh vs. rh'
+         if verb: print('** multiple spec files must only differ in lh vs. rh')
          return 0
 
    return 1
@@ -2428,7 +2517,7 @@ def make_spec_var(fnames, vname='hemi'):
 
    hemi = sfile[hlen:hlen+2]
    if hemi != 'lh' and hemi != 'rh':
-      print '** MSV: bad lh/rh search from spec files: %s' % fnames
+      print('** MSV: bad lh/rh search from spec files: %s' % fnames)
       return '', []
 
    return sfile[0:hlen] + '${%s}'%vname + sfile[hlen+2:], ['lh', 'rh']
@@ -2492,7 +2581,7 @@ def _parse_leading_int(name, seplist=['.','_','-']):
    else:
       try: val = int(name[0:posn])
       except:
-         print "** _parse_leading_int: can't parse int from %s" % name
+         print("** _parse_leading_int: can't parse int from %s" % name)
          return
 
    # if only a number, we're outta here
@@ -2548,12 +2637,12 @@ def common_parent_dirs(flists):
       if top_dir has at least 2 levels, use it
    """
    if type(flists) != list:
-      print '** common_parent_dirs: bad flists type'
+      print('** common_parent_dirs: bad flists type')
       return None
    for ind in range(len(flists)):
       flist = flists[ind]
       if type(flist) != list:
-         print '** common_parent_dirs: bad flist[%d] type' % ind
+         print('** common_parent_dirs: bad flist[%d] type' % ind)
          return None, None, None, None
 
    # get top_dir and parents
@@ -2639,7 +2728,7 @@ def get_ids_from_dsets(dsets, prefix='', suffix='', hpad=0, tpad=0, verb=1):
       return None on failure
    """
    if hpad < 0 or tpad < 0:
-      print '** get_ids_from_dsets: will not apply negative padding'
+      print('** get_ids_from_dsets: will not apply negative padding')
       hpad, tpad = 0, 0
 
    if len(dsets) == 0: return None
@@ -2651,7 +2740,7 @@ def get_ids_from_dsets(dsets, prefix='', suffix='', hpad=0, tpad=0, verb=1):
    elif isinstance(dsets[0], BASE.afni_name):
       nlist = dsets
    else:
-      print '** GIFD: invalid type for dset list, have value %s' % dsets[0]
+      print('** GIFD: invalid type for dset list, have value %s' % dsets[0])
       return None
 
    dlist = [dname.prefix for dname in nlist]
@@ -2664,15 +2753,15 @@ def get_ids_from_dsets(dsets, prefix='', suffix='', hpad=0, tpad=0, verb=1):
    # do some error checking
    for val in slist:
       if '/' in val:            # no directories
-         if verb > 0: print '** GIFD: IDs would have directories'
+         if verb > 0: print('** GIFD: IDs would have directories')
          return None
 
    if len(slist) != len(dsets): # appropriate number of entries
-      if verb > 0: print '** GIFD: length mis-match getting IDs'
+      if verb > 0: print('** GIFD: length mis-match getting IDs')
       return None
 
    if not vals_are_unique(slist):
-      if verb > 0: print '** GIFD: final IDs are not unique'
+      if verb > 0: print('** GIFD: final IDs are not unique')
       return None
 
    return slist
@@ -2708,7 +2797,7 @@ def search_path_dirs(word, mtype=0, casematch=1):
    try:
       plist = os.environ['PATH'].split(':')
    except:
-      print '** search_path_dirs: no PATH var'
+      print('** search_path_dirs: no PATH var')
       return 1, []
 
    # if no casematch, look for upper/lower pairs
@@ -2720,7 +2809,7 @@ def search_path_dirs(word, mtype=0, casematch=1):
    elif mtype == 1: form = '%s/%s'      # exact match
    elif mtype == 2: form = '%s/%s*'     # prefix match
    else:
-      print '** search_path_dirs: illegal mtype = %s' % mtype
+      print('** search_path_dirs: illegal mtype = %s' % mtype)
       return 1, []
 
    # now just search for matches
@@ -2734,6 +2823,23 @@ def search_path_dirs(word, mtype=0, casematch=1):
    rlist = [os.path.realpath(pfile) for pfile in rlist]
 
    return 0, get_unique_sublist(rlist)
+
+def num_found_in_path(word, mtype=0, casematch=1):
+   """a simple wrapper to print search_path_dirs results
+
+      Search for given 'word' in path, and print out list elements
+      with element prefix of 'indent'.
+
+        mtype     : 0 = match any sub-word (i.e. look for DIR/*word*)
+                    1 = exact match (i.e. no wildcard, look for DIR/word)
+                    2 = prefix match (i.e. look for DIR/word*)
+        casematch : flag: if set, case must match
+                          else, 'word' letters can be either case
+        indent    : prefix/separator string for list elements
+   """
+   rv, rlist = search_path_dirs(word, mtype=mtype, casematch=casematch)
+   if rv: return 0
+   return len(rlist)
 
 def show_found_in_path(word, mtype=0, casematch=1, indent='\n   '):
    """a simple wrapper to print search_path_dirs results
@@ -2749,7 +2855,7 @@ def show_found_in_path(word, mtype=0, casematch=1, indent='\n   '):
         indent    : prefix/separator string for list elements
    """
    rv, rlist = search_path_dirs(word, mtype=mtype, casematch=casematch)
-   if not rv: print indent+indent.join(rlist)
+   if not rv: print(indent+indent.join(rlist))
 
 # ----------------------------------------------------------------------
 # mathematical functions:
@@ -2795,7 +2901,7 @@ def dotprod(v1,v2):
    """compute the dot product of 2 vectors"""
    try: dsum = loc_sum([v1[i]*v2[i] for i in range(len(v1))])
    except:
-      print '** cannot take dotprod() of these elements'
+      print('** cannot take dotprod() of these elements')
       dsum = 0
    return dsum
 
@@ -2811,8 +2917,8 @@ def affine_to_params_6(avec, verb=1):
    rvec = [0.0]*6
 
    if len(avec) < 12:
-      print '** affine_to_params_6: requires length 12+ vector, have %d' \
-            % len(avec)
+      print('** affine_to_params_6: requires length 12+ vector, have %d' \
+            % len(avec))
       return rvec
 
    # rotations
@@ -2847,7 +2953,7 @@ def mean(vec, ibot=-1, itop=-1):
 
     if not vec: return 0.0
     if ibot > itop:
-        print '** afni_util.mean: ibot (%d) > itop (%d)' % (ibot, itop)
+        print('** afni_util.mean: ibot (%d) > itop (%d)' % (ibot, itop))
         return 0.0
 
     vlen = len(vec)
@@ -2878,7 +2984,7 @@ def demean(vec, ibot=-1, itop=-1):
 
     if not vec: return 0
     if ibot > itop:
-        print '** afni_util.demean: ibot (%d) > itop (%d)' % (ibot, itop)
+        print('** afni_util.demean: ibot (%d) > itop (%d)' % (ibot, itop))
         return 1
 
     vlen = len(vec)
@@ -2910,7 +3016,7 @@ def lin_vec_sum(s1, vec1, s2, vec2):
    l1 = len(vec1)
    l2 = len(vec2)
    if l1 != l2:
-      print '** LVC: vectors have different lengths (%d, %d)' % (l1, l2)
+      print('** LVC: vectors have different lengths (%d, %d)' % (l1, l2))
       return []
 
    return [s1*vec1[i]+s2*vec2[i] for i in range(l1)]
@@ -2926,7 +3032,7 @@ def proj_onto_vec(v1, v2, unit_v2=0):
    else:
       len2 = L2_norm(v2,v2)
       if len2 == 0:
-         print '** cannot project onto <0> vector'
+         print('** cannot project onto <0> vector')
          return []
       scalar = dotprod(v1,v2) * 1.0 / len2
 
@@ -2963,7 +3069,7 @@ def min_mean_max_stdev(data):
     if type(data[0]) == str:
        try: dd = [float(val) for val in data]
        except:
-          print '** bad data for min_mean_max_stdev'
+          print('** bad data for min_mean_max_stdev')
           return 0, 0, 0, 0
     else: dd = data
     if length == 1: return dd[0], dd[0], dd[0], 0.0
@@ -2979,7 +3085,7 @@ def interval_offsets(times, dur):
        the offsets into respective intervals"""
 
     if not times or dur <= 0:
-        print "** interval offsets: bad dur (%s) or times: %s" % (dur, times)
+        print("** interval offsets: bad dur (%s) or times: %s" % (dur, times))
         return []
 
     length = len(times)
@@ -2989,7 +3095,7 @@ def interval_offsets(times, dur):
 
     try: offlist = [val % fdur for val in times]
     except:
-        print "** interval offsets 2: bad dur (%s) or times: %s" % (dur, times)
+        print("** interval offsets 2: bad dur (%s) or times: %s" % (dur, times))
         return []
    
     return offlist
@@ -3101,20 +3207,20 @@ def r(vA, vB, unbiased=0):
     la = len(vA)
 
     if len(vB) != la:
-        print '** r (correlation): vectors have different lengths'
+        print('** r (correlation): vectors have different lengths')
         return 0.0
     ma = mean(vA)
     mb = mean(vB)
     dA = [v-ma for v in vA]
     dB = [v-mb for v in vB]
-    sA = L2_norm(dA)
+    sA = L2_norm(dA) # is float
     sB = L2_norm(dB)
     dA = [v/sA for v in dA]
     dB = [v/sB for v in dB]
 
     r = dotprod(dA,dB)
 
-    if unbiased: return r * (1 + (1-r*r)/(2*la))
+    if unbiased: return r * (1.0 + (1-r*r)/(2.0*la))
     return r
 
 def linear_fit(vy, vx=None):
@@ -3139,7 +3245,7 @@ def linear_fit(vy, vx=None):
    if vx == None: vx = [i-mn for i in range(N)]
    else:
       if len(vx) != N:
-         print '** cannot fit vectors of different lengths'
+         print('** cannot fit vectors of different lengths')
          return 0.0, 0.0
 
    sx   = loc_sum(vx)
@@ -3168,7 +3274,7 @@ def eta2(vA, vB):
 
     length = len(vA)
     if len(vB) != length:
-        print '** eta2: vectors have different lengths'
+        print('** eta2: vectors have different lengths')
         return 0.0
     if length < 1: return 0.0
 
@@ -3187,9 +3293,9 @@ def eta2(vA, vB):
     denom = sumsq(da) + sumsq(db)
 
     if num < 0.0 or denom <= 0.0 or num >= denom:
-        print '** bad eta2: num = %s, denom = %s' % (num, denom)
+        print('** bad eta2: num = %s, denom = %s' % (num, denom))
         return 0.0
-    return 1.0 - num/denom
+    return 1.0 - float(num)/denom
 
 def correlation_p(vA, vB, demean=1, unbiased=0):
     """return the Pearson correlation between the 2 vectors
@@ -3198,7 +3304,7 @@ def correlation_p(vA, vB, demean=1, unbiased=0):
 
     la = len(vA)
     if len(vB) != la:
-        print '** correlation_pearson: vectors have different lengths'
+        print('** correlation_pearson: vectors have different lengths')
         return 0.0
 
     if la < 2: return 0.0
@@ -3261,7 +3367,7 @@ def ttest_paired(data0, data1):
     N1 = len(data1)
     if N0 < 2 or N1 < 2: return 0.0
     if N0 != N1:
-        print '** ttest_paired: unequal vector lengths'
+        print('** ttest_paired: unequal vector lengths')
         return 0.0
 
     return ttest_1sam([data1[i] - data0[i] for i in range(N0)])
@@ -3463,13 +3569,14 @@ def show_sum_pswr(nT, nR):
     cp = 0.0
     prev = 0
     for r in range(nR+1):
-       p = prob_start_with_R(nT,nR,r)
+       # already float, but be clear
+       p = float(prob_start_with_R(nT,nR,r))
        cp += p
        # print 'prob at %3d = %g (cum %g)' % (r, p, cp)
        if prev == 0: prev = p
-       print p, p/prev
+       print(p, p/prev)
        prev = p
-    print 'cum result is %g' % cp
+    print('cum result is %g' % cp)
 
 
 def prob_start_with_R(nA, nB, nS):
@@ -3485,6 +3592,7 @@ def prob_start_with_R(nA, nB, nS):
 
 def choose(n,m):
     """return n choose m = n! / (m! * (n-m)!)"""
+    # integral division (or use floats, to better handle overflow)
     return factorial(n,init=n-m+1) / factorial(m)
 
 def factorial(n, init=1):
@@ -3536,7 +3644,7 @@ def vec_extremes(vec, minv, maxv, inclusive=0):
    if not vec: return 1, None
 
    if minv > maxv:
-      print '** extremes: minv > maxv (', minv, maxv, ')' 
+      print('** extremes: minv > maxv (', minv, maxv, ')') 
       return 1, None
 
    if inclusive:
@@ -3558,7 +3666,7 @@ def vec_moderates(vec, minv, maxv, inclusive=1):
    if not vec: return 1, None
 
    if minv > maxv:
-      print '** moderates: minv > maxv (', minv, maxv, ')' 
+      print('** moderates: minv > maxv (', minv, maxv, ')') 
       return 1, None
 
    if inclusive:
@@ -3578,7 +3686,7 @@ def vec_range_limit(vec, minv, maxv):
    if not vec: return 0
 
    if minv > maxv:
-      print '** range_limit: minv > maxv (', minv, maxv, ')'
+      print('** range_limit: minv > maxv (', minv, maxv, ')')
       return 1
 
    for ind in range(len(vec)):
@@ -3604,9 +3712,9 @@ def test_polort_const(ntrs, nruns, verb=1):
     v1 = [0] * ntrs + [1] * ntrs + [0] * (ntrs * (nruns-2))
 
     if verb > 1:
-        print '++ test_polort_const, vectors are:\n' \
+        print('++ test_polort_const, vectors are:\n' \
               '   v0 : %s \n'                        \
-              '   v1 : %s' % (v0, v1)
+              '   v1 : %s' % (v0, v1))
 
     return correlation_p(v0, v1)
 
@@ -3657,6 +3765,14 @@ afni_util.py: not really intended as a main program
             afni_util.py -exec "import PyQt4"
             afni_util.py -exec "show_process_stack()"
 
+      -funchelp FUNC    : print the help for afni_util.py function FUNC
+
+         Pring the FUNC.__doc__ text, if any.
+
+         Example:
+
+            afni_util.py -funchelp wrap_file_text
+
       -print STRING     : print the result of executing STRING
 
          Akin to -eval, but print the results of evaluating STRING.
@@ -3694,6 +3810,7 @@ afni_util.py: not really intended as a main program
 
             afni_util.py -listfunc -join shuffle `count -digits 4 1 124`
             count -digits 4 1 124 | afni_util.py -listfunc -join shuffle -
+            afni_util.py -listfunc glob2stdout 'EPI_run1/8*'
 
             afni_util.py -listfunc -joinc list_minus_glob_form *HEAD
 
@@ -3723,7 +3840,7 @@ def process_listfunc(argv):
    if argv[1] != '-listfunc': return 1
 
    if len(argv) <= 3 :
-      print '** -listfunc usage requires at least 3 args'
+      print('** -listfunc usage requires at least 3 args')
       return 1
 
    do_join = 0
@@ -3768,11 +3885,11 @@ def process_listfunc(argv):
    if do_float:
       try: vals1 = [float(v) for v in args1]
       except:
-         print '** list1 is not all float'
+         print('** list1 is not all float')
          return 1
       try: vals2 = [float(v) for v in args2]
       except:
-         print '** list2 is not all float'
+         print('** list2 is not all float')
          return 1
    else:
       vals1 = args1
@@ -3781,17 +3898,25 @@ def process_listfunc(argv):
    if len(vals2) > 0: ret = func(vals1, vals2)
    else:              ret = func(vals1)
    
-   if   do_join:  print ' '.join(str(v) for v in ret)
-   elif do_joinc: print ','.join(str(v) for v in ret)
-   elif do_print: print  ret
+   if   do_join:  print(' '.join(str(v) for v in ret))
+   elif do_joinc: print(','.join(str(v) for v in ret))
+   elif do_print: print(ret)
    # else do nothing special
    return 0
 
+def show_function_help(flist):
+   for func in flist:
+      print(section_divider('help for: %s' % func))
+      try:
+         fn = eval(func)
+         print(fn.__doc__)
+      except:
+         print("** not a valid function '%s'" % func)
 
 def main():
    argv = sys.argv
    if '-help' in argv:
-      print _g_main_help
+      print(_g_main_help)
       return 0
    if len(argv) > 2:
       if argv[1] == '-eval':
@@ -3800,17 +3925,20 @@ def main():
       elif argv[1] == '-exec':
          exec(' '.join(argv[2:]))
          return 0
+      elif argv[1] == '-funchelp':
+         show_function_help(argv[2:])
+         return 0
       elif argv[1] == '-lprint':
          ret = eval(' '.join(argv[2:]))
-         print '\n'.join(['%s'%rent for rent in ret])
+         print('\n'.join(['%s'%rent for rent in ret]))
          return 0
       elif argv[1] == '-print':
-         print eval(' '.join(argv[2:]))
+         print(eval(' '.join(argv[2:])))
          return 0
       elif argv[1] == '-listfunc':
          return process_listfunc(argv)
 
-   print 'afni_util.py: not intended as a main program'
+   print('afni_util.py: not intended as a main program')
    return 1
 
 if __name__ == '__main__':
