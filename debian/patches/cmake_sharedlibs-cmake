@@ -265,7 +265,7 @@
 +ENDIF(NOT AFNI_BUILD_CORELIBS_ONLY)
 --- /dev/null
 +++ b/src/CMakeLists_apps.txt
-@@ -0,0 +1,207 @@
+@@ -0,0 +1,217 @@
 +##
 +## This file is to be included in the toplevel CMakeLists.txt
 +##
@@ -311,7 +311,13 @@
 +  FIRdesign 2perm 3dClustCount 3dTransformGroupInCorr 3dExtractGroupInCorr
 +  3dUnifize 3dNwarpCat 3dQwarp 3dLocalHistog 3dNwarpAdjust 3dNwarpFuncs
 +  3dTproject afni_open 3dConformist 3dNwarpXYZ 3dTRfix 3dToyProg images_equal
-+  uniq_images GLTsymtest 3dPval csfft_cache 3dLocalACF ${EXTRAS})
++  uniq_images GLTsymtest 3dPval csfft_cache 3dLocalACF
++  3dBrainSync 3dDegreeCentrality 3dLFCD 3dMSE 3dSharpen 3dTsplit4D
++  3dTto1D 3dsvm_linpredict 3dMultiThresh 3dTfilter 3dXClustSim 3dtoXdataset
++  ${EXTRAS})
++
++# the left beast TODO:
++# dcm2niix_afni
 +
 +FILE(GLOB SCRIPTS scripts_install/*)
 +
@@ -356,6 +362,10 @@
 +ADD_EXECUTABLE(3danisosmooth 3danisosmooth.c DWIstructtensor.c)
 +TARGET_LINK_LIBRARIES(3danisosmooth ${AFNI_LIBS})
 +LIST(APPEND PROGRAMS 3danisosmooth)
++
++ADD_EXECUTABLE(3dECM 3dECM.c sparse_array.c)
++TARGET_LINK_LIBRARIES(3dECM ${AFNI_LIBS})
++LIST(APPEND PROGRAMS 3dECM)
 +
 +ADD_EXECUTABLE(3dfim 3dfim.c afni_pcor_update.c ts.c)
 +# This is for compiling to an object that was called afni_pcor_float.o

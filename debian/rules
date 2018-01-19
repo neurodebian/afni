@@ -141,6 +141,11 @@ override_dh_auto_install:
 	# with packaged installation
 	find debian/ -iname @update.afni.\* -delete
 
+override_dh_installchangelogs:
+	# TODO:  use afni_history to produce THE upstream changelog
+	# For now including a digest as changelog
+	dh_installchangelog src/AFNI_digest_history.txt
+
 override_dh_auto_clean:
 	dh_auto_clean --builddirectory=$(DEB_BUILDDIR)
 	dh_auto_clean --builddirectory=$(DEB_BUILDDIR_STATIC)

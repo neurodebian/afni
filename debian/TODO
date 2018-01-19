@@ -1,3 +1,9 @@
+3rd party stuff to modularize/patch away
+========================================
+
+- dcm2niix_afni -- includes full cmdline dcm2niix which we have
+   already in Debian and NeuroDebian
+
 Duplicate files
 ===============
   eispack.h eispack/eispack.h
