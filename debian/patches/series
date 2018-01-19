@@ -11,6 +11,7 @@ ttatlas_location
 ffmpeg_support
 unmod_f2c
 fixes
+# yoh: wants it back
 disable_runtimetests
 debian_paths
 cmake_sharedlibs-noncmake
