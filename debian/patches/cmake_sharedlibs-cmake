@@ -265,7 +265,7 @@
 +ENDIF(NOT AFNI_BUILD_CORELIBS_ONLY)
 --- /dev/null
 +++ b/src/CMakeLists_apps.txt
-@@ -0,0 +1,217 @@
+@@ -0,0 +1,218 @@
 +##
 +## This file is to be included in the toplevel CMakeLists.txt
 +##
@@ -317,7 +317,8 @@
 +  ${EXTRAS})
 +
 +# the left beast TODO:
-+# dcm2niix_afni
++# - dcm2niix_afni
++# - discoraj -- all the shiny stuff from Justin (seems to be just a INSTALL(DIRECTORY))
 +
 +FILE(GLOB SCRIPTS scripts_install/*)
 +
@@ -525,7 +526,7 @@
 +  mri_genalign_util.c rcmat.c dmat44.c mri_rbfinterp.c matrix.c
 +  gifti_choice.c zfun.c cs_pv.c cs_sort_iv.c cs_sort_d misc_math.c
 +  mri_sharpness.c mri_genARMA11.c mri_catvol.c mri_polyfit.c mri_nwarp.c
-+  mri_extract.c mri_to_pval.c retroicor.c)
++  mri_extract.c mri_to_pval.c mri_sharpen3D.c retroicor.c)
 +
 +SET(THD_SRC
 +  thd_atr.c thd_dsetto1D.c thd_initalldir.c thd_reconpar.c thd_auxdata.c
@@ -555,7 +556,7 @@
 +  thd_instacorr.c thd_svdblur.c thd_ttest.c thd_satcheck.c thd_dumdset.c
 +  ktaub.c bilinear_warp3D.c thd_table.c thd_atlas.c thd_warp_tables.c
 +  thd_lasso.c thd_mean_dset.c thd_despike_L1.c thd_Tcorr1D.c thd_selenium.c
-+  thd_openimage.c)
++  thd_openimage.c thd_remove_allzero.c)
 +
 +SET(EDT_SRC
 +  edt_addbrick.c edt_blur.c edt_buildmask.c edt_checkargv.c edt_clust.c
@@ -573,7 +574,7 @@
 +  cs_addto_args.c multivector.c afni_environ.c cs_qmed.c cl2.c
 +  cs_sort_fv.c cs_laguerre.c machdep.c cs_qhull.c afni_logger.c cl1.c
 +  cs_misc.c powell_int.c powell_newuoa.c afni_suma.c suma_afni_surface.c
-+  vol2surf.c cs_sort_dv.c rhdd.c cs_fgets.c list_struct.c svdlib.c)
++  vol2surf.c cs_sort_dv.c rhdd.c cs_fgets.c list_struct.c svdlib.c cs_gamfit.c)
 +
 +# Assimilate NIfTI lib pieces into libmri, if we do not link against a
 +# system NIfTI lib
@@ -735,7 +736,7 @@
 +  model_diffexp model_gammavar model_convgamma model_convgamma2a
 +  model_michaelis_menton model_linplusort model_zero model_demri_3
 +  model_expr2 model_conv_diffgamma model_expMEMRI model_expMEMRI3
-+  model_conv_cosine4 model_conv_PRF model_conv_PRF_6)
++  model_conv_cosine4 model_conv_PRF model_conv_PRF_6 model_conv_PRF_DOG)
 +
 +SET(ziad_plugins
 +  plug_3Ddump_V2 plug_4Ddump plug_delay_V2 plug_extract)
@@ -896,7 +897,7 @@
 +# Programs
 +#
 +SET(PROGRAMS
-+  suma prompt_user MakeColorMap ScaleToMap
++  suma prompt_user prompt_popup MakeColorMap ScaleToMap
 +  inflate_compare SurfaceMetrics ConvertSurface
 +  ConvertDset ROI2dataset SurfSmooth SurfPatch SurfQual SurfClust
 +  ConvexHull 3dSkullStrip 3dSeg 3dCRUISEtoAFNI 3dGenPriors 3dGenFeatureDist
@@ -1310,3 +1311,16 @@
 +#define AFNI_VERSION_LABEL "@AFNI_VERSION@"
 +#undef  AFNI_VERSION_PLATFORM
 +#define AFNI_VERSION_PLATFORM "@AFNI_VERSION_PLATFORM@"
+--- /dev/null
++++ b/src/jzosky/CMakeLists.txt
+@@ -0,0 +1,10 @@
++PROJECT(JZOSKY)
++
++# script being programs on their own
++SET(SCRIPTS RetroTS.py)
++
++INSTALL(PROGRAMS ${SCRIPTS}
++  DESTINATION ${AFNI_INSTALL_SCRIPT_DIR} COMPONENT Runtime)
++
++INSTALL(DIRECTORY lib_RetroTS
++  DESTINATION ${AFNI_INSTALL_SCRIPT_DIR} COMPONENT Runtime)

@@ -4,6 +4,11 @@
 - dcm2niix_afni -- includes full cmdline dcm2niix which we have
    already in Debian and NeuroDebian
 
+Checks
+=====
+
+- if we did "install" the lib_RetroTS under bin/
+
 Duplicate files
 ===============
   eispack.h eispack/eispack.h
