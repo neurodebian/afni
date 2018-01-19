@@ -20,7 +20,7 @@ Last-Update: 2010-09-21
  
 --- a/src/SUMA/SUMA_gts_insert.c
 +++ b/src/SUMA/SUMA_gts_insert.c
-@@ -7,6 +7,8 @@
+@@ -7,6 +7,8 @@ inserting them via:
  #include "../../SUMA_gts_insert.c" 
  gts's surface.c works just fine
  */
@@ -31,7 +31,7 @@ Last-Update: 2010-09-21
  
 --- a/src/cs_qmed.c
 +++ b/src/cs_qmed.c
-@@ -18,6 +18,10 @@
+@@ -18,6 +18,10 @@ float qmean_float( int n , float *ar )
     sum /= n ; return sum ;
  }
  
@@ -44,7 +44,7 @@ Last-Update: 2010-09-21
     sort) the array in the process.  The algorithm is based on Quicksort,
 --- a/src/mri_dicom_hdr.c
 +++ b/src/mri_dicom_hdr.c
-@@ -95,18 +95,18 @@
+@@ -95,18 +95,18 @@ int mri_siemens_slice_times(int * nalloc
  
  /* Dimon needs to compile without libmri     18 May 2006 */
  /* (this allows removal of rickr/l_mri_dicom_hdr.c)      */
@@ -82,10 +82,10 @@ Last-Update: 2010-09-21
 -#include "cs_qmed.c"
  #endif
  
- /*--------------------------------------------------------------------------*/
+ /* default fill and unfill values */
 --- a/src/rickr/Dimon.c
 +++ b/src/rickr/Dimon.c
-@@ -204,6 +204,7 @@
+@@ -212,6 +212,7 @@ static char * g_history[] =
  #define MAIN
  #define IFM_PROG_NAME   "Dimon"
  
@@ -93,7 +93,7 @@ Last-Update: 2010-09-21
  #include "mrilib.h"
  #include "Dimon.h"      /* broken off from Imon.h */
  #include "realtime.h"
-@@ -283,7 +284,7 @@
+@@ -291,7 +292,7 @@ static int set_ftype(param_t * p, char *
  #include "l_mcw_glob.h"
  #include "thd_iochan.h"
  #include "mri_image.h"
@@ -117,7 +117,7 @@ Last-Update: 2010-09-21
   * dimon_afni.c
 --- a/src/suma_gifti.c
 +++ b/src/suma_gifti.c
-@@ -262,9 +262,14 @@
+@@ -262,9 +262,14 @@ static  gifti_image *afni_surf_to_gifti_
     }
     
     /* form image */
@@ -132,7 +132,7 @@ Last-Update: 2010-09-21
     
     /* basic step - create empty image (with a version string) 
        from gifti_create_image */
-@@ -375,10 +380,15 @@
+@@ -375,10 +380,15 @@ static  gifti_image *afni_surf_to_gifti_
        RETURN(gim);
     }
  
@@ -151,7 +151,7 @@ Last-Update: 2010-09-21
   
 --- a/src/R_scripts/AFNIio.R
 +++ b/src/R_scripts/AFNIio.R
-@@ -9,7 +9,7 @@
+@@ -9,7 +9,7 @@ SHOW_TRC <<- FALSE
  # Functions for library loading
  #------------------------------------------------------------------
  find.in.path <- function(file) { #Pretty much same as first.in.path
@@ -160,7 +160,7 @@ Last-Update: 2010-09-21
     ff <- ff[lapply(ff,file.exists)==TRUE];
     aa <- gsub('//','/',ff[1], fixed=TRUE)
     if (is.na(aa)) aa <- NULL
-@@ -155,11 +155,11 @@
+@@ -155,12 +155,12 @@ exit.AFNI <- function(str='The piano has
  #Locate and load R_io.so
  set_R_io <- function() {
     rio <- 0
@@ -168,13 +168,41 @@ Last-Update: 2010-09-21
 +   ll <- find.in.path('librio.so')
     if (!is.null(ll)) {
        dd <- try(dyn.load(ll), silent=TRUE)
--      if (dd[[1]]!="R_io") {
+       # newer versions might return R_io.so   8 Dec 2017 [rickr]
+-      if (dd[[1]]!="R_io" && dd[[1]]!="R_io.so") {
 -         warn.AFNI(paste("Failed to load R_io.so with this error message:\n"));
-+      if (dd[[1]]!="librio") {
++      if (dd[[1]]!="librio" && dd[[1]]!="librio.so") {
 +         warn.AFNI(paste("Failed to load librio.so with this error message:\n"));
           dyn.load(ll)
        } else {
           rio <- 1
+@@ -616,7 +616,7 @@ compressed.AFNI.name <- function(an) {
+ 
+ modify.AFNI.name <- function (name, what="append", val="_new", cwd=NULL) {
+    if (!is.loaded('R_SUMA_ParseModifyName')) {
+-      err.AFNI("Missing R_io.so");
++      err.AFNI("Missing librio.so");
+       return(NULL);
+    }
+    an <- .Call("R_SUMA_ParseModifyName", 
+@@ -2922,7 +2922,7 @@ read.AFNI <- function(filename, verb = 0
+ 
+ read.c.AFNI <- function(filename, verb = 0, ApplyScale = 1, PercMask=0.0) {
+    if (!is.loaded('R_THD_load_dset')) {
+-      err.AFNI("Missing R_io.so");
++      err.AFNI("Missing librio.so");
+       return(NULL);
+    }
+    if (ApplyScale != 1 || PercMask != 0.0) {
+@@ -3095,7 +3095,7 @@ write.c.AFNI <- function( filename, dset
+    }
+    
+    if (!is.loaded('R_THD_write_dset')) {
+-      err.AFNI("Missing R_io.so.");
++      err.AFNI("Missing librio.so.");
+       return(NULL);
+    } 
+    
 --- a/src/powell_int.c
 +++ b/src/powell_int.c
 @@ -19,7 +19,7 @@
