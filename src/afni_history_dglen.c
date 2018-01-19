@@ -50,6 +50,33 @@
 
 
 afni_history_struct dglen_history[] = {
+{ 18, JAN, 2018, DRG, "3dUndump cubes",
+	MICRO, TYPE_NEW_OPT,
+	"-cubes makes cubes instead of spheres"
+},
+
+{ 18, JAN, 2018, DRG, "thickness scripts",
+	SUPER, TYPE_NEW_PROG,
+	"Scripts to compute thickness of a mask 3 ways",
+	"@measure_bb_thick, @measure_erosion_thick, @measure_in2out\n"
+	"Suite of thickness scripts to compute thickness in volume\n"
+    "and map to surface. Master script, @thickness_master, to\n"
+    "call others with option for FreeSurfer input data"
+},
+{ 9, NOV, 2017, DRG, "whereami report changes",
+	MICRO, TYPE_MODIFY,
+	"linkrbrain, sumsdb no longer working, so turned off",
+	"Also reduced line spacing in whereami html reports, default in GUI\n"
+	"and coordinates showing up as -0.0 instead of 0.0 (for Justin)."
+},
+{ 31, OCT, 2017, DRG, "SUMA popups disabled",
+	MICRO, TYPE_NEW_ENV,
+	"SUMA popups are disabled by default, SUMA_SHOWPOPUPS",
+	"Popups in SUMA that required clicking are now off\n"
+	"by default. Bracket (hemisphere) hiding and small surface\n"
+	"warnings only go to terminal. Other messages can be shown\n"
+	"in popup messages with env. variable."
+},
 { 11, JUL, 2017 , DRG , "DriveSuma quiet variable" , 
     MICRO , TYPE_NEW_OPT, 
     "SUMA_DriveSumaQuiet",

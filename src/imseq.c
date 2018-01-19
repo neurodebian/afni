@@ -13816,6 +13816,32 @@ ENTRY("ISQ_save_anim") ;
             /* otherwise go with ffmpegs default */
             else pattrn="";
         }
+        fprintf(fpar,
+                  "OUTPUT %s\n"             /* oof */
+                  "GOP_SIZE          5\n"
+                  "SLICES_PER_FRAME  1\n"
+                  "FRAME_RATE        %s\n"  /* frate */
+                  "BASE_FILE_FORMAT  PPM\n"
+                  "INPUT_CONVERT     *\n"
+                  "INPUT_DIR         .\n"
+                  "PATTERN           %s\n"  /* pattrn */
+                  "IQSCALE           %s\n"  /* qscale */
+                  "PQSCALE           10\n"
+                  "BQSCALE           25\n"
+                  "PIXEL             HALF\n"
+                  "RANGE             10 4\n"
+                  "PSEARCH_ALG       LOGARITHMIC\n"
+                  "BSEARCH_ALG       SIMPLE\n"
+                  "REFERENCE_FRAME   ORIGINAL\n"
+                  "INPUT\n"
+                  "%s%s.*.ppm [%06d-%06d]\n"  /* prefix, tsuf, from, to */
+                  "END_INPUT\n"
+               , oof , frate , pattrn , qscale ,
+                 /* akk is 1 too big, was corrected elsewhere  27 Nov 2017 */
+                 ppo,tsuf,0,akk-1) ;
+        fclose(fpar) ;
+        if( mpar ) free(pattrn) ;
+
         /* make command to run */
         alen = strlen(seq->saver_prefix) + strlen(ppmto_mpeg_filter)
                       +1000 ;

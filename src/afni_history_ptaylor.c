@@ -66,6 +66,41 @@
 afni_history_struct ptaylor_history[] = {
 /*=====BELOW THIS LINE=====*/
 
+{ 12, Jan , 2018 , PT , "@djunct_select_str.py" , MINOR , TYPE_BUG_FIX,
+   "Would return an error when *no* bad vols were selected.",
+   "Now updated to work fine with that; just an intermed program.\n"
+},
+
+{ 12, Jan , 2018 , PT , "3dRSFC" , MICRO , TYPE_GENERAL,
+   "Deal with change elsewhere to definition of a function.",
+   "New option added to function, just need another arg; shd be no change.\n"
+},
+
+{ 12, Jan , 2018 , PT , "fat_proc_align_anat_pair" , MICRO , TYPE_BUG_FIX,
+   "Output 3dAllineate's weight vol to working dir, not present dir.",
+   "Minor change, does not affect alignment/output.\n"
+},
+
+{ 22, Dec , 2017 , PT , "fat_proc_connec_vis" , MINOR , TYPE_NEW_OPT,
+   "Can output the intermediate tstat or tcat files of ROI maps.",
+   "Might be useful in subsequent volumetric analyses.\n"
+},
+
+{ 20, Dec , 2017 , PT , "fat_proc_connec_vis" , MINOR , TYPE_MODIFY,
+   "Changing the way that outputting is specified.",
+   "Make making a separate directory the default output; new opt for files.\n"
+},
+
+{ 29, Sep , 2017 , PT , "@chauffeur_afni" , MINOR , TYPE_MODIFY,
+   "Now has help with list of options.",
+   "Should be useful for users during processing.\n"
+},
+
+{ 29, Nov , 2017 , PT , "@djunct_4d_imager" , MAJOR , TYPE_NEW_PROG,
+   "Helper function to make montages and movies of 4D dsets.",
+   "Useful when proc'ing dsets, make record of them.\n"
+},
+
 { 26, Oct , 2017 , PT , "fat_proc_connec_vis" , MAJOR , TYPE_NEW_PROG,
    "Visualize 'white matter connection' volumes output by 3dTrackID.",
    "Combine separate '-dump_rois ...' output into SUMAble surface maps.\n"

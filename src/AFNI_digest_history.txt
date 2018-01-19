@@ -1,4 +1,175 @@
 ========================================================================
+
+AFNI Digest, week of 2018/01/05.
+
+00)  The AFNI Bootcamp cometh!
+What better way to shake away the cold than to think about freshly
+baked FMRI data, hot out of the afni_proc.py pipeline?  Registration
+for the next AFNI Bootcamp, to be held at NIH in March (2018!) is now
+open.  Please see the "Registration" link, as well other useful
+information, here:
+https://afni.nimh.nih.gov/bootcamp/
+
+01)  ROI-based group analysis using Bayesian hierarchical modeling
+The current practice of handling multiple testing through controlling
+the overall FPR in neuroimaging under the null hypothesis significance
+testing (NHST) paradigm excessively penalizes the statistical power
+with inflated type II errors (“false negatives” or “low power”). An
+ROI-based approach has been proposed to handling neuroimaging group
+analysis using Bayesian hierarchical modeling (BHM) to achieve two
+goals: 1) improving modeling efficiency via one integrative (instead
+of many separate) model and dissolving the multiple testing issue, and
+2) turning the focus of conventional NHST on FPR into quality control
+by calibrating type S errors while maintaining a reasonable level of
+inference efficiency. See more details here:
+https://doi.org/10.1101/238998
+
+02)  Startup tips in AFNI
+The latest edition of the AFNI program now prints out a usage tip (to
+the terminal window) when it finishes starting up. An example:
+
+   ------------------------- AFNI Startup Tip (13/54)------------------
+   You can run InstaCorr on several subjects at the same time, using
+   multiple AFNI controllers opened with the 'New' button.
+   --------------------------------------------------------------------
+
+---------------------------------------------------------------------
++ This Digest is not a comprehensive list of code updates.
++ Please direct comments or questions to the AFNI Message Board:
+ https://afni.nimh.nih.gov/afni/community/board/list.php?1
++ To unsubscribe or otherwise manage your Digest settings, click here:
+ https://list.nih.gov/cgi-bin/wa.exe?SUBED1=afni_digest&A=1
+---------------------------------------------------------------------
+========================================================================
+
+========================================================================
+
+AFNI Digest, week of 2017/12/23.
+
+00) Notes on temporal autocorrelation modelling in major FMRI packages.
+Some new and interesting methods work comparing different programs, by
+Olszowy et al.  https://arxiv.org/abs/1711.09877 From the abstract:
+    "Though temporal autocorrelation modelling in AFNI was not
+    perfect, its performance was much higher than the performance of
+    temporal autocorrelation modelling in FSL and SPM. FSL and SPM
+    could improve their autocorrelation modelling approaches for
+    example adopting a noise model similar to the one used by AFNI."
+AFNI models the temporal autocorrelation using an ARMA(1,1) model. The
+feature that makes AFNI most distinct from FSL and SPM in this area is
+that the autocorrelation model parameters are estimated separately for
+each voxel time series (program 3dREMLfit), rather than globally (SPM)
+or over regions (FSL).
+
+01) A new option "-Tslices" in 3drefit.
+This option allows a user to add slice time offsets directly to a
+dataset. The purpose of this is to let a user (or script) set the
+slice timing when the dataset creation process did not do so
+correctly. AFNI allows arbitrary slice timing to be added to NIFTI
+files, using the AFNI extension to the NIFTI header. These slice times
+will be used by the "tshift" processing block in afni_proc.py. Details
+of how to specify slice time offsets are described in the output of
+3drefit -help.
+
+02) Fixed "-substatpar" in 3drefit.
+The -substatpar option in 3drefit did not always work properly for
+some types of datasets. This problem has (hopefully) been fixed, so
+that the statistical type and parameters associated with a dataset
+sub-brick can now be changed. The main application for this is when
+(say) 3dcalc is used to process a dataset: the statistical information
+is usually removed from the output dataset, since 3dcalc cannot "know"
+if the calculations affected the statistical distribution. Option
+-substatpar would usually be combined with option -sublabel to change
+the label of the same sub-brick, to match the new statistical type
+(e.g., "Correlation"). Details of how to set statistical parameters
+and type for a sub-brick are described in 3drefit -help.
+
+03) A new AFNI driver command is now available.
+The new command "DATASET#N" drives the Dataset#N "transformation" used
+in graph viewers to overlay time series plots from more than one
+dataset. This change allows a script to drive the creation of such
+overlaid time series graphs and then save them to image files. The
+details are described in the updated README.driver file. At this time,
+this is the only AFNI plugin that can be controlled by driving.
+
+04) Larger montages for AFNI viewer.
+The maximum array size for an image viewer Montage has been increased,
+significantly. This change is principally for driving the AFNI GUI to
+produce image snapshots with lots of slices.
+
+05) New recommended options in afni_proc.py.
+Some of the more recent afni_proc.py option recommendations include:
+      -volreg_align_to MIN_OUTLIER
+      -tlrc_base MNI152_T1_2009c+tlrc (assuming one wants MNI space)
+      -regress_motion_per_run
+Please see "afni_proc.py -help" for details.
+
+06) A note on python2 and python3 "fun".
+We are in the process of enhancing python programs to work with both
+python2 and python3. Programs that should already be python3
+compatible include afni_proc.py, afni_system_check.py, 1d_tool.py,
+make_random_timing.py and timing_tool.py.
+
+07) Enhancements in make_random_timing.py.
+The program can now handle more complicated designs. One can define
+stimulus and rest timing classes with their own probability
+distributions, including limits. See "Advanced Usage" in the -help
+output for details.
+
+08) Intraclass Correlation (ICC) can improve your life.
+Well, at least it might improve some of your analysis and results
+interpretation, as described by G. Chen et al. in a new paper in HBM:
+http://onlinelibrary.wiley.com/doi/10.1002/hbm.23909/full
+
+-----------------------------
+Updates 01-03 were suggested by our interactions with students during
+our recent Bootcamps in Shenzhen and Guangzhou (China). Thanks go to
+them for excellent hosting and such fruitful discussions!
+
+---------------------------------------------------------------------
++ This Digest is not a comprehensive list of code updates.
++ Please direct comments or questions to the AFNI Message Board:
+  https://afni.nimh.nih.gov/afni/community/board/list.php?1
++ To unsubscribe or otherwise manage your Digest settings, click here:
+  https://list.nih.gov/cgi-bin/wa.exe?SUBED1=afni_digest&A=1
+---------------------------------------------------------------------
+========================================================================
+
+
+========================================================================
+
+AFNI Digest, week of 2017/11/22.
+
+00) Job Opening in the AFNI group.
+The Scientific and Statistical Computing Core (a.k.a. the AFNI group)
+at the NIMH, NIH (Bethesda, MD, USA) is lookin' to hire a postdoc,
+particularly someone with C and/or C++ experience, with Python and
+OpenGL skills also being quite useful.
+
+If you like problem solving and working with a fun group of people,
+then check out the advert here for details:
+https://afni.nimh.nih.gov/afni/community/board/read.php?1,156739,156739#msg-156739
+(And please feel free to forward on.)
+
+01) 3dLME: new fun option in the program.
+Option "-ML" has been added in 3dLME, which can be invoked when
+Maximum Likelihood is desirable, instead of the default method,
+Restricted Maximum Likelihood (REML).
+
+02) Have a good Thanksgiving!
+And remember: "An optimist is a person who starts a new diet on
+Thanksgiving Day." -- I. Kupcinet
+
+---------------------------------------------------------------------
++ This Digest is not a comprehensive list of code updates.
++ Please direct comments or questions to the AFNI Message Board:
+  https://afni.nimh.nih.gov/afni/community/board/list.php?1
++ To unsubscribe or otherwise manage your Digest settings, click here:
+  https://list.nih.gov/cgi-bin/wa.exe?SUBED1=afni_digest&A=1
+---------------------------------------------------------------------
+========================================================================
+
+
+========================================================================
 AFNI Digest, week of 2017/09/26.
 
 00) More FMRI cluster exploration.
@@ -42,13 +213,6 @@ to afni.bootcamp@gmail.com with your first name in the
 subject.  We will verify the output and help resolve any issues.  
 (And please note that all spots for this Bootcamp have already been
 filled.)
-
-
-
-
-
-
-
 
 
 ========================================================================
