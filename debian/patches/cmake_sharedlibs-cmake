@@ -265,7 +265,7 @@
 +ENDIF(NOT AFNI_BUILD_CORELIBS_ONLY)
 --- /dev/null
 +++ b/src/CMakeLists_apps.txt
-@@ -0,0 +1,218 @@
+@@ -0,0 +1,219 @@
 +##
 +## This file is to be included in the toplevel CMakeLists.txt
 +##
@@ -405,7 +405,8 @@
 +ADD_EXECUTABLE(afni_history
 +  afni_history.c afni_history_bpittman.c afni_history_christip.c
 +  afni_history_dglen.c afni_history_gangc.c afni_history_rickr.c
-+  afni_history_rwcox.c afni_history_ziad.c afni_history_ptaylor.c)
++  afni_history_rwcox.c afni_history_ziad.c afni_history_ptaylor.c afni_history_discoraj.c
++)
 +TARGET_LINK_LIBRARIES(afni_history ${AFNI_LIBS})
 +LIST(APPEND PROGRAMS afni_history)
 +
@@ -806,7 +807,7 @@
 +  DESTINATION ${AFNI_INSTALL_SCRIPT_DIR} COMPONENT Runtime)
 --- /dev/null
 +++ b/src/SUMA/CMakeLists.txt
-@@ -0,0 +1,180 @@
+@@ -0,0 +1,181 @@
 +PROJECT(SUMA)
 +
 +##
@@ -897,7 +898,7 @@
 +# Programs
 +#
 +SET(PROGRAMS
-+  suma prompt_user prompt_popup MakeColorMap ScaleToMap
++  suma prompt_user MakeColorMap ScaleToMap
 +  inflate_compare SurfaceMetrics ConvertSurface
 +  ConvertDset ROI2dataset SurfSmooth SurfPatch SurfQual SurfClust
 +  ConvexHull 3dSkullStrip 3dSeg 3dCRUISEtoAFNI 3dGenPriors 3dGenFeatureDist
@@ -914,9 +915,10 @@
 +  ADD_EXECUTABLE(${program} SUMA_${program}.c)
 +ENDFOREACH(program)
 +
-+# SUMA prefixed programs
++# SUMA prefixed programs or programs without SUMA_ prefix altogether
 +FOREACH(program SUMA_glxdino SUMA_paperplane SUMA_pixmap2eps
-+                SUMA_Load_Surface_Object SUMA_inflate_compare SUMA_Homer)
++                SUMA_Load_Surface_Object SUMA_inflate_compare SUMA_Homer
++				prompt_popup)
 +  ADD_EXECUTABLE(${program} ${program}.c)
 +  LIST(APPEND PROGRAMS ${program})
 +ENDFOREACH(program)
@@ -1147,19 +1149,22 @@
 +  DESTINATION ${AFNI_INSTALL_HTML_DIR} COMPONENT Runtime)
 --- /dev/null
 +++ b/src/ptaylor/CMakeLists.txt
-@@ -0,0 +1,25 @@
+@@ -0,0 +1,28 @@
 +PROJECT(tracktools)
 +
 +IF (GSL_LIBRARY AND GTS_FOUND)
 +  MESSAGE(STATUS "Found GSL and GTS libraries, compiling tracktools")
 +  SET(SOURCES DoTrackit.c TrackIO.c rsfc.c diffusiony.c FuncTrac.c roiing.c
-+              Fat_Labels.c colorbasic.c LS_funcs.c)
++              Fat_Labels.c colorbasic.c LS_funcs.c
++			  checks_and_balances.c readglob.c basic_boring.c)
 +  ADD_LIBRARY(tracktools ${SOURCES})
 +  TARGET_LINK_LIBRARIES(tracktools gts mri ${GSL_LIBRARIES})
 +  SET(PROGRAMS
 +    3dTrackID 3dProbTrackID 3dDWUncert 3dReHo 3dRSFC map_TrackID 3dROIMaker
-+    3dMatch 3dNetCorr 1dDW_Grad_o_Mat 3dEigsToDT 3dDTtoNoisyDWI
-+    3dTORTOISEtoHere 3dVecRGB_to_HSL 3ddot_beta 3dLombScargle 3dAmpToRSFC)
++    3dMatch 3dNetCorr 1dDW_Grad_o_Mat 1dDW_Grad_o_Mat++ 3dEigsToDT 3dDTtoNoisyDWI
++    3dTORTOISEtoHere 3dVecRGB_to_HSL 3ddot_beta 3dLombScargle 3dAmpToRSFC
++    3dSpaceTimeCorr 3dZipperZapper
++  )
 +
 +  FOREACH(program ${PROGRAMS})
 +    ADD_EXECUTABLE(${program} ${program}.c)

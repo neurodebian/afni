@@ -4,10 +4,18 @@
 - dcm2niix_afni -- includes full cmdline dcm2niix which we have
    already in Debian and NeuroDebian
 
+- libgifti which we build (also see below in checks) is not included
+   in any package since "installed" "system-wide" under usr/ prefix,
+   not usr/lib/afni/
+
 Checks
 =====
 
 - if we did "install" the lib_RetroTS under bin/
+- we use provided upstream CMakeList for gifti but they don't use it,
+   but introduced changes to the makefile to include nifti2_io and
+   znzlib.
+  So we might need to tune up that Cmake file
 
 Duplicate files
 ===============
