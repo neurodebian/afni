@@ -1,3 +1,9 @@
+afni (18.0.05+git24-gb25b21054~dfsg.1-1) UNRELEASED; urgency=medium
+
+  * An attempt to update packaging for the current state of affairs
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 18 Jan 2018 19:57:28 -0500
+
 afni (16.2.07~dfsg.1-5) neurodebian; urgency=medium
 
   * Remove bdepends on hardening-includes which were removed in >=stretch, and
