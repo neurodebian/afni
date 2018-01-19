@@ -1,6 +1,6 @@
 --- a/src/thd_xwebber.c
 +++ b/src/thd_xwebber.c
-@@ -190,6 +190,9 @@
+@@ -193,6 +193,9 @@ ENTRY("htmlize") ;
     RETURN(mmm) ;
  }
  
@@ -10,7 +10,7 @@
  /*----------------------------------------------------------------------------*/
  /* This is a callback to deal with some refresh problems
     that should have been handled by the XmHTML library.
-@@ -201,6 +204,7 @@
+@@ -204,6 +207,7 @@ void RefreshHTML_AtEvent( Widget w , XtP
  {
      XmHTMLRefresh(client_data);
  }
