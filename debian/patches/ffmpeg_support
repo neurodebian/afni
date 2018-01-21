@@ -8,7 +8,7 @@ Forwarded: Rick Reynolds <reynoldr@mail.nih.gov>
 Author: Michael Hanke <michael.hanke@gmail.com>
 Last-Updated: 2018-01-18
 diff --git a/src/imseq.c b/src/imseq.c
-index 2cde457b5..2e6f424a7 100644
+index 2cde457b5..0dd47ae36 100644
 --- a/src/imseq.c
 +++ b/src/imseq.c
 @@ -308,7 +308,7 @@ static char *  gimp_path          = NULL ;  /* 27 Oct 2017 */
@@ -127,18 +127,18 @@ index 2cde457b5..2e6f424a7 100644
                                 ) ;
             MCW_reghint_children( seq->save_agif_bbox->wrowcol ,
                                   "Save image sequence to animation" ) ;
-@@ -13831,28 +13801,20 @@ ENTRY("ISQ_save_anim") ;
+@@ -13831,64 +13801,33 @@ ENTRY("ISQ_save_anim") ;
        /* MPEG-1 */
  
        case MPEG_MODE:{
 -        int alen ; char *alf , *oof , *par , *frate ;
 -        char *qscale , *pattrn ; int mpar=0 ;
 -        FILE *fpar ;
+-
+-        /* write mpeg_encode parameter file */
 +        int alen ; char *alf , *oof , *frate ;
 +        char *qscale , *pattrn ;
  
--        /* write mpeg_encode parameter file */
--
 -        par = AFMALL( char, strlen(ppo)+32 ) ; /* param fname */
 -        sprintf(par,"%s%s.PARAM",ppo,tsuf) ;
 -
@@ -161,11 +161,32 @@ index 2cde457b5..2e6f424a7 100644
 +            /* otherwise go with ffmpegs default */
 +            else pattrn="";
          }
-         fprintf(fpar,
-                   "OUTPUT %s\n"             /* oof */
-@@ -13881,14 +13843,17 @@ ENTRY("ISQ_save_anim") ;
-         if( mpar ) free(pattrn) ;
- 
+-        fprintf(fpar,
+-                  "OUTPUT %s\n"             /* oof */
+-                  "GOP_SIZE          5\n"
+-                  "SLICES_PER_FRAME  1\n"
+-                  "FRAME_RATE        %s\n"  /* frate */
+-                  "BASE_FILE_FORMAT  PPM\n"
+-                  "INPUT_CONVERT     *\n"
+-                  "INPUT_DIR         .\n"
+-                  "PATTERN           %s\n"  /* pattrn */
+-                  "IQSCALE           %s\n"  /* qscale */
+-                  "PQSCALE           10\n"
+-                  "BQSCALE           25\n"
+-                  "PIXEL             HALF\n"
+-                  "RANGE             10 4\n"
+-                  "PSEARCH_ALG       LOGARITHMIC\n"
+-                  "BSEARCH_ALG       SIMPLE\n"
+-                  "REFERENCE_FRAME   ORIGINAL\n"
+-                  "INPUT\n"
+-                  "%s%s.*.ppm [%06d-%06d]\n"  /* prefix, tsuf, from, to */
+-                  "END_INPUT\n"
+-               , oof , frate , pattrn , qscale ,
+-                 /* akk is 1 too big, was corrected elsewhere  27 Nov 2017 */
+-                 ppo,tsuf,0,akk-1) ;
+-        fclose(fpar) ;
+-        if( mpar ) free(pattrn) ;
+-
          /* make command to run */
 -
 -        alen = strlen(par)+strlen(ppmto_mpeg_filter)+32 ;

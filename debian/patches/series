@@ -7,8 +7,7 @@ up_pragma_var_definition
 up_3dNetCorrFix
 up_3rd_no_RefreshHTML_AtEvent
 ttatlas_location
-# Disabled temporarily since Yarik screwed up refreshing it and it causes build failure
-# ffmpeg_support
+ffmpeg_support
 unmod_f2c
 fixes
 # yoh: wants tests back
