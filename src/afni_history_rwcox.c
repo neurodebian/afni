@@ -44,6 +44,40 @@
 afni_history_struct rwcox_history[] = {
 /*=====BELOW THIS LINE=====*/
 
+ { 6 , JAN , 2018 , RWC , "3dDeconvolve" , MINOR , TYPE_ENHANCE ,
+   "Add TWOGAM basis function" ,
+   "Arbitrary difference of two GAM functions." } ,
+
+ { 3 , JAN , 2018 , RWC , "AFNI GUI" , MICRO , TYPE_ENHANCE ,
+   "Add startup tips (to stderr) to AFNI" ,
+   "Source is in afni.c. Search for TIP string." } ,
+
+ { 20 , DEC , 2017 , RWC , "afni GUI" , MINOR , TYPE_ENHANCE ,
+   "Add driver command DATASET#N" ,
+   "To let the user drive the graph viewer plugin from outside. A little\n"
+   "trickier than I thought, since to do this well requires mucking with the\n"
+   "menu settings inside afni_graph.c as well as registering a new driver\n"
+   "function in plug_nth_dataset.c." } ,
+
+ { 20 , DEC , 2017 , RWC , "afni GUI" , MINOR , TYPE_ENHANCE ,
+   "Increase the maximum dimension of an image Montage (for PT)" ,
+   NULL } ,
+
+ { 20 , DEC , 2017 , RWC , "3drefit" , MINOR , TYPE_NEW_OPT ,
+   "-Tslices lets user replace slice time offsets" ,
+   "I don't know why this didn't exist before. So now the user can attach\n"
+   "slice time offsets to a dataset if they weren't correct before (e.g., in\n"
+   "NIFTI files)." } ,
+
+ { 20 , DEC , 2017 , RWC , "3drefit" , MINOR , TYPE_BUG_FIX ,
+   "Make -substatpar option work better" ,
+   "It didn't work on some datasets, as they weren't labeled as 'bucket'.\n"
+   "That oversight was fixed." } ,
+
+ { 2 , NOV , 2017 , RWC , "aiv" , MICRO , TYPE_NEW_OPT ,
+   "-pad option makes all images the same size for viewing" ,
+   NULL } ,
+
  { 01 , NOV , 2017 , RWC , "afni GUI" , MICRO , TYPE_ENHANCE ,
    "Add 'Gimp it?' option to image save popup chooser" ,
    "If gimp is present on the system, then user can save and edit image easily" } ,
