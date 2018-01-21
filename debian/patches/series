@@ -2,8 +2,7 @@ up_include_right
 up_condition_dset_unload
 up-fix_inflate_compare
 up_meica_tedana_upstream_mdp_api
-# Disabled temporarily since tune up (included and disabled upstream)
-# up_glut_init
+up_glut_init
 up_pragma_var_definition
 up_3dNetCorrFix
 up_3rd_no_RefreshHTML_AtEvent
@@ -12,8 +11,8 @@ ttatlas_location
 # ffmpeg_support
 unmod_f2c
 fixes
-# yoh: wants it back
-disable_runtimetests
+# yoh: wants tests back
+# disable_runtimetests
 debian_paths
 cmake_sharedlibs-noncmake
 cmake_sharedlibs-cmake
