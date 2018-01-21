@@ -265,7 +265,7 @@
 +ENDIF(NOT AFNI_BUILD_CORELIBS_ONLY)
 --- /dev/null
 +++ b/src/CMakeLists_apps.txt
-@@ -0,0 +1,219 @@
+@@ -0,0 +1,218 @@
 +##
 +## This file is to be included in the toplevel CMakeLists.txt
 +##
@@ -317,7 +317,6 @@
 +  ${EXTRAS})
 +
 +# the left beast TODO:
-+# - dcm2niix_afni
 +# - discoraj -- all the shiny stuff from Justin (seems to be just a INSTALL(DIRECTORY))
 +
 +FILE(GLOB SCRIPTS scripts_install/*)

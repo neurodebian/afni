@@ -191,6 +191,8 @@ dfsg-source-tree:
 	rm -rf src/XmHTML
 	# NiBabel
 	rm -rf src/pkundu/meica.libs/nibabel
+	# dcm2niix
+	rm -rf src/crorden/dcm2niix_console
 	# MDP
 	rm -rf src/pkundu/meica.libs/mdp
 	# non-commercial, non-distribution license

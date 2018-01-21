@@ -46,6 +46,7 @@ Depends: afni-common (= ${source:Version}),
          ${shlibs:Depends}, ${misc:Depends}
 Recommends: nifti-bin,
             bzip2, ffmpeg, netpbm, qhull-bin,
+            dcm2niix
 Suggests: r-base
 Description: toolkit for analyzing and visualizing functional MRI data
  AFNI is an environment for processing and displaying functional MRI data.

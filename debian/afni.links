@@ -1,1 +1,2 @@
 /usr/lib/afni/bin/afni_wrapper /usr/bin/afni
+/usr/bin/dcm2niix /usr/lib/afni/bin/dcm2niix_afni
