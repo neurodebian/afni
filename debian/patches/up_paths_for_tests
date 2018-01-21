@@ -1,0 +1,22 @@
+--- a/tests/xvfb-driver
++++ b/tests/xvfb-driver
+@@ -25,8 +25,8 @@ done
+ 
+ # Deduce paths
+ 
+-srcdir=$(readlink -f `dirname $0`/..)
+-builddir=$(readlink -f $PWD/..)
++srcdir=$(readlink -f `dirname $0`/../src)
++builddir=$(readlink -f $PWD/../src)
+ tempdir=`mktemp -d`
+ 
+ cleanup() { rm -r "$tempdir"; }
+@@ -37,7 +37,7 @@ cd $tempdir
+ ln -s $srcdir/faces pics
+ 
+ AFNI_DETACH=NO AFNI_SYSTEM_AFNIRC=/dev/null \
+-AFNI_PLUGINPATH=$builddir PATH=$builddir:$builddir/SUMA:$srcdir:$PATH \
++AFNI_PLUGINPATH=$builddir PATH=$builddir:$builddir/SUMA:$srcdir/scripts_install:$srcdir:$PATH \
+ 	xvfb-run --auto-servernum --server-num=20 -s "-screen 0 1024x768x24 -ac +extension GLX +render -noreset" \
+ 	"$@" 2>&1 | tee __outputlog.txt
+ code=${PIPESTATUS[0]}

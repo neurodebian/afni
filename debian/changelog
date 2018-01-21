@@ -1,6 +1,10 @@
-afni (18.0.05+git24-gb25b21054~dfsg.1-1) UNRELEASED; urgency=medium
+afni (18.0.05+git24-gb25b21054~dfsg.1-1~1) UNRELEASED; urgency=medium
 
-  * An attempt to update packaging for the current state of affairs
+  * Update Debian packaging for the package after a long time
+    - reenabled running tests at package build time
+    - new commands etc were added to the build
+    - dcm2niix is recommended and symlinked as dcm2niix_afni to avoid
+      the need of fragile patching
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 18 Jan 2018 19:57:28 -0500
 

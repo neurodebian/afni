@@ -12,6 +12,7 @@ unmod_f2c
 fixes
 # yoh: wants tests back
 # disable_runtimetests
+up_paths_for_tests
 debian_paths
 cmake_sharedlibs-noncmake
 cmake_sharedlibs-cmake

@@ -112,7 +112,8 @@ override_dh_auto_build:
 override_dh_auto_test:
 	: # call ctest directly since passing ctest -LE via dh_auto_test seems not to work
 	cd $(DEB_BUILDDIR)        && ctest $(CTEST_FLAGS)
-	cd $(DEB_BUILDDIR_STATIC) && ctest $(CTEST_FLAGS)
+	# Static build is not full, so we cannot test it ATM
+	# cd $(DEB_BUILDDIR_STATIC) && ctest $(CTEST_FLAGS)
 	: # Just to verify that previous fixes on linking are inplace
 	set -e; for b in 3dSkullStrip; do \
 		ldd $(DEB_BUILDDIR)/src/SUMA/$$b | grep '=>.*lib3DEdge.so'; \
