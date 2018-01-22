@@ -1,6 +1,6 @@
 --- /dev/null
 +++ b/src/CMakeLists.txt
-@@ -0,0 +1,265 @@
+@@ -0,0 +1,266 @@
 +##
 +## Check for and configure for external dependencies
 +##
@@ -260,6 +260,7 @@
 +  ADD_SUBDIRECTORY(SUMA)
 +  ADD_SUBDIRECTORY(avovk)
 +  ADD_SUBDIRECTORY(ptaylor)
++  ADD_SUBDIRECTORY(jzosky)
 +  ADD_SUBDIRECTORY(pkundu)
 +
 +  ADD_SUBDIRECTORY(faces)
@@ -486,7 +487,7 @@
 +  DESTINATION ${AFNI_INSTALL_SCRIPT_DIR} COMPONENT Runtime)
 --- /dev/null
 +++ b/src/CMakeLists_libs.txt
-@@ -0,0 +1,226 @@
+@@ -0,0 +1,230 @@
 +##
 +## This file is to be included in the toplevel CMakeLists.txt
 +##
@@ -495,7 +496,9 @@
 +                    ${CMAKE_SOURCE_DIR}/src
 +                    ${CMAKE_SOURCE_DIR}/src/niml
 +                    ${CMAKE_SOURCE_DIR}/src/rickr
-+                    ${CMAKE_SOURCE_DIR}/src/ptaylor)
++                    ${CMAKE_SOURCE_DIR}/src/ptaylor
++                    ${CMAKE_SOURCE_DIR}/src/jzosky
++                    )
 +
 +#
 +# Define sets of source files
@@ -579,8 +582,10 @@
 +# Assimilate NIfTI lib pieces into libmri, if we do not link against a
 +# system NIfTI lib
 +IF(AFNI_BUILD_LOCAL_NIFTICLIBS)
-+  LIST(APPEND CS_SRC nifti/nifti2/nifti2_io.c nifti/znzlib/znzlib.c
++  # Will also be built-in to libgifti
++  SET(LOCAL_NIFTICLIB_SRC nifti/nifti2/nifti2_io.c nifti/znzlib/znzlib.c
 +       nifti/utils/nifti_stats.c nifti/nifticdf/nifticdf.c nifti_statlib.c)
++  LIST(APPEND CS_SRC ${LOCAL_NIFTICLIB_SRC})
 +  SET_SOURCE_FILES_PROPERTIES(nifti/nifticdf/nifticdf.c
 +                PROPERTIES COMPILE_FLAGS "-D__COMPILE_UNUSED_FUNCTIONS__")
 +ENDIF(AFNI_BUILD_LOCAL_NIFTICLIBS)
@@ -1343,14 +1348,16 @@
  
  FIND_PACKAGE(ITK)
  IF(ITK_FOUND)
-@@ -46,6 +46,12 @@ ${gifticlib_BINARY_DIR}
+@@ -46,6 +46,14 @@ ${gifticlib_BINARY_DIR}
  
  SET(GIFTIIO_SRC gifti_io.c gifti_xml.c)
  
 +IF(AFNI_BUILD_LOCAL_NIFTICLIBS)
-+  # include nifti2 sources into gifti, following the upstream's recipe, although they did not
-+  # include all of them, just  $(NIFTI_DIR)/nifti2/nifti2_io.c $(NIFTI_DIR)/znzlib/znzlib.c
-+  LIST(APPEND GIFTIIO_SRC ${LOCAL_NIFTICLIB_SRC})
++  # include nifti2 sources into gifti, following the upstream's recipe
++  LIST(APPEND GIFTIIO_SRC
++    ${CMAKE_SOURCE_DIR}/src/nifti/nifti2/nifti2_io.c
++    ${CMAKE_SOURCE_DIR}/src/nifti/znzlib/znzlib.c
++  )
 +ENDIF(AFNI_BUILD_LOCAL_NIFTICLIBS)
 +
  # shared version

@@ -1,23 +1,14 @@
 3rd party stuff to modularize/patch away
 ========================================
 
-- libgifti which we build (also see below in checks) is not included
-   in any package since "installed" "system-wide" under usr/ prefix,
-   not usr/lib/afni/
+- ATM we build-in local copy of nifti/nifti2 (into librmri) and gifti
+   (includes nifti and nifti2 stuff) libraries
 
 Additional components
 =====================
 - discoraj -- all the shiny stuff from Justin (seems to be just a INSTALL(DIRECTORY))
 
 
-Checks
-=====
-
-- if we did "install" the lib_RetroTS under bin/
-- we use provided upstream CMakeList for gifti but they don't use it,
-   but introduced changes to the makefile to include nifti2_io and
-   znzlib.
-  So we might need to tune up that Cmake file
 
 Duplicate files
 ===============
