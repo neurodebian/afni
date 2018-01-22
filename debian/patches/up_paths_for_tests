@@ -20,3 +20,14 @@
  	xvfb-run --auto-servernum --server-num=20 -s "-screen 0 1024x768x24 -ac +extension GLX +render -noreset" \
  	"$@" 2>&1 | tee __outputlog.txt
  code=${PIPESTATUS[0]}
+--- a/src/scripts_install/@DO.examples
++++ b/src/scripts_install/@DO.examples
+@@ -161,7 +161,7 @@ NIDO:
+ #Displayable objects (DO) action
+ set spath = `which suma`
+ set spath = $spath:h
+-foreach dopath ($spath $spath/.. $spath/../.. /usr/share/doc/afni-common/examples)
++foreach dopath ($spath $spath/.. $spath/../.. $spath/scripts_install/ $spath/../src/scripts_install/ $spath/../../src/scripts_install/ $spath/../../../src/scripts_install/ /usr/share/doc/afni-common/examples)
+    if ( -f $dopath/demo.fixed.niml.do) then
+      cp $dopath/demo.fixed.niml.do ./fixed.niml.do
+      cp $dopath/demo.mobile.niml.do ./mobile.niml.do
