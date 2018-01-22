@@ -2,4 +2,5 @@ debian/tmp/lib/afni/bin/* usr/lib/afni/bin/
 debian/tmp/lib/afni/plugins/plug* usr/lib/afni/plugins/
 debian/tmp/lib/afni/plugins/model* usr/lib/afni/models/
 debian/tmp/lib/afni/lib/*.so usr/lib/afni/lib
+debian/tmp/lib/afni/lib/*.so.* usr/lib/afni/lib
 debian/afni.desktop usr/share/applications
