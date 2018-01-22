@@ -265,7 +265,7 @@
 +ENDIF(NOT AFNI_BUILD_CORELIBS_ONLY)
 --- /dev/null
 +++ b/src/CMakeLists_apps.txt
-@@ -0,0 +1,218 @@
+@@ -0,0 +1,215 @@
 +##
 +## This file is to be included in the toplevel CMakeLists.txt
 +##
@@ -315,9 +315,6 @@
 +  3dBrainSync 3dDegreeCentrality 3dLFCD 3dMSE 3dSharpen 3dTsplit4D
 +  3dTto1D 3dsvm_linpredict 3dMultiThresh 3dTfilter 3dXClustSim 3dtoXdataset
 +  ${EXTRAS})
-+
-+# the left beast TODO:
-+# - discoraj -- all the shiny stuff from Justin (seems to be just a INSTALL(DIRECTORY))
 +
 +FILE(GLOB SCRIPTS scripts_install/*)
 +

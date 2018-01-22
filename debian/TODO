@@ -1,12 +1,14 @@
 3rd party stuff to modularize/patch away
 ========================================
 
-- dcm2niix_afni -- includes full cmdline dcm2niix which we have
-   already in Debian and NeuroDebian
-
 - libgifti which we build (also see below in checks) is not included
    in any package since "installed" "system-wide" under usr/ prefix,
    not usr/lib/afni/
+
+Additional components
+=====================
+- discoraj -- all the shiny stuff from Justin (seems to be just a INSTALL(DIRECTORY))
+
 
 Checks
 =====
