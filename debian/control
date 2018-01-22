@@ -30,6 +30,7 @@ Build-Depends: cmake (>= 2.6.4), debhelper (>= 9~),
                libxmhtml-dev | xmhtml1-dev | xmhtml-dev,
                r-base-core,
                xvfb, xauth, libgl1-mesa-dri, mesa-utils,
+               xfonts-base,
                tcsh,
                libjpeg-turbo-progs | libjpeg-progs,
                libxt-dev,
@@ -47,7 +48,7 @@ Depends: afni-common (= ${source:Version}),
 Recommends: nifti-bin,
             bzip2, ffmpeg, netpbm, qhull-bin,
             dcm2niix
-Suggests: r-base
+Suggests: r-base, xfonts-base
 Description: toolkit for analyzing and visualizing functional MRI data
  AFNI is an environment for processing and displaying functional MRI data.
  It provides a complete analysis toolchain, including 3D cortical surface

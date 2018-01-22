@@ -5,6 +5,8 @@ afni (18.0.05+git24-gb25b21054~dfsg.1-1~1) UNRELEASED; urgency=medium
     - new commands etc were added to the build
     - dcm2niix is recommended and symlinked as dcm2niix_afni to avoid
       the need of fragile patching
+    - xfonts-base into Build-Depends and Suggests (needs to avoid Fonts related
+      warnings while running the tests)
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 18 Jan 2018 19:57:28 -0500
 
