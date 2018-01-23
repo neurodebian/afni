@@ -269,7 +269,7 @@
 +ENDIF(NOT AFNI_BUILD_CORELIBS_ONLY)
 --- /dev/null
 +++ b/src/CMakeLists_apps.txt
-@@ -0,0 +1,215 @@
+@@ -0,0 +1,221 @@
 +##
 +## This file is to be included in the toplevel CMakeLists.txt
 +##
@@ -321,6 +321,12 @@
 +  ${EXTRAS})
 +
 +FILE(GLOB SCRIPTS scripts_install/*)
++
++#
++# The shiny things - just pure scripts to be installed among other scripts
++#
++FILE(GLOB SHINY_SCRIPTS discoraj/*/@* discoraj/*/*.py)
++LIST(APPEND SCRIPTS ${SHINY_SCRIPTS})
 +
 +##
 +## Targets
