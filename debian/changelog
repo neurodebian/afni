@@ -7,8 +7,10 @@ afni (18.0.05+git24-gb25b21054~dfsg.1-1) neurodebian; urgency=medium
       the need of fragile patching
     - xfonts-base into Build-Depends and Suggests (needs to avoid Fonts related
       warnings while running the tests)
+    - libgiftiio-dev removed from Build-Depends since we are building/using
+      bundled copy
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 22 Jan 2018 20:43:35 -0500
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 23 Jan 2018 09:46:33 -0500
 
 afni (16.2.07~dfsg.1-5) neurodebian; urgency=medium
 
