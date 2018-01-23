@@ -1,4 +1,4 @@
-afni (18.0.05+git24-gb25b21054~dfsg.1-1~1) UNRELEASED; urgency=medium
+afni (18.0.05+git24-gb25b21054~dfsg.1-1) neurodebian; urgency=medium
 
   * Update Debian packaging for the package after a long time
     - reenabled running tests at package build time
@@ -8,7 +8,7 @@ afni (18.0.05+git24-gb25b21054~dfsg.1-1~1) UNRELEASED; urgency=medium
     - xfonts-base into Build-Depends and Suggests (needs to avoid Fonts related
       warnings while running the tests)
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 18 Jan 2018 19:57:28 -0500
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 22 Jan 2018 20:43:35 -0500
 
 afni (16.2.07~dfsg.1-5) neurodebian; urgency=medium
 
